@@ -561,6 +561,24 @@ async function handleSendNotifications(body) {
   return respond(200, { success: true, count: sent, message: `${sent} notification emails sent!` });
 }
 
+async function handleMemberships() {
+  const { data, error } = await supabase
+    .from('memberships')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return respond(200, { success: true, data: data || [] });
+}
+
+async function handleContacts() {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return respond(200, { success: true, data: data || [] });
+}
+
 async function handleCleanupHolds() {
   await cleanupExpiredHolds();
   return respond(200, { success: true });
@@ -591,6 +609,10 @@ exports.handler = async (event) => {
           return await handleBookings(params.event_id);
         case 'notifications':
           return await handleNotifications();
+        case 'memberships':
+          return await handleMemberships();
+        case 'contacts':
+          return await handleContacts();
         case 'dashboard':
           return await handleDashboard();
         default:
@@ -636,6 +658,13 @@ exports.handler = async (event) => {
           return await handleCancelBooking(body);
         case 'send_notifications':
           return await handleSendNotifications(body);
+        case 'update_membership':
+          requireAdmin(body.admin_key);
+          const { id: memId, status: memStatus } = body;
+          if (!memId || !memStatus) return respond(400, { success: false, error: 'id and status required' });
+          const { error: memErr } = await supabase.from('memberships').update({ status: memStatus }).eq('id', memId);
+          if (memErr) throw memErr;
+          return respond(200, { success: true });
         case 'cleanup_holds':
           return await handleCleanupHolds();
         default:

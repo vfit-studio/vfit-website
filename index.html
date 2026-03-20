@@ -35,6 +35,7 @@
   .nav-links { display: flex; gap: 36px; list-style: none; align-items: center; }
   .nav-links button { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--deep); text-decoration: none; opacity: 0.55; transition: opacity 0.3s; cursor: pointer; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; padding: 0; min-height: 44px; }
   .nav-links button:hover, .nav-links button.active { opacity: 1; }
+  .nav-right { display: flex; align-items: center; gap: 32px; }
   .nav-actions { display: flex; gap: 6px; align-items: center; }
   .nav-action-btn { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--warm-white); background: var(--deep); padding: 10px 20px; border: 1px solid var(--deep); cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: background 0.3s, border-color 0.3s, transform 0.25s ease-out; min-height: 44px; }
   .nav-action-btn:hover { background: var(--bark); border-color: var(--bark); transform: translateY(-1px); }
@@ -490,7 +491,7 @@
   /* ─── RESPONSIVE ─── */
   @media (max-width: 1024px) {
     nav { padding: 20px 28px; } nav.scrolled { padding: 14px 28px; }
-    .nav-links, .nav-actions { display: none; } .hamburger { display: flex; }
+    .nav-right { display: none; } .hamburger { display: flex; }
     .home-hero, .about-split, .contact-grid, .split-hero, .home-countdowns { grid-template-columns: 1fr; }
     .home-cd-divider { width: auto; height: 1px; margin: 0; }
     .home-cd-card { padding: 48px 36px; }
@@ -537,14 +538,16 @@
 <!-- NAV -->
 <nav id="navbar">
   <button class="nav-logo" onclick="showPage('home')">VFIT</button>
-  <ul class="nav-links">
-    <li><button onclick="showPage('about')">About</button></li>
-    <li><button onclick="showPage('contact')">Contact</button></li>
-  </ul>
-  <div class="nav-actions">
-    <button class="nav-action-btn" onclick="showPage('runclub')">Run Club</button>
-    <button class="nav-action-btn" onclick="showPage('pilattes')">Pi'lattes</button>
-    <button class="nav-action-btn" onclick="showPage('memberships')">Memberships</button>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><button onclick="showPage('about')">About</button></li>
+      <li><button onclick="showPage('contact')">Contact</button></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="nav-action-btn" onclick="showPage('runclub')">Run Club</button>
+      <button class="nav-action-btn" onclick="showPage('pilattes')">Pi'lattes</button>
+      <button class="nav-action-btn" onclick="showPage('memberships')">Memberships</button>
+    </div>
   </div>
   <button class="hamburger" onclick="toggleMobile()" aria-label="Toggle navigation menu" aria-expanded="false"><span></span><span></span><span></span></button>
 </nav>
@@ -1871,12 +1874,13 @@ function wizSubmit() {
   btn.textContent = 'Sending...';
 
   var data = {
+    action: 'membership',
+    type: 'membership',
     interest: wizData.plan + ' Membership Enquiry',
-    plan: wizData.plan,
-    price: wizData.price + ' / ' + wizData.period,
-    sessions_per_week: wizData.sessionsPerWeek || 'Not specified',
-    preferred_days: wizData.preferredDays.length > 0 ? wizData.preferredDays.join(', ') : 'Not specified',
-    preferred_time: wizData.timeSlot || wizData.timePeriod || 'Not specified',
+    plan: wizData.plan + ' Membership — ' + wizData.price + '/' + wizData.period,
+    sessions: wizData.sessionsPerWeek || 'Not specified',
+    days: wizData.preferredDays.length > 0 ? wizData.preferredDays.join(', ') : 'Not specified',
+    times: wizData.timeSlot || wizData.timePeriod || 'Not specified',
     name: wizData.name,
     email: wizData.email,
     phone: wizData.phone,
