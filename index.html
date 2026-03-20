@@ -20,6 +20,10 @@
   html { scroll-behavior: smooth; }
   body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--deep); font-weight: 300; overflow-x: hidden; }
 
+  /* ─── FOCUS VISIBLE (all interactive) ─── */
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible,
+  [tabindex]:focus-visible { outline: 1px solid var(--clay); outline-offset: 3px; }
+
   /* ─── SKIP NAV ─── */
   .skip-nav { position: absolute; top: -100%; left: 16px; z-index: 999; padding: 12px 24px; background: var(--deep); color: var(--warm-white); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none; }
   .skip-nav:focus { top: 16px; }
@@ -31,8 +35,8 @@
   .nav-links { display: flex; gap: 36px; list-style: none; align-items: center; }
   .nav-links button { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--deep); text-decoration: none; opacity: 0.55; transition: opacity 0.3s; cursor: pointer; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; padding: 0; }
   .nav-links button:hover, .nav-links button.active { opacity: 1; }
-  .nav-cta { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--warm-white); background: var(--deep); padding: 11px 26px; border: none; cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: background 0.3s, transform 0.3s; }
-  .nav-cta:hover { background: var(--bark); transform: translateY(-1px); }
+  .nav-cta { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--deep); background: transparent; padding: 11px 26px; border: 1px solid var(--deep); cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: background 0.3s, color 0.3s, transform 0.25s ease-out; }
+  .nav-cta:hover { background: var(--deep); color: var(--warm-white); transform: translateY(-1px); }
 
   /* ─── HAMBURGER ─── */
   .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; z-index: 300; }
@@ -57,14 +61,33 @@
   .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 5vw, 60px); font-weight: 300; line-height: 1.1; margin-bottom: 16px; }
   .section-title em { font-style: italic; color: var(--bark); }
 
-  .btn-primary { display: inline-block; padding: 15px 42px; background: var(--deep); color: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em; text-transform: uppercase; text-decoration: none; border: none; cursor: pointer; transition: all 0.3s; }
-  .btn-primary:hover { background: var(--bark); transform: translateY(-1px); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .btn-outline { display: inline-block; padding: 14px 40px; background: transparent; color: var(--bark); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--clay); cursor: pointer; transition: all 0.3s; }
+  /* ─── BUTTONS (refined) ─── */
+  .btn-primary {
+    display: inline-block; padding: 15px 42px; background: var(--deep); color: var(--warm-white);
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em;
+    text-transform: uppercase; text-decoration: none; border: 1px solid transparent; cursor: pointer;
+    transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, color 0.35s, background 0.35s, border-color 0.35s;
+  }
+  .btn-primary:hover { background: var(--bark); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(61,53,48,0.15); border-color: var(--bark); }
+  .btn-primary:active { transform: translateY(0); box-shadow: none; background: #6b5e52; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-outline {
+    display: inline-block; padding: 14px 40px; background: transparent; color: var(--bark);
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em;
+    text-transform: uppercase; text-decoration: none; border: 1px solid var(--clay); cursor: pointer;
+    transition: border-color 0.25s, background 0.3s, color 0.3s;
+  }
   .btn-outline:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
-  .btn-ghost { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bark); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; transition: gap 0.3s; }
+
+  .btn-ghost {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bark);
+    text-decoration: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300;
+    transition: gap 0.3s, color 0.3s;
+  }
   .btn-ghost::after { content: ''; width: 28px; height: 1px; background: var(--clay); display: inline-block; transition: width 0.3s; }
-  .btn-ghost:hover { gap: 14px; }
+  .btn-ghost:hover { gap: 14px; color: var(--deep); }
   .btn-ghost:hover::after { width: 40px; }
 
   .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.75s ease, transform 0.75s ease; }
@@ -94,10 +117,10 @@
   /* ─── OFFERINGS ─── */
   .offerings-strip { background: var(--sand); padding: 0; }
   .offerings-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
-  .offering-card { padding: 56px 48px; border-right: 1px solid var(--stone); cursor: pointer; transition: background 0.35s; position: relative; overflow: hidden; }
+  .offering-card { padding: 56px 48px; border-right: 1px solid var(--stone); cursor: pointer; transition: background 0.35s, box-shadow 0.35s; position: relative; overflow: hidden; }
   .offering-card:last-child { border-right: none; }
   .offering-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--clay); transform: scaleX(0); transition: transform 0.4s; transform-origin: left; }
-  .offering-card:hover { background: var(--warm-white); }
+  .offering-card:hover { background: white; box-shadow: 0 8px 30px rgba(61,53,48,0.06); }
   .offering-card:hover::after { transform: scaleX(1); }
   .offering-badge { display: inline-block; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; padding: 4px 10px; margin-bottom: 22px; border: 1px solid var(--clay); color: var(--bark); }
   .offering-badge.public { background: var(--sage); border-color: var(--sage); color: var(--warm-white); }
@@ -132,7 +155,12 @@
   .countdown-num { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--deep); line-height: 1; }
   .countdown-txt { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-top: 4px; }
   .countdown-sep { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--clay); line-height: 1; padding-top: 4px; }
+  .countdown-session-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: var(--bark); margin-bottom: 16px; }
+  .countdown-follow-text { font-size: 11px; color: var(--bark); margin-top: 10px; }
+  .countdown-follow-text a { color: var(--bark); font-weight: 400; text-decoration: underline; }
   .spots-bar { margin: 20px 0; }
+  .spots-bar.hidden { display: none; }
+  .spots-bar.fade-in { animation: fadeIn 0.5s ease forwards; }
   .spots-text { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .spots-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
   .spots-dot.open { background: var(--moss); animation: pulse 2s infinite; }
@@ -140,12 +168,15 @@
   .spots-track { width: 100%; height: 4px; background: var(--stone); border-radius: 2px; overflow: hidden; }
   .spots-fill { height: 100%; background: var(--moss); border-radius: 2px; transition: width 0.6s; }
   .spots-fill.low { background: var(--red); }
+  .spots-fast { font-size: 11px; color: var(--red); margin-top: 6px; font-weight: 400; letter-spacing: 0.1em; }
   .widget-btn { width: 100%; margin-top: 20px; padding: 16px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-family: 'Jost', sans-serif; font-weight: 400; border: none; cursor: pointer; transition: all 0.3s; }
   .widget-btn.open { background: var(--deep); color: var(--warm-white); }
   .widget-btn.open:hover { background: var(--bark); }
   .widget-btn.closed { background: var(--stone); color: var(--bark); cursor: default; }
   .widget-btn.waitlist { background: transparent; color: var(--bark); border: 1px solid var(--clay); }
   .widget-btn.waitlist:hover { background: var(--bark); color: var(--warm-white); }
+  .widget-btn.notify { background: transparent; color: var(--bark); border: 1px solid var(--clay); }
+  .widget-btn.notify:hover { background: var(--bark); color: var(--warm-white); }
 
   /* ─── EXPECT GRID ─── */
   .expect-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 52px 80px; margin-top: 56px; max-width: 820px; }
@@ -159,7 +190,7 @@
   .cta-strip h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 5vw, 58px); font-weight: 300; color: var(--warm-white); margin-bottom: 20px; line-height: 1.1; }
   .cta-strip h2 em { font-style: italic; color: var(--clay); }
   .cta-strip p { font-size: 14px; color: rgba(254,252,248,0.55); line-height: 1.9; margin-bottom: 40px; }
-  .cta-strip .btn-primary { background: var(--clay); color: var(--deep); }
+  .cta-strip .btn-primary { background: var(--clay); color: var(--deep); border-color: transparent; }
   .cta-strip .btn-primary:hover { background: var(--bark); color: var(--warm-white); }
   .cta-strip .section-label { justify-content: center; color: var(--clay); }
 
@@ -182,8 +213,14 @@
   .card-features { list-style: none; display: flex; flex-direction: column; gap: 11px; }
   .card-feature { font-size: 12.5px; color: #6b5e52; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
   .card-feature::before { content: '\2014'; color: var(--clay); flex-shrink: 0; }
-  .select-btn { margin-top: 36px; width: 100%; padding: 14px; background: var(--deep); border: none; color: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
-  .select-btn:hover { background: var(--bark); }
+  .select-btn {
+    margin-top: 36px; width: 100%; padding: 14px;
+    background: transparent; border: 1px solid var(--clay); color: var(--bark);
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400;
+    letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .select-btn:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
 
   /* ─── PRICING TOGGLE ─── */
   .pricing-toggle { display: flex; justify-content: center; margin-top: 24px; margin-bottom: 8px; }
@@ -277,7 +314,7 @@
   .form-textarea { width: 100%; padding: 13px 17px; border: 1px solid var(--stone); background: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 300; color: var(--deep); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.3s; }
   .form-textarea:focus { border-color: var(--clay); }
 
-  /* ─── BOOKING MODAL ─── */
+  /* ─── BOOKING MODAL (simple) ─── */
   .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(61,53,48,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 24px; }
   .modal-backdrop.open { display: flex; }
   .modal { background: var(--warm-white); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; position: relative; padding: 48px 44px; animation: modalIn 0.3s ease; }
@@ -292,6 +329,67 @@
   .modal-success h3 em { font-style: italic; color: var(--bark); }
   .modal-success p { font-size: 14px; color: #6b5e52; line-height: 1.8; }
   .success-icon { width: 60px; height: 60px; border: 1px solid var(--moss); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 20px; color: var(--moss); }
+
+  /* ─── MEMBERSHIP WIZARD MODAL ─── */
+  .wiz-backdrop { display: none; position: fixed; inset: 0; z-index: 510; background: rgba(61,53,48,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 24px; }
+  .wiz-backdrop.open { display: flex; }
+  .wiz-modal { background: var(--warm-white); width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; position: relative; padding: 48px 44px; animation: modalIn 0.3s ease; }
+  .wiz-step-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--clay); margin-bottom: 24px; }
+  .wiz-viewport { overflow: hidden; position: relative; }
+  .wiz-track { display: flex; transition: transform 0.4s ease; }
+  .wiz-step { min-width: 100%; opacity: 1; transition: opacity 0.3s; }
+  .wiz-step-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; margin-bottom: 8px; color: var(--deep); }
+  .wiz-step-title em { font-style: italic; color: var(--bark); }
+  .wiz-step-desc { font-size: 13px; color: #6b5e52; line-height: 1.7; margin-bottom: 28px; }
+  .wiz-plan-summary { background: var(--sand); padding: 24px 28px; margin-bottom: 28px; }
+  .wiz-plan-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--deep); margin-bottom: 4px; }
+  .wiz-plan-price { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--deep); margin-bottom: 12px; }
+  .wiz-plan-price span { font-size: 16px; color: var(--bark); }
+  .wiz-plan-features { list-style: none; }
+  .wiz-plan-features li { font-size: 12.5px; color: #6b5e52; padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+  .wiz-plan-features li::before { content: '\2014'; color: var(--clay); }
+  .wiz-field-label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-bottom: 12px; display: block; }
+  .wiz-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+  .wiz-pill {
+    padding: 10px 20px; border: 1px solid var(--clay); background: transparent; color: var(--bark);
+    font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 0.15em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.25s;
+  }
+  .wiz-pill.selected { background: var(--deep); color: var(--warm-white); border-color: var(--deep); }
+  .wiz-pill.large { padding: 13px 26px; font-size: 13px; }
+  .wiz-day-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .wiz-day-chip {
+    padding: 8px 16px; border: 1px solid var(--clay); background: transparent; color: var(--bark);
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.12em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.25s; border-radius: 0;
+  }
+  .wiz-day-chip.selected { background: var(--deep); color: var(--warm-white); border-color: var(--deep); }
+  .wiz-time-toggle { display: flex; gap: 0; margin-bottom: 16px; }
+  .wiz-time-toggle button {
+    padding: 10px 24px; border: 1px solid var(--stone); background: transparent;
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--bark); cursor: pointer; transition: all 0.3s;
+  }
+  .wiz-time-toggle button:first-child { border-right: none; }
+  .wiz-time-toggle button.selected { background: var(--deep); border-color: var(--deep); color: var(--warm-white); }
+  .wiz-time-slots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .wiz-time-slot {
+    padding: 10px 18px; border: 1px solid var(--clay); background: transparent; color: var(--bark);
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.1em;
+    cursor: pointer; transition: all 0.25s;
+  }
+  .wiz-time-slot.selected { background: var(--deep); color: var(--warm-white); border-color: var(--deep); }
+  .wiz-review-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--stone); }
+  .wiz-review-section:last-of-type { border-bottom: none; }
+  .wiz-review-label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-bottom: 6px; }
+  .wiz-review-value { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--deep); line-height: 1.5; }
+  .wiz-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; }
+  .wiz-back { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bark); background: none; border: none; cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: color 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+  .wiz-back:hover { color: var(--deep); }
+  .wiz-back::before { content: '\2190'; }
+  .wiz-next { display: inline-block; padding: 15px 42px; background: var(--deep); color: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em; text-transform: uppercase; border: 1px solid transparent; cursor: pointer; transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, background 0.35s; }
+  .wiz-next:hover { background: var(--bark); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(61,53,48,0.15); }
+  .wiz-next:active { transform: translateY(0); box-shadow: none; background: #6b5e52; }
 
   /* ─── TERMS MODAL ─── */
   .terms-backdrop { display: none; position: fixed; inset: 0; z-index: 600; background: rgba(61,53,48,0.6); backdrop-filter: blur(4px); align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
@@ -332,6 +430,7 @@
   @keyframes marqueeAnim { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes modalIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   /* ─── RESPONSIVE ─── */
   @media (max-width: 1024px) {
@@ -351,6 +450,7 @@
     .insta-grid { grid-template-columns: repeat(2, 1fr); }
     footer { grid-template-columns: 1fr; padding: 48px 28px 28px; }
     .modal { padding: 36px 28px; } .terms-modal { padding: 40px 28px; }
+    .wiz-modal { padding: 36px 28px; }
     .cookie-banner { flex-direction: column; text-align: center; padding: 20px 24px; }
   }
   @media (max-width: 480px) {
@@ -360,6 +460,7 @@
     .contact-info, .contact-form-wrap { padding: 40px 24px; }
     .gallery-grid { grid-template-columns: 1fr; }
     .insta-grid { grid-template-columns: repeat(2, 1fr); }
+    .wiz-modal { padding: 28px 20px; }
   }
 </style>
 </head>
@@ -500,14 +601,20 @@
   <section class="section" style="background:var(--warm-white);">
     <div class="section-inner" style="text-align:center;">
       <div class="countdown-widget" id="rcWidget">
-        <p class="countdown-label">Next Session</p>
+        <p class="countdown-label" id="rcCountdownLabel">Next Session</p>
         <div class="countdown-timer" id="rcCountdown">
           <div class="countdown-unit"><span class="countdown-num" id="rcDays">0</span><span class="countdown-txt">Days</span></div><span class="countdown-sep">:</span>
           <div class="countdown-unit"><span class="countdown-num" id="rcHours">0</span><span class="countdown-txt">Hrs</span></div><span class="countdown-sep">:</span>
           <div class="countdown-unit"><span class="countdown-num" id="rcMins">0</span><span class="countdown-txt">Min</span></div><span class="countdown-sep">:</span>
           <div class="countdown-unit"><span class="countdown-num" id="rcSecs">0</span><span class="countdown-txt">Sec</span></div>
         </div>
-        <div class="spots-bar"><div class="spots-text"><span class="spots-dot open" id="rcDot"></span><span id="rcLabel">Loading...</span></div><div class="spots-track"><div class="spots-fill" id="rcFill" style="width:0%"></div></div></div>
+        <div class="countdown-session-date" id="rcSessionDate" style="display:none;"></div>
+        <div class="spots-bar hidden" id="rcSpotsBar">
+          <div class="spots-text"><span class="spots-dot open" id="rcDot"></span><span id="rcLabel">Loading...</span></div>
+          <div class="spots-track"><div class="spots-fill" id="rcFill" style="width:0%"></div></div>
+          <div class="spots-fast" id="rcFast" style="display:none;">Spots filling fast</div>
+        </div>
+        <div class="countdown-follow-text" id="rcFollowText" style="display:none;"></div>
         <button class="widget-btn open" id="rcBtn" onclick="openModal('Run Club (Track Tuesday)')">Book Your Spot</button>
       </div>
     </div>
@@ -558,14 +665,20 @@
   <section class="section" style="background:var(--warm-white);">
     <div class="section-inner" style="text-align:center;">
       <div class="countdown-widget" id="plWidget">
-        <p class="countdown-label">Next Session</p>
+        <p class="countdown-label" id="plCountdownLabel">Next Session</p>
         <div class="countdown-timer" id="plCountdown">
           <div class="countdown-unit"><span class="countdown-num" id="plDays">0</span><span class="countdown-txt">Days</span></div><span class="countdown-sep">:</span>
           <div class="countdown-unit"><span class="countdown-num" id="plHours">0</span><span class="countdown-txt">Hrs</span></div><span class="countdown-sep">:</span>
           <div class="countdown-unit"><span class="countdown-num" id="plMins">0</span><span class="countdown-txt">Min</span></div><span class="countdown-sep">:</span>
           <div class="countdown-unit"><span class="countdown-num" id="plSecs">0</span><span class="countdown-txt">Sec</span></div>
         </div>
-        <div class="spots-bar"><div class="spots-text"><span class="spots-dot open" id="plDot"></span><span id="plLabel">Loading...</span></div><div class="spots-track"><div class="spots-fill" id="plFill" style="width:0%"></div></div></div>
+        <div class="countdown-session-date" id="plSessionDate" style="display:none;"></div>
+        <div class="spots-bar hidden" id="plSpotsBar">
+          <div class="spots-text"><span class="spots-dot open" id="plDot"></span><span id="plLabel">Loading...</span></div>
+          <div class="spots-track"><div class="spots-fill" id="plFill" style="width:0%"></div></div>
+          <div class="spots-fast" id="plFast" style="display:none;">Spots filling fast</div>
+        </div>
+        <div class="countdown-follow-text" id="plFollowText" style="display:none;"></div>
         <button class="widget-btn open" id="plBtn" onclick="openModal('Pi\'lattes')">Book Your Spot</button>
       </div>
     </div>
@@ -602,7 +715,7 @@
     <h1>Small Group<br><em>Memberships.</em></h1>
     <p class="page-hero-desc">Exclusive access to our private gym for small group training — recurring weekly sessions, expert coaching every time.</p>
     <div class="page-hero-actions">
-      <button class="btn-primary" onclick="openModal('Small Group Membership')">Enquire Now</button>
+      <button class="btn-primary" onclick="openMembershipWizard('Signature','$60','session',['Weekly recurring group session/s (max 4 ppl)','3-month minimum commitment','Best value per session'])">Enquire Now</button>
       <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
     </div>
   </section>
@@ -630,7 +743,7 @@
             <li class="card-feature">3-month minimum commitment</li>
             <li class="card-feature">Best value per session</li>
           </ul>
-          <button class="select-btn" onclick="openModal('Signature Membership — $60/session')">Select &amp; Enquire</button>
+          <button class="select-btn" onclick="openMembershipWizard('Signature','$60','session',['Weekly recurring group session/s (max 4 ppl)','3-month minimum commitment','Best value per session'])">Select &amp; Enquire</button>
         </div>
         <div class="membership-card reveal rd1">
           <span class="card-badge badge-flex">No Commitment</span>
@@ -642,7 +755,7 @@
             <li class="card-feature">No minimum contract</li>
             <li class="card-feature">Full flexibility, no lock-in</li>
           </ul>
-          <button class="select-btn" onclick="openModal('Flexible Membership — $70/session')">Select &amp; Enquire</button>
+          <button class="select-btn" onclick="openMembershipWizard('Flexible','$70','session',['Weekly recurring group session/s (max 4 ppl)','No minimum contract','Full flexibility, no lock-in'])">Select &amp; Enquire</button>
         </div>
         <div class="membership-card reveal rd2">
           <span class="card-badge badge-vip">&#x2726; VIP</span>
@@ -656,7 +769,7 @@
             <li class="card-feature">Fridge access (juices, waters &amp; snacks)</li>
             <li class="card-feature">3-month commitment</li>
           </ul>
-          <button class="select-btn" onclick="openModal('VIP Membership — $190/session')">Select &amp; Enquire</button>
+          <button class="select-btn" onclick="openMembershipWizard('VIP','$190','session',['Weekly private 1-on-1 PT session','Direct line to Georgie anytime','Fridge access (juices, waters & snacks)','3-month commitment'])">Select &amp; Enquire</button>
         </div>
       </div>
     </div>
@@ -761,7 +874,7 @@
   <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
 </div>
 
-<!-- ═══ BOOKING MODAL ═══ -->
+<!-- ═══ BOOKING MODAL (simple) ═══ -->
 <div class="modal-backdrop" id="bookingModal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
@@ -781,6 +894,102 @@
       <div class="success-icon">&#x2726;</div>
       <h3>You're <em>in.</em></h3>
       <p>We'll be in touch within 24 hours to confirm your spot.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MEMBERSHIP WIZARD MODAL ═══ -->
+<div class="wiz-backdrop" id="wizModal" onclick="if(event.target===this)closeWizard()">
+  <div class="wiz-modal">
+    <button class="modal-close" onclick="closeWizard()" aria-label="Close">&times;</button>
+    <p class="wiz-step-label" id="wizStepLabel">Step 1 of 4</p>
+    <div class="wiz-viewport">
+      <div class="wiz-track" id="wizTrack">
+        <!-- Step 1: Your Plan -->
+        <div class="wiz-step" id="wizStep1">
+          <h3 class="wiz-step-title">Your <em>Plan</em></h3>
+          <p class="wiz-step-desc">Confirm the membership you'd like to enquire about.</p>
+          <div class="wiz-plan-summary" id="wizPlanSummary">
+            <div class="wiz-plan-name" id="wizPlanName">Signature</div>
+            <div class="wiz-plan-price" id="wizPlanPrice">$60 <span>/ session</span></div>
+            <ul class="wiz-plan-features" id="wizPlanFeatures"></ul>
+          </div>
+          <div class="wiz-footer">
+            <div></div>
+            <button class="wiz-next" onclick="wizNext()">Continue</button>
+          </div>
+        </div>
+        <!-- Step 2: Your Schedule -->
+        <div class="wiz-step" id="wizStep2">
+          <h3 class="wiz-step-title">Your <em>Schedule</em></h3>
+          <p class="wiz-step-desc">Tell us when works best for you.</p>
+
+          <label class="wiz-field-label">How many sessions per week?</label>
+          <div class="wiz-pills" id="wizSessionPills">
+            <button class="wiz-pill large" onclick="wizSelectSession(this,1)">1</button>
+            <button class="wiz-pill large" onclick="wizSelectSession(this,2)">2</button>
+            <button class="wiz-pill large" onclick="wizSelectSession(this,3)">3</button>
+            <button class="wiz-pill large" onclick="wizSelectSession(this,4)">4</button>
+          </div>
+
+          <label class="wiz-field-label">Preferred days</label>
+          <div class="wiz-day-chips" id="wizDayChips">
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Mon</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Tue</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Wed</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Thu</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Fri</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Sat</button>
+          </div>
+
+          <label class="wiz-field-label">Preferred time</label>
+          <div class="wiz-time-toggle" id="wizTimeToggle">
+            <button onclick="wizSelectTimePeriod(this,'morning')">Morning</button>
+            <button onclick="wizSelectTimePeriod(this,'afternoon')">Afternoon</button>
+          </div>
+          <div class="wiz-time-slots" id="wizTimeSlots">
+            <!-- Populated by JS based on morning/afternoon -->
+          </div>
+
+          <div class="wiz-footer">
+            <button class="wiz-back" onclick="wizBack()">Back</button>
+            <button class="wiz-next" onclick="wizNext()">Continue</button>
+          </div>
+        </div>
+        <!-- Step 3: Your Details -->
+        <div class="wiz-step" id="wizStep3">
+          <h3 class="wiz-step-title">Your <em>Details</em></h3>
+          <p class="wiz-step-desc">How can we reach you?</p>
+
+          <div class="form-group"><label class="form-label" for="wizName">Your Name</label><input class="form-input" id="wizName" type="text" placeholder="First & last name" required></div>
+          <div class="form-group"><label class="form-label" for="wizEmail">Email</label><input class="form-input" id="wizEmail" type="email" placeholder="hello@email.com" required></div>
+          <div class="form-group"><label class="form-label" for="wizPhone">Phone</label><input class="form-input" id="wizPhone" type="tel" placeholder="04xx xxx xxx" required></div>
+          <div class="form-group"><label class="form-label" for="wizNotes">Notes <span style="opacity:0.5">(optional)</span></label><textarea class="form-textarea" id="wizNotes" placeholder="Anything else we should know..." style="min-height:70px;"></textarea></div>
+
+          <div class="wiz-footer">
+            <button class="wiz-back" onclick="wizBack()">Back</button>
+            <button class="wiz-next" onclick="wizNext()">Continue</button>
+          </div>
+        </div>
+        <!-- Step 4: Review & Send -->
+        <div class="wiz-step" id="wizStep4">
+          <h3 class="wiz-step-title">Review &amp; <em>Send</em></h3>
+          <p class="wiz-step-desc">Check your details before sending.</p>
+
+          <div id="wizReviewContent"></div>
+
+          <div class="wiz-footer">
+            <button class="wiz-back" onclick="wizBack()">Back</button>
+            <button class="wiz-next" id="wizSubmitBtn" onclick="wizSubmit()">Send Enquiry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Wizard success -->
+    <div class="modal-success" id="wizSuccess">
+      <div class="success-icon">&#x2726;</div>
+      <h3>You're <em>in.</em></h3>
+      <p>We'll be in touch within 24 hours to confirm your membership details.</p>
     </div>
   </div>
 </div>
@@ -818,18 +1027,25 @@
 
 <script>
 // ═══════════════════════════════════
-// CONFIG — Edit these to manage bookings
+// CONFIG
 // ═══════════════════════════════════
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgalnnp';
 
-const RUNCLUB_SPOTS_OPEN = true;
-const RUNCLUB_SPOTS_TOTAL = 20;
-const RUNCLUB_SPOTS_REMAINING = 12;
+// Run Club
+const RUNCLUB_CONFIG = {
+  ticketsOpen: '2026-03-22T08:00:00+10:00',
+  sessionDate: '2026-03-24T05:15:00+10:00',
+  spotsTotal: 20,
+  spotsRemaining: 20,
+};
 
-const NEXT_PILATTES_DATE = '2026-04-19T07:00:00+10:00';
-const PILATTES_SPOTS_OPEN = true;
-const PILATTES_SPOTS_TOTAL = 15;
-const PILATTES_SPOTS_REMAINING = 8;
+// Pi'lattes
+const PILATTES_CONFIG = {
+  ticketsOpen: '2026-04-12T08:00:00+10:00',
+  sessionDate: '2026-04-19T07:00:00+10:00',
+  spotsTotal: 15,
+  spotsRemaining: 15,
+};
 
 // ═══ PAGE NAV ═══
 function showPage(name) {
@@ -872,7 +1088,20 @@ setTimeout(initReveals, 100);
 // ═══ COPYRIGHT ═══
 document.querySelectorAll('.yr').forEach(el => { el.textContent = new Date().getFullYear(); });
 
-// ═══ COUNTDOWNS ═══
+// ═══════════════════════════════════
+// COUNTDOWN STATE MACHINE
+// ═══════════════════════════════════
+
+function formatSessionDate(dateStr) {
+  const d = new Date(dateStr);
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  const mStr = m === 0 ? '' : ':' + String(m).padStart(2,'0');
+  return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()] + ' \u00B7 ' + h + mStr + ' ' + ampm;
+}
+
 function getNextTuesday() {
   const now = new Date(), t = new Date(now), day = now.getDay();
   let d = (2 - day + 7) % 7;
@@ -880,54 +1109,176 @@ function getNextTuesday() {
   t.setDate(now.getDate() + d); t.setHours(5, 15, 0, 0);
   return t;
 }
-function updateCD(target, pre) {
-  const now = new Date(), diff = target - now;
-  if (diff <= 0 && diff > -2700000) {
-    document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:28px;color:var(--moss);animation:pulse 2s infinite;">Happening Now</p>';
-    return;
-  }
-  const ad = diff <= 0 ? getNextTuesday() - now : diff;
-  document.getElementById(pre + 'Days').textContent = Math.floor(ad / 86400000);
-  document.getElementById(pre + 'Hours').textContent = Math.floor((ad % 86400000) / 3600000);
-  document.getElementById(pre + 'Mins').textContent = String(Math.floor((ad % 3600000) / 60000)).padStart(2, '0');
-  document.getElementById(pre + 'Secs').textContent = String(Math.floor((ad % 60000) / 1000)).padStart(2, '0');
+
+function getNextTuesdayISO() {
+  const t = getNextTuesday();
+  // Return as local ISO-ish string with +10:00
+  const y = t.getFullYear(), m = String(t.getMonth()+1).padStart(2,'0'), d = String(t.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + d + 'T05:15:00+10:00';
 }
-function initWidget(pre, open, total, remaining, targetDate, fallbackFn) {
-  if (targetDate) {
-    const t = new Date(targetDate);
-    if (isNaN(t.getTime()) || t < new Date()) {
-      document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:22px;color:var(--bark);font-style:italic;">Next date TBA</p>';
-      document.getElementById(pre + 'Label').textContent = 'Follow @valdalfit for dates';
-      document.getElementById(pre + 'Dot').className = 'spots-dot closed';
-      document.getElementById(pre + 'Btn').className = 'widget-btn waitlist';
-      document.getElementById(pre + 'Btn').textContent = 'Get Notified';
-      document.getElementById(pre + 'Btn').onclick = function() { openModal("Pi'lattes — Notify Me"); };
+
+function updateCountdown(targetDate, pre) {
+  const now = new Date(), diff = targetDate - now;
+  if (diff <= 0) {
+    document.getElementById(pre + 'Days').textContent = '0';
+    document.getElementById(pre + 'Hours').textContent = '0';
+    document.getElementById(pre + 'Mins').textContent = '00';
+    document.getElementById(pre + 'Secs').textContent = '00';
+    return true; // expired
+  }
+  document.getElementById(pre + 'Days').textContent = Math.floor(diff / 86400000);
+  document.getElementById(pre + 'Hours').textContent = Math.floor((diff % 86400000) / 3600000);
+  document.getElementById(pre + 'Mins').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+  document.getElementById(pre + 'Secs').textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+  return false;
+}
+
+function initCountdownWidget(pre, config, isRunClub) {
+  const now = new Date();
+  const ticketsOpenDate = new Date(config.ticketsOpen);
+  const sessionDate = new Date(config.sessionDate);
+  const remaining = config.spotsRemaining;
+  const total = config.spotsTotal;
+
+  function render() {
+    const now = new Date();
+    const ticketsOpen = new Date(config.ticketsOpen);
+    const session = new Date(config.sessionDate);
+
+    // EXPIRED state
+    if (now > session) {
+      if (isRunClub) {
+        // Auto-calculate next Tuesday, reset to tease
+        const nextTues = getNextTuesday();
+        const nextTicketsOpen = new Date(nextTues);
+        nextTicketsOpen.setDate(nextTicketsOpen.getDate() - 2);
+        nextTicketsOpen.setHours(8, 0, 0, 0);
+        config.sessionDate = nextTues.toISOString();
+        config.ticketsOpen = nextTicketsOpen.toISOString();
+        config.spotsRemaining = config.spotsTotal;
+        render();
+        return;
+      } else {
+        // Pi'lattes — show TBA
+        document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
+        document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:22px;color:var(--bark);font-style:italic;">Next date TBA</p>';
+        document.getElementById(pre + 'SpotsBar').classList.add('hidden');
+        document.getElementById(pre + 'SessionDate').style.display = 'none';
+        var followEl = document.getElementById(pre + 'FollowText');
+        followEl.style.display = 'block';
+        followEl.innerHTML = 'Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">@valdalfit</a> for next date';
+        var btn = document.getElementById(pre + 'Btn');
+        btn.className = 'widget-btn notify';
+        btn.textContent = 'Get Notified';
+        btn.onclick = function() { openModal("Pi'lattes — Notify Me"); };
+        return;
+      }
+    }
+
+    // TEASE state (now < ticketsOpen)
+    if (now < ticketsOpen) {
+      document.getElementById(pre + 'CountdownLabel').textContent = 'Bookings Open In';
+      document.getElementById(pre + 'SpotsBar').classList.add('hidden');
+      document.getElementById(pre + 'SessionDate').style.display = 'block';
+      document.getElementById(pre + 'SessionDate').textContent = formatSessionDate(config.sessionDate);
+      document.getElementById(pre + 'FollowText').style.display = 'none';
+      var btn = document.getElementById(pre + 'Btn');
+      btn.className = 'widget-btn notify';
+      btn.textContent = 'Get Notified';
+      btn.onclick = function() {
+        var label = isRunClub ? 'Run Club — Notify Me' : "Pi'lattes — Notify Me";
+        openModal(label);
+      };
+      // Count down to ticketsOpen
+      updateCountdown(ticketsOpen, pre);
       return;
     }
-    updateCD(t, pre); setInterval(() => updateCD(new Date(targetDate), pre), 1000);
-  } else {
-    updateCD(fallbackFn(), pre); setInterval(() => updateCD(fallbackFn(), pre), 1000);
-  }
-  const pct = ((total - remaining) / total) * 100;
-  document.getElementById(pre + 'Fill').style.width = pct + '%';
-  if (remaining <= 3) document.getElementById(pre + 'Fill').classList.add('low');
-  if (open && remaining > 0) {
-    document.getElementById(pre + 'Label').textContent = remaining + ' of ' + total + ' spots remaining';
-    document.getElementById(pre + 'Dot').className = 'spots-dot open';
-    document.getElementById(pre + 'Btn').className = 'widget-btn open';
-  } else {
-    document.getElementById(pre + 'Label').textContent = remaining === 0 ? 'Sold Out' : 'Bookings Closed';
-    document.getElementById(pre + 'Dot').className = 'spots-dot closed';
-    document.getElementById(pre + 'Btn').className = remaining === 0 ? 'widget-btn waitlist' : 'widget-btn closed';
-    document.getElementById(pre + 'Btn').textContent = remaining === 0 ? 'Join Waitlist' : 'Bookings Closed';
-    if (remaining === 0) document.getElementById(pre + 'Btn').onclick = function() { openModal(pre === 'rc' ? 'Run Club — Waitlist' : "Pi'lattes — Waitlist"); };
-    else document.getElementById(pre + 'Btn').disabled = true;
-  }
-}
-initWidget('rc', RUNCLUB_SPOTS_OPEN, RUNCLUB_SPOTS_TOTAL, RUNCLUB_SPOTS_REMAINING, null, getNextTuesday);
-initWidget('pl', PILATTES_SPOTS_OPEN, PILATTES_SPOTS_TOTAL, PILATTES_SPOTS_REMAINING, NEXT_PILATTES_DATE, null);
 
-// ═══ BOOKING MODAL ═══
+    // SOLD OUT (spotsRemaining === 0)
+    if (config.spotsRemaining === 0) {
+      document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
+      document.getElementById(pre + 'SessionDate').style.display = 'none';
+      updateCountdown(session, pre);
+      var spotsBar = document.getElementById(pre + 'SpotsBar');
+      spotsBar.classList.remove('hidden');
+      spotsBar.classList.add('fade-in');
+      document.getElementById(pre + 'Dot').className = 'spots-dot closed';
+      document.getElementById(pre + 'Label').textContent = 'Sold Out';
+      document.getElementById(pre + 'Fill').style.width = '100%';
+      document.getElementById(pre + 'Fill').classList.add('low');
+      document.getElementById(pre + 'Fast').style.display = 'none';
+      var followEl = document.getElementById(pre + 'FollowText');
+      followEl.style.display = 'block';
+      followEl.innerHTML = 'Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">@valdalfit</a> for last-minute openings';
+      var btn = document.getElementById(pre + 'Btn');
+      btn.className = 'widget-btn waitlist';
+      btn.textContent = 'Join Waitlist';
+      btn.onclick = function() {
+        var label = isRunClub ? 'Run Club — Waitlist' : "Pi'lattes — Waitlist";
+        openModal(label);
+      };
+      return;
+    }
+
+    // URGENCY state (now >= ticketsOpen AND spotsRemaining > 0)
+    document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
+    document.getElementById(pre + 'SessionDate').style.display = 'none';
+    document.getElementById(pre + 'FollowText').style.display = 'none';
+    updateCountdown(session, pre);
+    var spotsBar = document.getElementById(pre + 'SpotsBar');
+    spotsBar.classList.remove('hidden');
+    spotsBar.classList.add('fade-in');
+    var pct = ((total - config.spotsRemaining) / total) * 100;
+    document.getElementById(pre + 'Fill').style.width = pct + '%';
+    document.getElementById(pre + 'Dot').className = 'spots-dot open';
+    document.getElementById(pre + 'Label').textContent = config.spotsRemaining + ' of ' + total + ' spots remaining';
+    if (config.spotsRemaining <= 3) {
+      document.getElementById(pre + 'Fill').classList.add('low');
+      document.getElementById(pre + 'Fast').style.display = 'block';
+    } else {
+      document.getElementById(pre + 'Fill').classList.remove('low');
+      document.getElementById(pre + 'Fast').style.display = 'none';
+    }
+    var btn = document.getElementById(pre + 'Btn');
+    btn.className = 'widget-btn open';
+    btn.textContent = 'Book Now';
+    btn.onclick = function() {
+      var label = isRunClub ? 'Run Club (Track Tuesday)' : "Pi'lattes";
+      openModal(label);
+    };
+  }
+
+  // Initial render
+  render();
+
+  // Update every second
+  setInterval(function() {
+    var now = new Date();
+    var ticketsOpen = new Date(config.ticketsOpen);
+    var session = new Date(config.sessionDate);
+
+    if (now > session) {
+      render(); // Will handle expired -> reset/TBA
+      return;
+    }
+
+    if (now < ticketsOpen) {
+      var expired = updateCountdown(ticketsOpen, pre);
+      if (expired) {
+        // Transition from tease to urgency
+        render();
+      }
+    } else {
+      updateCountdown(session, pre);
+    }
+  }, 1000);
+}
+
+// Initialize both widgets
+initCountdownWidget('rc', RUNCLUB_CONFIG, true);
+initCountdownWidget('pl', PILATTES_CONFIG, false);
+
+// ═══ BOOKING MODAL (simple) ═══
 function openModal(interest) {
   const m = document.getElementById('bookingModal');
   document.getElementById('modalForm').style.display = 'block';
@@ -971,9 +1322,9 @@ function closeTerms() { document.getElementById('termsModal').classList.remove('
 
 // ═══ TESTIMONIAL CAROUSEL ═══
 const testimonials = [
-  { q: '"So refreshing to have a trainer that keeps things new, exciting and challenging. No matter what stage of fitness I\'m in, VFIT always gets the most out of every session."', a: 'Client Testimonial · Toowoomba' },
-  { q: '"VFIT always tailor their training to get the most out of my sessions. It is so refreshing to have a trainer that can keep things new, exciting and challenging."', a: 'Client Testimonial · Toowoomba' },
-  { q: '"The best part about training with Georgie is the attention to detail. Every session is purposeful and I always leave feeling stronger."', a: 'Member Testimonial · Toowoomba' },
+  { q: '"So refreshing to have a trainer that keeps things new, exciting and challenging. No matter what stage of fitness I\'m in, VFIT always gets the most out of every session."', a: 'Client Testimonial \u00B7 Toowoomba' },
+  { q: '"VFIT always tailor their training to get the most out of my sessions. It is so refreshing to have a trainer that can keep things new, exciting and challenging."', a: 'Client Testimonial \u00B7 Toowoomba' },
+  { q: '"The best part about training with Georgie is the attention to detail. Every session is purposeful and I always leave feeling stronger."', a: 'Member Testimonial \u00B7 Toowoomba' },
 ];
 let tIdx = 0;
 const tQ = document.getElementById('tQuote'), tA = document.getElementById('tAuthor');
@@ -1014,8 +1365,212 @@ function navLightbox(dir) { lbIdx = (lbIdx + dir + galleryImgs.length) % gallery
 function acceptCookies() { document.getElementById('cookieBanner').classList.remove('show'); localStorage.setItem('vfit_cookies', '1'); }
 if (!localStorage.getItem('vfit_cookies')) { setTimeout(() => document.getElementById('cookieBanner').classList.add('show'), 2000); }
 
+// ═══════════════════════════════════
+// MEMBERSHIP WIZARD MODAL
+// ═══════════════════════════════════
+let wizCurrentStep = 0;
+let wizData = {
+  plan: '', price: '', period: '', features: [],
+  sessionsPerWeek: null,
+  preferredDays: [],
+  timePeriod: '',
+  timeSlot: '',
+  name: '', email: '', phone: '', notes: ''
+};
+
+const morningSlots = ['5:00 AM','5:30 AM','6:00 AM','6:30 AM','7:00 AM','7:30 AM','8:00 AM','8:30 AM','9:00 AM'];
+const afternoonSlots = ['12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','3:00 PM','4:00 PM','4:30 PM','5:00 PM'];
+
+function openMembershipWizard(plan, price, period, features) {
+  wizCurrentStep = 0;
+  wizData = {
+    plan: plan, price: price, period: period, features: features,
+    sessionsPerWeek: null, preferredDays: [], timePeriod: '', timeSlot: '',
+    name: '', email: '', phone: '', notes: ''
+  };
+
+  // Populate step 1 summary
+  document.getElementById('wizPlanName').textContent = plan + ' Membership';
+  document.getElementById('wizPlanPrice').innerHTML = price + ' <span>/ ' + period + '</span>';
+  var featuresList = document.getElementById('wizPlanFeatures');
+  featuresList.innerHTML = '';
+  features.forEach(function(f) {
+    var li = document.createElement('li');
+    li.textContent = f;
+    featuresList.appendChild(li);
+  });
+
+  // Reset step 2
+  document.querySelectorAll('#wizSessionPills .wiz-pill').forEach(function(p) { p.classList.remove('selected'); });
+  document.querySelectorAll('#wizDayChips .wiz-day-chip').forEach(function(c) { c.classList.remove('selected'); });
+  document.querySelectorAll('#wizTimeToggle button').forEach(function(b) { b.classList.remove('selected'); });
+  document.getElementById('wizTimeSlots').innerHTML = '';
+
+  // Reset step 3
+  document.getElementById('wizName').value = '';
+  document.getElementById('wizEmail').value = '';
+  document.getElementById('wizPhone').value = '';
+  document.getElementById('wizNotes').value = '';
+
+  // Reset step 4
+  document.getElementById('wizReviewContent').innerHTML = '';
+
+  // Reset success
+  document.getElementById('wizSuccess').classList.remove('show');
+  document.querySelector('.wiz-viewport').style.display = 'block';
+  document.getElementById('wizStepLabel').style.display = 'block';
+
+  // Move to step 0
+  wizGoToStep(0);
+
+  // Show modal
+  document.getElementById('wizModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeWizard() {
+  document.getElementById('wizModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function wizGoToStep(step) {
+  wizCurrentStep = step;
+  document.getElementById('wizStepLabel').textContent = 'Step ' + (step + 1) + ' of 4';
+  document.getElementById('wizTrack').style.transform = 'translateX(-' + (step * 100) + '%)';
+}
+
+function wizNext() {
+  if (wizCurrentStep === 0) {
+    wizGoToStep(1);
+  } else if (wizCurrentStep === 1) {
+    // Gather schedule data
+    wizData.preferredDays = [];
+    document.querySelectorAll('#wizDayChips .wiz-day-chip.selected').forEach(function(c) {
+      wizData.preferredDays.push(c.textContent);
+    });
+    wizGoToStep(2);
+    setTimeout(function() { document.getElementById('wizName').focus(); }, 200);
+  } else if (wizCurrentStep === 2) {
+    // Validate
+    var name = document.getElementById('wizName').value.trim();
+    var email = document.getElementById('wizEmail').value.trim();
+    var phone = document.getElementById('wizPhone').value.trim();
+    if (!name || !email || !phone) {
+      alert('Please fill in your name, email, and phone.');
+      return;
+    }
+    wizData.name = name;
+    wizData.email = email;
+    wizData.phone = phone;
+    wizData.notes = document.getElementById('wizNotes').value.trim();
+    // Build review
+    wizBuildReview();
+    wizGoToStep(3);
+  }
+}
+
+function wizBack() {
+  if (wizCurrentStep > 0) {
+    wizGoToStep(wizCurrentStep - 1);
+  }
+}
+
+function wizSelectSession(btn, num) {
+  document.querySelectorAll('#wizSessionPills .wiz-pill').forEach(function(p) { p.classList.remove('selected'); });
+  btn.classList.add('selected');
+  wizData.sessionsPerWeek = num;
+}
+
+function wizToggleDay(btn) {
+  btn.classList.toggle('selected');
+}
+
+function wizSelectTimePeriod(btn, period) {
+  document.querySelectorAll('#wizTimeToggle button').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  wizData.timePeriod = period;
+  // Populate time slots
+  var slots = period === 'morning' ? morningSlots : afternoonSlots;
+  var container = document.getElementById('wizTimeSlots');
+  container.innerHTML = '';
+  slots.forEach(function(s) {
+    var b = document.createElement('button');
+    b.className = 'wiz-time-slot';
+    b.textContent = s;
+    b.onclick = function() {
+      container.querySelectorAll('.wiz-time-slot').forEach(function(el) { el.classList.remove('selected'); });
+      b.classList.add('selected');
+      wizData.timeSlot = s;
+    };
+    container.appendChild(b);
+  });
+}
+
+function wizBuildReview() {
+  var html = '';
+  // Plan
+  html += '<div class="wiz-review-section"><p class="wiz-review-label">Plan</p><p class="wiz-review-value">' + wizData.plan + ' Membership — ' + wizData.price + ' / ' + wizData.period + '</p></div>';
+  // Schedule
+  var schedParts = [];
+  if (wizData.sessionsPerWeek) schedParts.push(wizData.sessionsPerWeek + 'x per week');
+  if (wizData.preferredDays.length > 0) schedParts.push(wizData.preferredDays.join(', '));
+  if (wizData.timeSlot) schedParts.push(wizData.timeSlot);
+  else if (wizData.timePeriod) schedParts.push(wizData.timePeriod.charAt(0).toUpperCase() + wizData.timePeriod.slice(1));
+  html += '<div class="wiz-review-section"><p class="wiz-review-label">Schedule</p><p class="wiz-review-value">' + (schedParts.length > 0 ? schedParts.join(' &middot; ') : 'Not specified') + '</p></div>';
+  // Contact
+  html += '<div class="wiz-review-section"><p class="wiz-review-label">Contact</p><p class="wiz-review-value">' + wizData.name + '<br>' + wizData.email + '<br>' + wizData.phone + '</p></div>';
+  if (wizData.notes) {
+    html += '<div class="wiz-review-section"><p class="wiz-review-label">Notes</p><p class="wiz-review-value" style="font-family:\'Jost\',sans-serif;font-size:14px;">' + wizData.notes + '</p></div>';
+  }
+  document.getElementById('wizReviewContent').innerHTML = html;
+}
+
+function wizSubmit() {
+  var btn = document.getElementById('wizSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  var data = {
+    interest: wizData.plan + ' Membership Enquiry',
+    plan: wizData.plan,
+    price: wizData.price + ' / ' + wizData.period,
+    sessions_per_week: wizData.sessionsPerWeek || 'Not specified',
+    preferred_days: wizData.preferredDays.length > 0 ? wizData.preferredDays.join(', ') : 'Not specified',
+    preferred_time: wizData.timeSlot || wizData.timePeriod || 'Not specified',
+    name: wizData.name,
+    email: wizData.email,
+    phone: wizData.phone,
+    notes: wizData.notes || 'None',
+    _subject: 'VFIT Membership Enquiry — ' + wizData.plan
+  };
+
+  fetch(FORMSPREE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(r) {
+    if (r.ok) {
+      document.querySelector('.wiz-viewport').style.display = 'none';
+      document.getElementById('wizStepLabel').style.display = 'none';
+      document.getElementById('wizSuccess').classList.add('show');
+    } else {
+      alert('Something went wrong. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Send Enquiry';
+    }
+  })
+  .catch(function() {
+    alert('Something went wrong. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Send Enquiry';
+  });
+}
+
 // ═══ ESC KEY ═══
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeTerms(); closeLightbox(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeTerms(); closeLightbox(); closeWizard(); }
+});
 </script>
 </body>
 </html>
