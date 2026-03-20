@@ -1245,12 +1245,21 @@ async function loadContacts() {
   }
 }
 
-// ─── MODAL CLOSE ON BACKDROP CLICK ───
-document.getElementById('event-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeEventModal();
+// ─── MODAL CLOSE ON BACKDROP CLICK (ignore drags) ───
+var modalMouseDownTarget = null;
+document.getElementById('event-modal').addEventListener('mousedown', function(e) {
+  modalMouseDownTarget = e.target;
 });
-document.getElementById('confirm-dialog').addEventListener('click', function(e) {
-  if (e.target === this) closeConfirm();
+document.getElementById('event-modal').addEventListener('mouseup', function(e) {
+  if (e.target === this && modalMouseDownTarget === this) closeEventModal();
+  modalMouseDownTarget = null;
+});
+document.getElementById('confirm-dialog').addEventListener('mousedown', function(e) {
+  modalMouseDownTarget = e.target;
+});
+document.getElementById('confirm-dialog').addEventListener('mouseup', function(e) {
+  if (e.target === this && modalMouseDownTarget === this) closeConfirm();
+  modalMouseDownTarget = null;
 });
 
 // ─── KEYBOARD ───
