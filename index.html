@@ -133,7 +133,7 @@
   .offering-desc { font-size: 13px; line-height: 1.9; color: #6b5e52; margin-bottom: 28px; }
 
   /* --- PAGE HERO (standard) --- */
-  .page-hero { min-height: 80vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 72px 96px; background: var(--warm-white); position: relative; overflow: hidden; }
+  .page-hero { min-height: 60vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 72px 72px; background: var(--warm-white); position: relative; overflow: hidden; }
   .page-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 15% 85%, rgba(201,185,154,0.2) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 85% 15%, rgba(168,184,154,0.12) 0%, transparent 55%); }
   .page-hero-bg { position: absolute; bottom: -30px; right: -20px; font-family: 'Cormorant Garamond', serif; font-size: 260px; font-weight: 300; color: rgba(201,185,154,0.07); line-height: 1; pointer-events: none; white-space: nowrap; }
   .page-hero-eyebrow { font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--bark); margin-bottom: 22px; display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards; }
@@ -144,8 +144,8 @@
   .page-hero-actions { display: flex; gap: 16px; align-items: center; position: relative; z-index: 2; opacity: 0; animation: fadeUp 0.8s ease 0.65s forwards; flex-wrap: wrap; }
 
   /* --- SPLIT HERO (Run Club / Pi'lattes) --- */
-  .split-hero { min-height: 80vh; display: grid; grid-template-columns: 1.2fr 0.8fr; background: var(--warm-white); overflow: hidden; }
-  .split-hero-left { display: flex; flex-direction: column; justify-content: flex-end; padding: 0 72px 96px; position: relative; z-index: 2; }
+  .split-hero { min-height: auto; display: grid; grid-template-columns: 1.2fr 0.8fr; background: var(--warm-white); overflow: hidden; }
+  .split-hero-left { display: flex; flex-direction: column; justify-content: center; padding: 120px 72px 72px; position: relative; z-index: 2; }
   .split-hero-left::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 70% 60% at 15% 85%, rgba(201,185,154,0.2) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 85% 15%, rgba(168,184,154,0.12) 0%, transparent 55%); }
   .split-hero-right { background: var(--sand); display: flex; align-items: center; justify-content: center; padding: 80px 60px; position: relative; }
   .split-hero-bg { position: absolute; bottom: -30px; right: -20px; font-family: 'Cormorant Garamond', serif; font-size: 220px; font-weight: 300; color: rgba(201,185,154,0.07); line-height: 1; pointer-events: none; white-space: nowrap; }
@@ -162,7 +162,7 @@
   /* --- INFO CARDS --- */
   .info-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--stone); }
   .info-card { background: var(--warm-white); padding: 44px 40px; }
-  .info-card-icon { font-size: 28px; margin-bottom: 16px; display: block; }
+  .info-card-icon { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--clay); margin-bottom: 12px; display: block; line-height: 1; }
   .info-card-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--bark); margin-bottom: 8px; }
   .info-card-value { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--deep); line-height: 1.3; }
 
@@ -724,9 +724,9 @@
   </section>
 
   <div class="info-cards">
-    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">&#x1F4CD;</span><p class="info-card-label">Location</p><p class="info-card-value">Glennie School Track</p></div>
-    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">&#x1F4C5;</span><p class="info-card-label">When</p><p class="info-card-value">Every Tuesday</p></div>
-    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">&#x23F0;</span><p class="info-card-label">Time</p><p class="info-card-value">5:15 – 6:00 AM</p></div>
+    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">I</span><p class="info-card-label">Location</p><p class="info-card-value">Glennie School Track</p></div>
+    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">II</span><p class="info-card-label">When</p><p class="info-card-value">Every Tuesday</p></div>
+    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">III</span><p class="info-card-label">Time</p><p class="info-card-value">5:15 – 6:00 AM</p></div>
   </div>
 
   <section class="section" style="background:var(--sand);">
@@ -789,9 +789,9 @@
   </section>
 
   <div class="info-cards">
-    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">&#x1F3E1;</span><p class="info-card-label">Venue</p><p class="info-card-value">The Dairy<br>Ravensbourne</p></div>
-    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">&#x1F4C5;</span><p class="info-card-label">Frequency</p><p class="info-card-value">Monthly Sundays<br><span style="font-size:12px;color:var(--bark);display:block;margin-top:6px;">Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" style="color:var(--bark);">@valdalfit</a> for dates</span></p></div>
-    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">&#x23F0;</span><p class="info-card-label">Time</p><p class="info-card-value">7:00 – 8:00 AM</p></div>
+    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">I</span><p class="info-card-label">Venue</p><p class="info-card-value">The Dairy<br>Ravensbourne</p></div>
+    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">II</span><p class="info-card-label">Frequency</p><p class="info-card-value">Monthly Sundays<br><span style="font-size:12px;color:var(--bark);display:block;margin-top:6px;">Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" style="color:var(--bark);">@valdalfit</a> for dates</span></p></div>
+    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">III</span><p class="info-card-label">Time</p><p class="info-card-value">7:00 – 8:00 AM</p></div>
   </div>
 
   <section class="section" style="background:var(--cream);">
@@ -1160,7 +1160,7 @@ function fetchLiveConfig() {
       var events = data.events || [];
 
       // Find next upcoming runclub event
-      var rcEvent = events.find(function(e) { return e.type === 'runclub'; });
+      var rcEvent = events.find(function(e) { return e.type === 'runclub' || e.type === 'run_club'; });
       if (rcEvent) {
         RUNCLUB_CONFIG = {
           eventId: rcEvent.id,
@@ -1176,7 +1176,7 @@ function fetchLiveConfig() {
       }
 
       // Find next upcoming pilattes event
-      var plEvent = events.find(function(e) { return e.type === 'pilattes'; });
+      var plEvent = events.find(function(e) { return e.type === 'pilattes' || e.type === "pi'lattes" || e.type === 'pilattes'; });
       if (plEvent) {
         PILATTES_CONFIG = {
           eventId: plEvent.id,

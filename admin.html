@@ -415,8 +415,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   <div class="sidebar" id="sidebar">
     <ul class="sidebar-nav">
       <li><button class="active" onclick="showPage('overview')" data-page="overview"><span class="nav-icon">&#9632;</span> Dashboard</button></li>
-      <li><button onclick="showPage('events')" data-page="events"><span class="nav-icon">&#9733;</span> Events</button></li>
-      <li><button onclick="showPage('bookings')" data-page="bookings"><span class="nav-icon">&#9744;</span> Bookings</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Sessions</li>
+      <li><button onclick="showPage('runclub')" data-page="runclub"><span class="nav-icon">&#9654;</span> Run Club</button></li>
+      <li><button onclick="showPage('pilattes')" data-page="pilattes"><span class="nav-icon">&#9654;</span> Pi'lattes</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Studio</li>
       <li><button onclick="showPage('memberships')" data-page="memberships"><span class="nav-icon">&#9826;</span> Memberships</button></li>
       <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9993;</span> Notifications</button></li>
       <li><button onclick="showPage('contacts')" data-page="contacts"><span class="nav-icon">&#9998;</span> Messages</button></li>
@@ -457,7 +459,69 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
       <div id="events-empty" class="empty-state" style="display:none;">No events yet. Create your first event to get started.</div>
     </div>
 
-    <!-- BOOKINGS -->
+    <!-- RUN CLUB -->
+    <div class="admin-page" id="page-runclub">
+      <div class="page-header">
+        <h1 class="page-title"><em>Run Club</em></h1>
+        <button class="btn-primary" onclick="openEventModal(null,'runclub')">+ New Session</button>
+      </div>
+      <div id="rc-loading" class="loading">Loading...</div>
+      <div id="rc-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Spots</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="rc-events-tbody"></tbody>
+          </table>
+        </div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin:28px 0 12px;">Bookings</h3>
+        <div id="rc-bookings-filter" style="margin-bottom:12px;">
+          <select class="form-input" id="rc-event-select" onchange="loadTypeBookings('rc')" style="max-width:300px;padding:8px 12px;font-size:13px;">
+            <option value="">Select a session...</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Amount</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="rc-bookings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="rc-empty" class="empty-state" style="display:none;">No Run Club sessions yet. Create one to get started.</div>
+    </div>
+
+    <!-- PI'LATTES -->
+    <div class="admin-page" id="page-pilattes">
+      <div class="page-header">
+        <h1 class="page-title"><em>Pi'lattes</em></h1>
+        <button class="btn-primary" onclick="openEventModal(null,'pilattes')">+ New Session</button>
+      </div>
+      <div id="pl-loading" class="loading">Loading...</div>
+      <div id="pl-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Spots</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="pl-events-tbody"></tbody>
+          </table>
+        </div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin:28px 0 12px;">Bookings</h3>
+        <div id="pl-bookings-filter" style="margin-bottom:12px;">
+          <select class="form-input" id="pl-event-select" onchange="loadTypeBookings('pl')" style="max-width:300px;padding:8px 12px;font-size:13px;">
+            <option value="">Select a session...</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Amount</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="pl-bookings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="pl-empty" class="empty-state" style="display:none;">No Pi'lattes sessions yet. Create one to get started.</div>
+    </div>
+
+    <!-- BOOKINGS (keep for backward compat but hidden from nav) -->
     <div class="admin-page" id="page-bookings">
       <div class="page-header">
         <h1 class="page-title"><em>Bookings</em></h1>
@@ -793,6 +857,8 @@ function showPage(page) {
   switch (page) {
     case 'overview': loadOverview(); break;
     case 'events': loadEvents(); break;
+    case 'runclub': loadTypePage('rc', 'runclub'); break;
+    case 'pilattes': loadTypePage('pl', 'pilattes'); break;
     case 'bookings': loadBookingsPage(); break;
     case 'memberships': loadMemberships(); break;
     case 'notifications': loadNotifications(); break;
@@ -912,13 +978,18 @@ async function loadEvents() {
   }
 }
 
-function openEventModal(eventData) {
+function openEventModal(eventData, presetType) {
   var modal = document.getElementById('event-modal');
   var title = document.getElementById('event-modal-title');
   var btn = document.getElementById('event-submit-btn');
 
   document.getElementById('event-form').reset();
   document.getElementById('event-edit-id').value = '';
+
+  // Pre-set type if coming from Run Club or Pi'lattes page
+  if (presetType) {
+    document.getElementById('event-type').value = presetType;
+  }
 
   if (eventData) {
     title.innerHTML = 'Edit <em>Event</em>';
@@ -990,6 +1061,91 @@ async function handleEventSubmit(e) {
 function editEvent(id) {
   var ev = eventsCache.find(function(e) { return e.id === id; });
   if (ev) openEventModal(ev);
+}
+
+// ─── RUN CLUB / PI'LATTES PAGES ───
+
+async function loadTypePage(pre, type) {
+  var loading = document.getElementById(pre + '-loading');
+  var content = document.getElementById(pre + '-content');
+  var empty = document.getElementById(pre + '-empty');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  if (empty) empty.style.display = 'none';
+
+  try {
+    var data = await apiGet({ action: 'events' });
+    var allEvents = data.events || [];
+    var typeEvents = allEvents.filter(function(e) { return e.type === type || e.type === type.replace("'", ""); });
+    eventsCache = allEvents;
+
+    if (typeEvents.length === 0) {
+      loading.style.display = 'none';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    // Render events table
+    var tbody = document.getElementById(pre + '-events-tbody');
+    tbody.innerHTML = typeEvents.map(function(ev) {
+      return '<tr>' +
+        '<td><strong>' + esc(ev.name) + '</strong></td>' +
+        '<td>' + formatDate(ev.session_date) + '</td>' +
+        '<td>' + formatDate(ev.tickets_open) + '</td>' +
+        '<td>' + (ev.spots_total || 0) + '</td>' +
+        '<td>' + formatCurrency(ev.price_cents) + '</td>' +
+        '<td>' + statusBadge(ev.status || 'active') + '</td>' +
+        '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button></td>' +
+      '</tr>';
+    }).join('');
+
+    // Populate bookings dropdown
+    var sel = document.getElementById(pre + '-event-select');
+    sel.innerHTML = '<option value="">Select a session...</option>';
+    typeEvents.forEach(function(ev) {
+      sel.innerHTML += '<option value="' + esc(ev.id) + '">' + esc(ev.name) + ' — ' + formatDate(ev.session_date) + '</option>';
+    });
+
+    // Clear bookings
+    document.getElementById(pre + '-bookings-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">Select a session above</td></tr>';
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function loadTypeBookings(pre) {
+  var eventId = document.getElementById(pre + '-event-select').value;
+  var tbody = document.getElementById(pre + '-bookings-tbody');
+  if (!eventId) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">Select a session above</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">Loading...</td></tr>';
+  try {
+    var data = await apiGet({ action: 'bookings', event_id: eventId });
+    var bookings = data.bookings || [];
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">No bookings yet</td></tr>';
+    } else {
+      tbody.innerHTML = bookings.map(function(b) {
+        var canCancel = b.status !== 'cancelled' && b.status !== 'expired';
+        return '<tr>' +
+          '<td>' + esc(b.name || '') + '</td>' +
+          '<td>' + esc(b.email || '') + '</td>' +
+          '<td>' + esc(b.phone || '--') + '</td>' +
+          '<td>' + statusBadge(b.status) + '</td>' +
+          '<td>' + formatCurrency(b.amount_cents) + '</td>' +
+          '<td>' + formatDate(b.created_at) + '</td>' +
+          '<td>' + (canCancel ? '<button class="btn-outline btn-sm btn-danger" onclick="cancelBooking(\'' + esc(b.id) + '\')">Cancel</button>' : '') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px;">Error: ' + esc(err.message) + '</td></tr>';
+  }
 }
 
 // ─── BOOKINGS ───
