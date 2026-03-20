@@ -381,6 +381,83 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @media (max-width: 480px) {
   .stat-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── CALENDAR GRID ─── */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  background: var(--stone);
+}
+.calendar-day-header {
+  background: var(--deep);
+  color: var(--warm-white);
+  padding: 12px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.calendar-slot {
+  background: var(--warm-white);
+  padding: 12px;
+  min-height: 80px;
+}
+.calendar-slot-time {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--deep);
+  margin-bottom: 6px;
+}
+.calendar-slot-count {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.calendar-slot-member {
+  font-size: 12px;
+  color: #6b5e52;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--stone);
+}
+.calendar-slot-member:last-child { border-bottom: none; }
+.calendar-slot.full .calendar-slot-count { color: var(--red); }
+.calendar-slot.available .calendar-slot-count { color: var(--moss); }
+.calendar-slot.inactive-slot { opacity: 0.5; background: var(--sand); }
+
+/* ─── ASSIGN GRID ─── */
+.assign-day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.assign-day-col h4 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 300;
+  color: var(--deep); margin-bottom: 8px;
+  border-bottom: 1px solid var(--stone);
+  padding-bottom: 6px;
+}
+.assign-slot-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border: 1px solid var(--stone); margin-bottom: 6px;
+  background: var(--warm-white); font-size: 13px;
+}
+.assign-slot-item.assigned { background: rgba(122,140,110,0.1); border-color: var(--moss); }
+.assign-slot-item.slot-full { opacity: 0.45; }
+
+/* ─── BADGE PAUSED/CANCELLED ─── */
+.badge-paused { background: rgba(201,185,154,0.3); color: var(--bark); }
+.badge-cancelled { background: rgba(184,92,92,0.12); color: var(--red); }
+
+@media (max-width: 1024px) {
+  .calendar-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
@@ -418,8 +495,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Sessions</li>
       <li><button onclick="showPage('runclub')" data-page="runclub"><span class="nav-icon">&#9654;</span> Run Club</button></li>
       <li><button onclick="showPage('pilattes')" data-page="pilattes"><span class="nav-icon">&#9654;</span> Pi'lattes</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Members</li>
+      <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests</button></li>
+      <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
+      <li><button onclick="showPage('calendar')" data-page="calendar"><span class="nav-icon">&#9635;</span> Calendar</button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Studio</li>
-      <li><button onclick="showPage('memberships')" data-page="memberships"><span class="nav-icon">&#9826;</span> Memberships</button></li>
       <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9993;</span> Notifications</button></li>
       <li><button onclick="showPage('contacts')" data-page="contacts"><span class="nav-icon">&#9998;</span> Messages</button></li>
     </ul>
@@ -560,6 +640,53 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
       </div>
     </div>
 
+    <!-- MEMBERSHIP REQUESTS -->
+    <div class="admin-page" id="page-membership-requests">
+      <div class="page-header">
+        <h1 class="page-title"><em>Membership Requests</em></h1>
+      </div>
+      <div id="mreq-loading" class="loading">Loading requests...</div>
+      <div id="mreq-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="mreq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBER LIST -->
+    <div class="admin-page" id="page-member-list">
+      <div class="page-header">
+        <h1 class="page-title"><em>Member List</em></h1>
+        <button class="btn-primary" onclick="openAddMemberModal()">+ Add Member</button>
+      </div>
+      <div id="mlist-loading" class="loading">Loading members...</div>
+      <div id="mlist-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions/wk</th><th>Assigned Slots</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="mlist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="admin-page" id="page-calendar">
+      <div class="page-header">
+        <h1 class="page-title"><em>Weekly Calendar</em></h1>
+      </div>
+      <div id="cal-loading" class="loading">Loading schedule...</div>
+      <div id="cal-content" style="display:none;">
+        <div id="cal-grid" class="calendar-grid"></div>
+        <div style="margin-top:24px;">
+          <button class="btn-primary" onclick="openAddSlotModal()">+ Add Time Slot</button>
+        </div>
+      </div>
+    </div>
+
     <!-- NOTIFICATIONS -->
     <div class="admin-page" id="page-notifications">
       <div class="page-header">
@@ -598,6 +725,89 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
   </div><!-- /main-content -->
 </div><!-- /dashboard-shell -->
+
+<!-- ─── ACCEPT MEMBERSHIP MODAL ─── -->
+<div class="modal-backdrop" id="accept-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAcceptModal()">&times;</button>
+    <h2 class="modal-title">Accept <em id="accept-member-name"></em></h2>
+    <p style="font-size:13px;color:var(--bark);margin-bottom:24px;">Plan: <strong id="accept-member-plan"></strong></p>
+    <input type="hidden" id="accept-membership-id">
+    <div class="form-group">
+      <label class="form-label">Sessions Per Week</label>
+      <input type="number" class="form-input" id="accept-sessions-per-week" min="1" max="7" value="3" required>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="acceptMembership()">Accept &amp; Create Member</button>
+  </div>
+</div>
+
+<!-- ─── ASSIGN SLOT MODAL ─── -->
+<div class="modal-backdrop" id="assign-modal">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" onclick="closeAssignModal()">&times;</button>
+    <h2 class="modal-title">Assign Slots &mdash; <em id="assign-member-name"></em></h2>
+    <input type="hidden" id="assign-member-id">
+    <div id="assign-slots-loading" class="loading">Loading slots...</div>
+    <div id="assign-slots-content" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ─── ADD SLOT MODAL ─── -->
+<div class="modal-backdrop" id="addslot-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddSlotModal()">&times;</button>
+    <h2 class="modal-title">Add <em>Time Slot</em></h2>
+    <div class="form-group">
+      <label class="form-label">Day of Week</label>
+      <select class="form-input form-select" id="addslot-day" required>
+        <option value="0">Monday</option>
+        <option value="1">Tuesday</option>
+        <option value="2">Wednesday</option>
+        <option value="3">Thursday</option>
+        <option value="4">Friday</option>
+        <option value="5">Saturday</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Time (e.g. 5:15 AM)</label>
+      <input type="text" class="form-input" id="addslot-time" placeholder="5:15 AM" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Max Capacity</label>
+      <input type="number" class="form-input" id="addslot-capacity" min="1" value="4" required>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createSlot()">Create Slot</button>
+  </div>
+</div>
+
+<!-- ─── ADD MEMBER MODAL ─── -->
+<div class="modal-backdrop" id="addmember-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddMemberModal()">&times;</button>
+    <h2 class="modal-title">Add <em>Member</em></h2>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="addmember-name" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="addmember-email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-input" id="addmember-phone">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <input type="text" class="form-input" id="addmember-plan" placeholder="e.g. 3x per week">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sessions Per Week</label>
+      <input type="number" class="form-input" id="addmember-sessions" min="1" max="7" value="3">
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createMemberManual()">Create Member</button>
+  </div>
+</div>
 
 <!-- ─── EVENT MODAL ─── -->
 <div class="modal-backdrop" id="event-modal">
@@ -861,6 +1071,9 @@ function showPage(page) {
     case 'pilattes': loadTypePage('pl', 'pilattes'); break;
     case 'bookings': loadBookingsPage(); break;
     case 'memberships': loadMemberships(); break;
+    case 'membership-requests': loadMembershipRequests(); break;
+    case 'member-list': loadMemberList(); break;
+    case 'calendar': loadCalendar(); break;
     case 'notifications': loadNotifications(); break;
     case 'contacts': loadContacts(); break;
   }
@@ -1076,7 +1289,7 @@ async function loadTypePage(pre, type) {
   try {
     var data = await apiGet({ action: 'events' });
     var allEvents = data.events || [];
-    var typeEvents = allEvents.filter(function(e) { return e.type === type || e.type === type.replace("'", ""); });
+    var typeEvents = allEvents.filter(function(e) { var t = (e.type || '').replace(/[_' ]/g, '').toLowerCase(); var target = type.replace(/[_' ]/g, '').toLowerCase(); return t === target; });
     eventsCache = allEvents;
 
     if (typeEvents.length === 0) {
@@ -1311,6 +1524,367 @@ async function updateMembershipStatus(id, status) {
   }
 }
 
+// ─── MEMBERSHIP REQUESTS ───
+
+async function loadMembershipRequests() {
+  var loading = document.getElementById('mreq-loading');
+  var content = document.getElementById('mreq-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'memberships' });
+    var members = resp.data || [];
+
+    var tbody = document.getElementById('mreq-tbody');
+    if (members.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="11" class="empty-state">No enquiries yet</td></tr>';
+    } else {
+      tbody.innerHTML = members.map(function(m) {
+        var id = m.id;
+        var status = (m.status || 'new').toLowerCase();
+        var showAccept = (status === 'new' || status === 'contacted');
+        return '<tr>' +
+          '<td>' + esc(m.name || '') + '</td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '--') + '</td>' +
+          '<td>' + esc(m.plan || '') + '</td>' +
+          '<td>' + esc(m.sessions || '') + '</td>' +
+          '<td>' + esc(m.days || '') + '</td>' +
+          '<td>' + esc(m.times || '') + '</td>' +
+          '<td title="' + esc(m.notes || '') + '">' + esc(truncate(m.notes || '', 40)) + '</td>' +
+          '<td>' + statusBadge(m.status || 'new') + '</td>' +
+          '<td>' + formatDate(m.created_at) + '</td>' +
+          '<td>' +
+            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\',\'' + esc((m.name || '').replace(/'/g, '')) + '\',\'' + esc((m.plan || '').replace(/'/g, '')) + '\')">Accept</button>' : '') +
+            '<select class="status-select" onchange="updateMembershipStatus(\'' + esc(id) + '\', this.value)">' +
+              '<option value="new"' + (status === 'new' ? ' selected' : '') + '>New</option>' +
+              '<option value="contacted"' + (status === 'contacted' ? ' selected' : '') + '>Contacted</option>' +
+              '<option value="active"' + (status === 'active' ? ' selected' : '') + '>Active</option>' +
+              '<option value="inactive"' + (status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
+            '</select>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load requests. ' + esc(err.message) + '</div>';
+  }
+}
+
+function openAcceptModal(membershipId, name, plan) {
+  document.getElementById('accept-membership-id').value = membershipId;
+  document.getElementById('accept-member-name').textContent = name;
+  document.getElementById('accept-member-plan').textContent = plan;
+  document.getElementById('accept-sessions-per-week').value = 3;
+  document.getElementById('accept-modal').classList.add('open');
+}
+
+function closeAcceptModal() {
+  document.getElementById('accept-modal').classList.remove('open');
+}
+
+async function acceptMembership() {
+  var membershipId = document.getElementById('accept-membership-id').value;
+  var sessionsPerWeek = parseInt(document.getElementById('accept-sessions-per-week').value) || 3;
+
+  try {
+    await apiPost({
+      action: 'accept_membership',
+      membership_id: membershipId,
+      sessions_per_week: sessionsPerWeek
+    });
+    showToast('Member created successfully', 'success');
+    closeAcceptModal();
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── MEMBER LIST ───
+
+async function loadMemberList() {
+  var loading = document.getElementById('mlist-loading');
+  var content = document.getElementById('mlist-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'members' });
+    var members = resp.data || resp.members || [];
+
+    var tbody = document.getElementById('mlist-tbody');
+    if (members.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No members yet</td></tr>';
+    } else {
+      tbody.innerHTML = members.map(function(m) {
+        var id = m.id;
+        var status = (m.status || 'active').toLowerCase();
+        var slots = (m.slots || []).map(function(s) {
+          var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+          return (dayNames[s.day_of_week] || '?') + ' ' + esc(s.time || '');
+        }).join(', ') || '--';
+        var statusCls = status === 'active' ? 'badge-active'
+          : status === 'paused' ? 'badge-paused'
+          : status === 'cancelled' ? 'badge-cancelled'
+          : 'badge-held';
+        return '<tr>' +
+          '<td><strong>' + esc(m.name || '') + '</strong></td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '--') + '</td>' +
+          '<td>' + esc(m.plan || '') + '</td>' +
+          '<td>' + (m.sessions_per_week || '--') + '</td>' +
+          '<td style="font-size:12px;max-width:200px;">' + slots + '</td>' +
+          '<td><span class="badge ' + statusCls + '">' + esc(status) + '</span></td>' +
+          '<td>' +
+            '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAssignModal(\'' + esc(id) + '\',\'' + esc((m.name || '').replace(/'/g, '')) + '\')">Assign Slot</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load members. ' + esc(err.message) + '</div>';
+  }
+}
+
+function openAddMemberModal() {
+  document.getElementById('addmember-name').value = '';
+  document.getElementById('addmember-email').value = '';
+  document.getElementById('addmember-phone').value = '';
+  document.getElementById('addmember-plan').value = '';
+  document.getElementById('addmember-sessions').value = 3;
+  document.getElementById('addmember-modal').classList.add('open');
+}
+
+function closeAddMemberModal() {
+  document.getElementById('addmember-modal').classList.remove('open');
+}
+
+async function createMemberManual() {
+  var name = document.getElementById('addmember-name').value.trim();
+  var email = document.getElementById('addmember-email').value.trim();
+  if (!name || !email) { showToast('Name and email are required', 'error'); return; }
+
+  try {
+    await apiPost({
+      action: 'create_member',
+      name: name,
+      email: email,
+      phone: document.getElementById('addmember-phone').value.trim(),
+      plan: document.getElementById('addmember-plan').value.trim(),
+      sessions_per_week: parseInt(document.getElementById('addmember-sessions').value) || 3
+    });
+    showToast('Member created', 'success');
+    closeAddMemberModal();
+    loadMemberList();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── ASSIGN SLOT MODAL ───
+
+function openAssignModal(memberId, memberName) {
+  document.getElementById('assign-member-id').value = memberId;
+  document.getElementById('assign-member-name').textContent = memberName;
+  document.getElementById('assign-slots-loading').style.display = 'block';
+  document.getElementById('assign-slots-content').style.display = 'none';
+  document.getElementById('assign-modal').classList.add('open');
+  loadSlotsForAssign(memberId);
+}
+
+function closeAssignModal() {
+  document.getElementById('assign-modal').classList.remove('open');
+}
+
+async function loadSlotsForAssign(memberId) {
+  var loading = document.getElementById('assign-slots-loading');
+  var content = document.getElementById('assign-slots-content');
+
+  try {
+    var resp = await apiGet({ action: 'schedule' });
+    var slots = resp.data || resp.slots || [];
+    var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    // Group by day
+    var byDay = {};
+    for (var d = 0; d < 6; d++) byDay[d] = [];
+    slots.forEach(function(s) {
+      var day = s.day_of_week;
+      if (day >= 0 && day <= 5) byDay[day].push(s);
+    });
+
+    var html = '<div class="assign-day-grid">';
+    dayNames.forEach(function(dayName, idx) {
+      var daySlots = byDay[idx] || [];
+      if (daySlots.length === 0) return;
+      html += '<div class="assign-day-col"><h4>' + dayName + '</h4>';
+      daySlots.forEach(function(s) {
+        var memberIds = (s.members || []).map(function(m) { return m.id || m.member_id; });
+        var isAssigned = memberIds.indexOf(memberId) !== -1;
+        var count = (s.members || []).length;
+        var max = s.max_capacity || 4;
+        var isFull = count >= max && !isAssigned;
+        var cls = 'assign-slot-item' + (isAssigned ? ' assigned' : '') + (isFull ? ' slot-full' : '');
+        html += '<div class="' + cls + '">' +
+          '<span>' + esc(s.time || '') + ' <span style="font-size:11px;color:var(--bark);">(' + count + '/' + max + ')</span></span>';
+        if (isAssigned) {
+          html += '<button class="btn-outline btn-sm btn-danger" onclick="unassignSlot(\'' + esc(memberId) + '\',\'' + esc(s.id) + '\')">Remove</button>';
+        } else if (!isFull) {
+          html += '<button class="btn-outline btn-sm" onclick="assignSlot(\'' + esc(memberId) + '\',\'' + esc(s.id) + '\')">Assign</button>';
+        } else {
+          html += '<span style="font-size:10px;color:var(--bark);text-transform:uppercase;letter-spacing:0.1em;">Full</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+
+    content.innerHTML = html;
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load slots. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function assignSlot(memberId, slotId) {
+  try {
+    await apiPost({ action: 'assign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Slot assigned', 'success');
+    loadSlotsForAssign(memberId);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+async function unassignSlot(memberId, slotId) {
+  try {
+    await apiPost({ action: 'unassign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Slot removed', 'success');
+    loadSlotsForAssign(memberId);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── CALENDAR ───
+
+async function loadCalendar() {
+  var loading = document.getElementById('cal-loading');
+  var content = document.getElementById('cal-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'schedule' });
+    var slots = resp.data || resp.slots || [];
+    var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    // Group by day
+    var byDay = {};
+    for (var d = 0; d < 6; d++) byDay[d] = [];
+    slots.forEach(function(s) {
+      var day = s.day_of_week;
+      if (day >= 0 && day <= 5) byDay[day].push(s);
+    });
+
+    var grid = document.getElementById('cal-grid');
+    var html = '';
+
+    // Day headers
+    dayNames.forEach(function(name) {
+      html += '<div class="calendar-day-header">' + name + '</div>';
+    });
+
+    // Find max rows needed
+    var maxSlots = 0;
+    for (var d = 0; d < 6; d++) {
+      if (byDay[d].length > maxSlots) maxSlots = byDay[d].length;
+    }
+
+    // Render rows
+    for (var row = 0; row < maxSlots; row++) {
+      for (var day = 0; day < 6; day++) {
+        var s = byDay[day][row];
+        if (!s) {
+          html += '<div class="calendar-slot" style="background:transparent;"></div>';
+          continue;
+        }
+        var members = s.members || [];
+        var count = members.length;
+        var max = s.max_capacity || 4;
+        var isFull = count >= max;
+        var isActive = s.status !== 'inactive';
+        var cls = 'calendar-slot' + (isFull ? ' full' : ' available') + (!isActive ? ' inactive-slot' : '');
+
+        html += '<div class="' + cls + '">';
+        html += '<div class="calendar-slot-time">' + esc(s.time || '') + '</div>';
+        html += '<div class="calendar-slot-count">' + count + '/' + max + ' booked</div>';
+        members.forEach(function(m) {
+          html += '<div class="calendar-slot-member">' + esc(m.name || 'Unknown') + '</div>';
+        });
+        html += '</div>';
+      }
+    }
+
+    if (maxSlots === 0) {
+      grid.innerHTML = '';
+      grid.insertAdjacentHTML('afterend', '<div class="empty-state" id="cal-empty-msg">No time slots yet. Add your first slot to get started.</div>');
+    } else {
+      var oldEmpty = document.getElementById('cal-empty-msg');
+      if (oldEmpty) oldEmpty.remove();
+      grid.innerHTML = html;
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load schedule. ' + esc(err.message) + '</div>';
+  }
+}
+
+function openAddSlotModal() {
+  document.getElementById('addslot-day').value = '0';
+  document.getElementById('addslot-time').value = '';
+  document.getElementById('addslot-capacity').value = 4;
+  document.getElementById('addslot-modal').classList.add('open');
+}
+
+function closeAddSlotModal() {
+  document.getElementById('addslot-modal').classList.remove('open');
+}
+
+async function createSlot() {
+  var day = parseInt(document.getElementById('addslot-day').value);
+  var time = document.getElementById('addslot-time').value.trim();
+  var capacity = parseInt(document.getElementById('addslot-capacity').value) || 4;
+
+  if (!time) { showToast('Please enter a time', 'error'); return; }
+
+  try {
+    await apiPost({
+      action: 'create_slot',
+      day_of_week: day,
+      time: time,
+      max_capacity: capacity
+    });
+    showToast('Time slot created', 'success');
+    closeAddSlotModal();
+    loadCalendar();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
 // ─── NOTIFICATIONS ───
 // API: { success: true, notifications: [...] }
 // Each: id, email, name, interest, type, notified (boolean), created_at
@@ -1418,11 +1992,28 @@ document.getElementById('confirm-dialog').addEventListener('mouseup', function(e
   modalMouseDownTarget = null;
 });
 
+// ─── NEW MODAL BACKDROP CLOSE ───
+['accept-modal','assign-modal','addslot-modal','addmember-modal'].forEach(function(id) {
+  var el = document.getElementById(id);
+  var downTarget = null;
+  el.addEventListener('mousedown', function(e) { downTarget = e.target; });
+  el.addEventListener('mouseup', function(e) {
+    if (e.target === el && downTarget === el) {
+      el.classList.remove('open');
+    }
+    downTarget = null;
+  });
+});
+
 // ─── KEYBOARD ───
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeEventModal();
     closeConfirm();
+    closeAcceptModal();
+    closeAssignModal();
+    closeAddSlotModal();
+    closeAddMemberModal();
   }
 });
 </script>

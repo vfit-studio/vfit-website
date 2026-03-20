@@ -586,6 +586,355 @@ async function handleCleanupHolds() {
 }
 
 // ═══════════════════════════════════════════════
+// Membership scheduling handlers
+// ═══════════════════════════════════════════════
+
+async function handleGetMembers() {
+  const { data: members, error } = await supabase
+    .from('members')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  // Fetch all slot assignments with slot details
+  const memberIds = (members || []).map((m) => m.id);
+  let slotMap = {};
+  if (memberIds.length > 0) {
+    const { data: assignments, error: slotErr } = await supabase
+      .from('member_slots')
+      .select('member_id, slot_id, schedule_slots(id, day_of_week, time)')
+      .eq('status', 'active')
+      .in('member_id', memberIds);
+    if (slotErr) throw slotErr;
+
+    for (const a of (assignments || [])) {
+      if (!slotMap[a.member_id]) slotMap[a.member_id] = [];
+      if (a.schedule_slots) {
+        slotMap[a.member_id].push({
+          slot_id: a.schedule_slots.id,
+          day_of_week: a.schedule_slots.day_of_week,
+          time: a.schedule_slots.time,
+        });
+      }
+    }
+  }
+
+  const result = (members || []).map((m) => ({
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    phone: m.phone,
+    plan: m.plan,
+    sessions_per_week: m.sessions_per_week,
+    status: m.status,
+    start_date: m.start_date,
+    notes: m.notes,
+    slots: slotMap[m.id] || [],
+  }));
+
+  return respond(200, { success: true, members: result });
+}
+
+async function handleGetSchedule() {
+  const { data: slots, error } = await supabase
+    .from('schedule_slots')
+    .select('*')
+    .eq('status', 'active')
+    .order('time', { ascending: true });
+  if (error) throw error;
+
+  const slotIds = (slots || []).map((s) => s.id);
+  let assignmentMap = {};
+  if (slotIds.length > 0) {
+    const { data: assignments, error: aErr } = await supabase
+      .from('member_slots')
+      .select('slot_id, members(id, name, plan)')
+      .eq('status', 'active')
+      .in('slot_id', slotIds);
+    if (aErr) throw aErr;
+
+    for (const a of (assignments || [])) {
+      if (!assignmentMap[a.slot_id]) assignmentMap[a.slot_id] = [];
+      if (a.members) {
+        assignmentMap[a.slot_id].push({
+          id: a.members.id,
+          name: a.members.name,
+          plan: a.members.plan,
+        });
+      }
+    }
+  }
+
+  // Group by day_of_week
+  const schedule = {};
+  for (const slot of (slots || [])) {
+    const day = String(slot.day_of_week);
+    if (!schedule[day]) schedule[day] = [];
+    schedule[day].push({
+      id: slot.id,
+      time: slot.time,
+      max_capacity: slot.max_capacity,
+      members: assignmentMap[slot.id] || [],
+    });
+  }
+
+  return respond(200, { success: true, schedule });
+}
+
+async function handleGetMember(memberId) {
+  if (!memberId) return respond(400, { success: false, error: 'id is required' });
+
+  const { data: member, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('id', memberId)
+    .single();
+  if (error || !member) return respond(404, { success: false, error: 'member_not_found' });
+
+  const { data: assignments, error: slotErr } = await supabase
+    .from('member_slots')
+    .select('slot_id, schedule_slots(id, day_of_week, time)')
+    .eq('status', 'active')
+    .eq('member_id', memberId);
+  if (slotErr) throw slotErr;
+
+  const slots = (assignments || [])
+    .filter((a) => a.schedule_slots)
+    .map((a) => ({
+      slot_id: a.schedule_slots.id,
+      day_of_week: a.schedule_slots.day_of_week,
+      time: a.schedule_slots.time,
+    }));
+
+  return respond(200, {
+    success: true,
+    member: {
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      plan: member.plan,
+      sessions_per_week: member.sessions_per_week,
+      status: member.status,
+      start_date: member.start_date,
+      notes: member.notes,
+      slots,
+    },
+  });
+}
+
+async function handleAcceptMembership(body) {
+  requireAdmin(body.admin_key);
+  const { membership_id, sessions_per_week } = body;
+  if (!membership_id) return respond(400, { success: false, error: 'membership_id is required' });
+
+  // Fetch the membership enquiry
+  const { data: enquiry, error: fetchErr } = await supabase
+    .from('memberships')
+    .select('*')
+    .eq('id', membership_id)
+    .single();
+  if (fetchErr || !enquiry) return respond(404, { success: false, error: 'membership_not_found' });
+
+  // Create the member record
+  const { data: member, error: insertErr } = await supabase
+    .from('members')
+    .insert({
+      membership_id: enquiry.id,
+      name: enquiry.name,
+      email: enquiry.email,
+      phone: enquiry.phone,
+      plan: enquiry.plan,
+      sessions_per_week: sessions_per_week || 1,
+      status: 'active',
+      start_date: new Date().toISOString().split('T')[0],
+    })
+    .select()
+    .single();
+  if (insertErr) throw insertErr;
+
+  // Update the membership enquiry status to 'active'
+  const { error: updateErr } = await supabase
+    .from('memberships')
+    .update({ status: 'active' })
+    .eq('id', membership_id);
+  if (updateErr) throw updateErr;
+
+  return respond(200, { success: true, member });
+}
+
+async function handleCreateMember(body) {
+  requireAdmin(body.admin_key);
+  const { name, email, phone, plan, sessions_per_week, notes } = body;
+  if (!name || !email || !plan) {
+    return respond(400, { success: false, error: 'name, email, and plan are required' });
+  }
+
+  const { data: member, error } = await supabase
+    .from('members')
+    .insert({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone ? phone.trim() : null,
+      plan,
+      sessions_per_week: sessions_per_week || 1,
+      status: 'active',
+      start_date: new Date().toISOString().split('T')[0],
+      notes: notes || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+
+  return respond(200, { success: true, member });
+}
+
+async function handleUpdateMember(body) {
+  requireAdmin(body.admin_key);
+  const { member_id, ...fields } = body;
+  if (!member_id) return respond(400, { success: false, error: 'member_id is required' });
+
+  // Strip non-updatable fields
+  delete fields.admin_key;
+  delete fields.action;
+  delete fields.id;
+  delete fields.created_at;
+
+  const { data: member, error } = await supabase
+    .from('members')
+    .update(fields)
+    .eq('id', member_id)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return respond(200, { success: true, member });
+}
+
+async function handleCreateSlot(body) {
+  requireAdmin(body.admin_key);
+  const { day_of_week, time, max_capacity } = body;
+  if (day_of_week === undefined || !time) {
+    return respond(400, { success: false, error: 'day_of_week and time are required' });
+  }
+
+  const { data: slot, error } = await supabase
+    .from('schedule_slots')
+    .insert({
+      day_of_week,
+      time,
+      max_capacity: max_capacity || 4,
+      status: 'active',
+    })
+    .select()
+    .single();
+  if (error) throw error;
+
+  return respond(200, { success: true, slot });
+}
+
+async function handleUpdateSlot(body) {
+  requireAdmin(body.admin_key);
+  const { slot_id, ...fields } = body;
+  if (!slot_id) return respond(400, { success: false, error: 'slot_id is required' });
+
+  // Strip non-updatable fields
+  delete fields.admin_key;
+  delete fields.action;
+  delete fields.id;
+  delete fields.created_at;
+
+  const { data: slot, error } = await supabase
+    .from('schedule_slots')
+    .update(fields)
+    .eq('id', slot_id)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return respond(200, { success: true, slot });
+}
+
+async function handleDeleteSlot(body) {
+  requireAdmin(body.admin_key);
+  const { slot_id } = body;
+  if (!slot_id) return respond(400, { success: false, error: 'slot_id is required' });
+
+  const { data: slot, error } = await supabase
+    .from('schedule_slots')
+    .update({ status: 'inactive' })
+    .eq('id', slot_id)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return respond(200, { success: true, slot });
+}
+
+async function handleAssignSlot(body) {
+  requireAdmin(body.admin_key);
+  const { member_id, slot_id } = body;
+  if (!member_id || !slot_id) {
+    return respond(400, { success: false, error: 'member_id and slot_id are required' });
+  }
+
+  // Fetch the slot to check capacity
+  const { data: slot, error: slotErr } = await supabase
+    .from('schedule_slots')
+    .select('*')
+    .eq('id', slot_id)
+    .single();
+  if (slotErr || !slot) return respond(404, { success: false, error: 'slot_not_found' });
+
+  // Count current active assignments for this slot
+  const { count, error: countErr } = await supabase
+    .from('member_slots')
+    .select('*', { count: 'exact', head: true })
+    .eq('slot_id', slot_id)
+    .eq('status', 'active');
+  if (countErr) throw countErr;
+
+  if ((count || 0) >= slot.max_capacity) {
+    return respond(400, { success: false, error: 'slot_full', message: `This slot is full (${count}/${slot.max_capacity})` });
+  }
+
+  const { data: assignment, error } = await supabase
+    .from('member_slots')
+    .insert({
+      member_id,
+      slot_id,
+      status: 'active',
+    })
+    .select()
+    .single();
+  if (error) {
+    if (error.code === '23505') {
+      return respond(400, { success: false, error: 'already_assigned', message: 'Member is already assigned to this slot' });
+    }
+    throw error;
+  }
+
+  return respond(200, { success: true, assignment });
+}
+
+async function handleUnassignSlot(body) {
+  requireAdmin(body.admin_key);
+  const { member_id, slot_id } = body;
+  if (!member_id || !slot_id) {
+    return respond(400, { success: false, error: 'member_id and slot_id are required' });
+  }
+
+  const { error } = await supabase
+    .from('member_slots')
+    .delete()
+    .eq('member_id', member_id)
+    .eq('slot_id', slot_id);
+  if (error) throw error;
+
+  return respond(200, { success: true });
+}
+
+// ═══════════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════════
 
@@ -616,6 +965,12 @@ exports.handler = async (event) => {
           return await handleContacts();
         case 'dashboard':
           return await handleDashboard();
+        case 'members':
+          return await handleGetMembers();
+        case 'schedule':
+          return await handleGetSchedule();
+        case 'member':
+          return await handleGetMember(params.id);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -668,6 +1023,22 @@ exports.handler = async (event) => {
           return respond(200, { success: true });
         case 'cleanup_holds':
           return await handleCleanupHolds();
+        case 'accept_membership':
+          return await handleAcceptMembership(body);
+        case 'create_member':
+          return await handleCreateMember(body);
+        case 'update_member':
+          return await handleUpdateMember(body);
+        case 'create_slot':
+          return await handleCreateSlot(body);
+        case 'update_slot':
+          return await handleUpdateSlot(body);
+        case 'delete_slot':
+          return await handleDeleteSlot(body);
+        case 'assign_slot':
+          return await handleAssignSlot(body);
+        case 'unassign_slot':
+          return await handleUnassignSlot(body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
