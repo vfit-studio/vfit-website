@@ -200,15 +200,23 @@ nav.scrolled{
    ============================================ */
 .home-hero{
   min-height:100vh;min-height:100dvh;
-  display:grid;grid-template-columns:1fr 1fr;
-  background:var(--warm-white);
+  display:flex;align-items:flex-end;
+  background:var(--deep);
   position:relative;overflow:hidden;
   padding-top:80px;
 }
+.home-hero-video{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.45;
+}
+.home-hero::after{
+  content:'';position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to top, rgba(61,53,48,0.8) 0%, rgba(61,53,48,0.2) 50%, rgba(61,53,48,0.1) 100%);
+}
 .home-hero-left{
-  display:flex;flex-direction:column;justify-content:center;
+  display:flex;flex-direction:column;justify-content:flex-end;
   padding:60px 80px 80px;
   position:relative;z-index:2;
+  width:100%;
 }
 .home-hero-eyebrow{
   font-size:10px;letter-spacing:.45em;text-transform:uppercase;
@@ -221,10 +229,10 @@ nav.scrolled{
   font-family:'Cormorant Garamond',serif;
   font-size:clamp(56px,7.5vw,110px);font-weight:300;
   line-height:.9;letter-spacing:-.02em;
-  color:var(--deep);margin-bottom:36px;
+  color:var(--warm-white);margin-bottom:36px;
   opacity:0;animation:fadeUp .9s ease .5s forwards;
 }
-.home-hero h1 em{font-style:italic;color:var(--bark)}
+.home-hero h1 em{font-style:italic;color:var(--clay)}
 .home-hero-desc{
   font-size:15px;line-height:1.95;color:#6b5e52;
   max-width:400px;margin-bottom:48px;
@@ -1107,22 +1115,22 @@ footer{
 <div class="page active" id="page-home">
 <main id="main">
 
-<!-- HERO — Light split layout -->
+<!-- HERO — Full-bleed video background -->
 <section class="home-hero">
+  <video class="home-hero-video" autoplay muted loop playsinline>
+    <source src="https://videos.pexels.com/video-files/4108054/4108054-hd_1920_1080_25fps.mp4" type="video/mp4">
+  </video>
   <div class="home-hero-left">
-    <p class="home-hero-eyebrow">Toowoomba's Boutique Fitness Studio</p>
+    <p class="home-hero-eyebrow" style="color:var(--clay);">Toowoomba's Boutique Fitness Studio</p>
     <h1>Move with<br><em>Purpose.</em></h1>
-    <p class="home-hero-desc">Three distinct ways to move — exclusive studio sessions, monthly Pilates at The Dairy, and a weekly run club. All led by Georgie Valdal.</p>
+    <p class="home-hero-desc" style="color:rgba(254,252,248,0.7);">Three distinct ways to move — exclusive studio sessions, monthly Pilates at The Dairy, and a weekly run club. All led by Georgie Valdal.</p>
     <div class="home-hero-actions">
-      <button class="btn-hero-outline" onclick="document.getElementById('panel-studio').scrollIntoView({behavior:'smooth'})">Explore</button>
+      <button class="btn-outline-light" onclick="document.getElementById('panel-studio').scrollIntoView({behavior:'smooth'})">Explore</button>
     </div>
   </div>
-  <div class="home-hero-right">
-    <img class="home-hero-bg-img" src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT boutique fitness studio" loading="eager">
-  </div>
-  <div class="scroll-indicator">
-    <span>Scroll</span>
-    <div class="scroll-line"></div>
+  <div class="scroll-indicator" style="z-index:3;">
+    <span style="color:var(--clay);">Scroll</span>
+    <div class="scroll-line" style="background:var(--clay);"></div>
   </div>
 </section>
 
@@ -1148,23 +1156,8 @@ footer{
     <p class="op-eyebrow reveal" style="color:var(--bark);">The Dairy, Ravensbourne</p>
     <h2 class="op-title reveal rd1" style="color:var(--deep);">Pi'lattes at<br><em>The Dairy.</em></h2>
     <p class="op-desc reveal rd2" style="color:#6b5e52;">Mat Pilates at one of SEQ's most stunning venues. A burn that fires up your core, followed by a complimentary coffee from Then Bakehouse Caf&eacute;.</p>
-    <div class="reveal rd3" style="margin-bottom:24px;">
+    <div class="reveal rd3">
       <button class="btn-ghost" onclick="showPage('pilattes')">View Details</button>
-    </div>
-    <!-- Countdown Widget -->
-    <div class="panel-countdown-video reveal rd4" id="homePlWidget">
-      <p class="countdown-label">Next Session</p>
-      <div class="home-cd-event-date" id="homePlDate" style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--clay);margin-bottom:16px;min-height:22px;"></div>
-      <div class="countdown-timer" id="homePlTimer">
-        <div class="countdown-unit"><span class="countdown-num" id="homePlDays">0</span><span class="countdown-txt">Days</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homePlHours">0</span><span class="countdown-txt">Hrs</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homePlMins">00</span><span class="countdown-txt">Min</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homePlSecs">00</span><span class="countdown-txt">Sec</span></div>
-      </div>
-      <div class="home-cd-status" id="homePlStatus" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--clay);min-height:20px;margin-top:8px;"></div>
     </div>
   </div>
 </section>
@@ -1176,26 +1169,17 @@ footer{
     <p class="op-eyebrow reveal" style="color:var(--bark);">Every Tuesday &middot; 5:15 AM</p>
     <h2 class="op-title reveal rd1" style="color:var(--deep);">Track<br><em>Tuesday.</em></h2>
     <p class="op-desc reveal rd2" style="color:#6b5e52;">All fitness levels welcome — intervals, tempo runs, strength circuits. No two sessions are the same. Led by Georgie Valdal with world-class credentials in Track &amp; Field.</p>
-    <div class="reveal rd3" style="margin-bottom:24px;">
+    <div class="reveal rd3">
       <button class="btn-ghost" onclick="showPage('runclub')">View Details</button>
-    </div>
-    <!-- Countdown Widget -->
-    <div class="panel-countdown-video reveal rd4" id="homeRcWidget">
-      <p class="countdown-label">Next Session</p>
-      <div class="home-cd-event-date" id="homeRcDate" style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--clay);margin-bottom:16px;min-height:22px;"></div>
-      <div class="countdown-timer" id="homeRcTimer">
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcDays">0</span><span class="countdown-txt">Days</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcHours">0</span><span class="countdown-txt">Hrs</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcMins">00</span><span class="countdown-txt">Min</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcSecs">00</span><span class="countdown-txt">Sec</span></div>
-      </div>
-      <div class="home-cd-status" id="homeRcStatus" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--clay);min-height:20px;margin-top:8px;"></div>
     </div>
   </div>
 </section>
+
+<!-- Hidden countdown elements (JS needs these IDs) -->
+<div style="display:none;" aria-hidden="true">
+  <div id="homePlWidget"><span id="homePlDate"></span><div id="homePlTimer"><span id="homePlDays"></span><span id="homePlHours"></span><span id="homePlMins"></span><span id="homePlSecs"></span></div><span id="homePlStatus"></span></div>
+  <div id="homeRcWidget"><span id="homeRcDate"></span><div id="homeRcTimer"><span id="homeRcDays"></span><span id="homeRcHours"></span><span id="homeRcMins"></span><span id="homeRcSecs"></span></div><span id="homeRcStatus"></span></div>
+</div>
 
 <!-- GEORGIE / ABOUT TEASER — Light Split -->
 <section class="georgie-editorial">
