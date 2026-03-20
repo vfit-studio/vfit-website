@@ -437,6 +437,11 @@
     font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase;
     color: var(--clay); margin-bottom: 12px;
   }
+  .home-cd-event-date {
+    font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300;
+    font-style: italic; color: rgba(254,252,248,0.7); margin-bottom: 24px;
+    min-height: 28px;
+  }
   .home-cd-title {
     font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300;
     font-style: italic; color: rgba(254,252,248,0.5); margin-bottom: 28px;
@@ -594,7 +599,7 @@
   <div class="home-countdowns">
     <div class="home-cd-card reveal" onclick="showPage('runclub')">
       <div class="home-cd-label">Run Club &middot; Track Tuesday</div>
-      <div class="home-cd-title">Next session</div>
+      <div class="home-cd-event-date" id="homeRcDate"></div>
       <div class="home-cd-timer" id="homeRcTimer">
         <div class="home-cd-unit"><span class="home-cd-num" id="homeRcDays">0</span><span class="home-cd-txt">Days</span></div>
         <span class="home-cd-sep">:</span>
@@ -610,7 +615,7 @@
     <div class="home-cd-divider"></div>
     <div class="home-cd-card reveal rd1" onclick="showPage('pilattes')">
       <div class="home-cd-label">Pi'lattes &middot; The Dairy</div>
-      <div class="home-cd-title">Next session</div>
+      <div class="home-cd-event-date" id="homePlDate"></div>
       <div class="home-cd-timer" id="homePlTimer">
         <div class="home-cd-unit"><span class="home-cd-num" id="homePlDays">0</span><span class="home-cd-txt">Days</span></div>
         <span class="home-cd-sep">:</span>
@@ -1142,42 +1147,54 @@ var BOOKING_API = '/.netlify/functions/api';
 // Formspree fallback (used when BOOKING_API is not set)
 var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgalnnp';
 
-// Default config (overridden by live API data when BOOKING_API is set)
-var RUNCLUB_CONFIG = {
-  ticketsOpen: '2026-03-22T08:00:00+10:00',
-  sessionDate: '2026-03-24T05:15:00+10:00',
-  spotsTotal: 20,
-  spotsRemaining: 20,
-};
+// Config — populated from database. null = no event exists yet.
+var RUNCLUB_CONFIG = null;
+var PILATTES_CONFIG = null;
 
-var PILATTES_CONFIG = {
-  ticketsOpen: '2026-04-12T08:00:00+10:00',
-  sessionDate: '2026-04-19T07:00:00+10:00',
-  spotsTotal: 15,
-  spotsRemaining: 15,
-};
-
-// Fetch live data from Google Sheets API
+// Fetch live config from database
 function fetchLiveConfig() {
   if (!BOOKING_API) return;
   fetch(BOOKING_API + '?action=config')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.runclub) {
-        RUNCLUB_CONFIG.ticketsOpen = data.runclub.ticketsOpen || RUNCLUB_CONFIG.ticketsOpen;
-        RUNCLUB_CONFIG.sessionDate = data.runclub.sessionDate || RUNCLUB_CONFIG.sessionDate;
-        RUNCLUB_CONFIG.spotsTotal = data.runclub.spotsTotal || RUNCLUB_CONFIG.spotsTotal;
-        RUNCLUB_CONFIG.spotsRemaining = data.runclub.spotsRemaining;
+      var events = data.events || [];
+
+      // Find next upcoming runclub event
+      var rcEvent = events.find(function(e) { return e.type === 'runclub'; });
+      if (rcEvent) {
+        RUNCLUB_CONFIG = {
+          eventId: rcEvent.id,
+          ticketsOpen: rcEvent.tickets_open,
+          sessionDate: rcEvent.session_date,
+          spotsTotal: rcEvent.spots_total,
+          spotsRemaining: rcEvent.spots_remaining,
+          priceCents: rcEvent.price_cents || 0,
+          name: rcEvent.name,
+        };
+      } else {
+        RUNCLUB_CONFIG = null;
       }
-      if (data.pilattes) {
-        PILATTES_CONFIG.ticketsOpen = data.pilattes.ticketsOpen || PILATTES_CONFIG.ticketsOpen;
-        PILATTES_CONFIG.sessionDate = data.pilattes.sessionDate || PILATTES_CONFIG.sessionDate;
-        PILATTES_CONFIG.spotsTotal = data.pilattes.spotsTotal || PILATTES_CONFIG.spotsTotal;
-        PILATTES_CONFIG.spotsRemaining = data.pilattes.spotsRemaining;
+
+      // Find next upcoming pilattes event
+      var plEvent = events.find(function(e) { return e.type === 'pilattes'; });
+      if (plEvent) {
+        PILATTES_CONFIG = {
+          eventId: plEvent.id,
+          ticketsOpen: plEvent.tickets_open,
+          sessionDate: plEvent.session_date,
+          spotsTotal: plEvent.spots_total,
+          spotsRemaining: plEvent.spots_remaining,
+          priceCents: plEvent.price_cents || 0,
+          name: plEvent.name,
+        };
+      } else {
+        PILATTES_CONFIG = null;
       }
+
       // Re-render countdowns with live data
       initCountdownWidget('rc', RUNCLUB_CONFIG, true);
       initCountdownWidget('pl', PILATTES_CONFIG, false);
+      updateHomeCountdowns();
     })
     .catch(function(err) { console.log('Using fallback config', err); });
 }
@@ -1329,6 +1346,24 @@ function updateCountdown(targetDate, pre) {
 }
 
 function initCountdownWidget(pre, config, isRunClub) {
+  // No event exists — show "no upcoming sessions"
+  if (!config) {
+    var label = isRunClub ? 'Run Club' : "Pi'lattes";
+    document.getElementById(pre + 'CountdownLabel').textContent = 'No Upcoming Sessions';
+    document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--bark);font-style:italic;margin:16px 0;">Check back soon</p>';
+    document.getElementById(pre + 'SpotsBar').classList.add('hidden');
+    document.getElementById(pre + 'SessionDate').style.display = 'none';
+    var followEl = document.getElementById(pre + 'FollowText');
+    if (followEl) { followEl.style.display = 'block'; followEl.innerHTML = 'Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" style="color:var(--bark);">@valdalfit</a> for updates'; }
+    var btn = document.getElementById(pre + 'Btn');
+    if (btn) { btn.className = 'widget-btn notify'; btn.textContent = 'Get Notified'; btn.onclick = function() { openSimpleModal(label + ' — Notify Me', 'Get Notified'); }; }
+    var heroBtn = document.getElementById(pre + 'HeroBtn');
+    if (heroBtn) { heroBtn.textContent = 'Get Notified'; heroBtn.onclick = function() { openSimpleModal(label + ' — Notify Me', 'Get Notified'); }; }
+    var ctaBtn = document.getElementById(pre + 'CtaBtn');
+    if (ctaBtn) { ctaBtn.textContent = 'Get Notified'; ctaBtn.onclick = function() { openSimpleModal(label + ' — Notify Me', 'Get Notified'); }; }
+    return;
+  }
+
   function render() {
     var now = new Date();
     var ticketsOpen = new Date(config.ticketsOpen);
@@ -1490,20 +1525,40 @@ function updateHomeCountdowns() {
   ];
   configs.forEach(function(item) {
     var c = item.config, pre = item.pre;
+    var statusEl = document.getElementById(pre + 'Status');
+    var timerEl = document.getElementById(pre + 'Timer');
+
+    // No event in database
+    var dateEl = document.getElementById(pre + 'Date');
+    if (!c) {
+      if (timerEl) timerEl.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:rgba(254,252,248,0.4);font-style:italic;margin:20px 0;">No upcoming sessions</div>';
+      if (statusEl) statusEl.innerHTML = '<a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" style="color:var(--clay);text-decoration:none;font-size:11px;letter-spacing:0.1em;">Follow @valdalfit</a>';
+      if (dateEl) dateEl.textContent = '';
+      return;
+    }
+
     var now = new Date();
     var ticketsOpen = new Date(c.ticketsOpen);
     var session = new Date(c.sessionDate);
-    var statusEl = document.getElementById(pre + 'Status');
-    var target, label;
+    var target;
+
+    // Show the event date clearly
+    if (dateEl && !isNaN(session.getTime())) {
+      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var h = session.getHours(), m = session.getMinutes();
+      var ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12;
+      dateEl.textContent = days[session.getDay()] + ' ' + session.getDate() + ' ' + months[session.getMonth()] + ' · ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
 
     if (isNaN(session.getTime())) {
-      document.getElementById(pre + 'Timer').innerHTML = '<div class="home-cd-title" style="margin:0;">Date TBA</div>';
+      if (timerEl) timerEl.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:rgba(254,252,248,0.4);font-style:italic;">Date TBA</div>';
       if (statusEl) statusEl.textContent = 'Follow @valdalfit';
       return;
     }
     if (now < ticketsOpen) {
       target = ticketsOpen;
-      if (statusEl) statusEl.innerHTML = '<span style="color:var(--clay);">Bookings open soon</span>';
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--clay);">Tickets open in</span>';
     } else if (c.spotsRemaining > 0) {
       target = session;
       if (statusEl) statusEl.innerHTML = '<span style="color:var(--sage);">&#9679; ' + c.spotsRemaining + ' spots remaining</span>';
