@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 <title>VFIT Admin</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
@@ -360,26 +360,115 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
+/* ─── BODY SCROLL LOCK ─── */
+body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
+
+/* ─── MOBILE SIDEBAR OVERLAY ─── */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; z-index: 94;
+  background: rgba(61,53,48,0.4); backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
-  .sidebar.mobile-open {
-    display: block; width: 100%; top: var(--topbar-h);
-    z-index: 95; border-right: none;
-  }
-  .main-content { margin-left: 0; padding: 24px 16px 60px; }
+  /* Topbar */
+  .topbar { padding: 0 16px; }
+  .topbar-logo { font-size: 20px; }
   .topbar-hamburger { display: flex; }
   .topbar-center { display: none; }
-  .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .page-header { flex-direction: column; align-items: flex-start; }
-  .filter-bar { flex-direction: column; align-items: flex-start; }
-  .filter-bar select { min-width: 100%; }
-  .modal { padding: 32px 24px; }
-  .login-card { padding: 40px 28px; }
-  .data-table { min-width: 500px; }
+  .topbar-logout { padding: 6px 14px; font-size: 10px; min-height: 44px; display: flex; align-items: center; }
+
+  /* Sidebar as full-screen overlay */
+  .sidebar {
+    position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
+    z-index: 500; background: var(--warm-white);
+    transition: left 0.3s ease;
+    padding-top: calc(var(--topbar-h) + 16px);
+    border-right: none; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar.mobile-open { left: 0; display: block; }
+  .sidebar-nav button {
+    min-height: 48px; font-size: 14px; padding: 16px 28px;
+  }
+  .sidebar-nav button.active { padding-left: 25px; }
+
+  /* Main content full width */
+  .main-content {
+    margin-left: 0; padding: 20px 16px 60px;
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+
+  /* Page headers */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header .btn-primary { width: 100%; text-align: center; }
+  .page-title { font-size: 28px; }
+
+  /* Stat cards */
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .stat-card { padding: 20px 16px; }
+  .stat-value { font-size: 28px; }
+
+  /* Tables */
+  .table-wrap { -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+  .data-table { font-size: 12px; min-width: 500px; }
+  .data-table th { padding: 10px 10px; font-size: 9px; }
+  .data-table td { padding: 10px 10px; font-size: 12px; }
+
+  /* Filter bar */
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar select { min-width: 100%; font-size: 16px; min-height: 44px; }
+
+  /* Modals full screen */
+  .modal-backdrop { padding: 0; align-items: stretch; }
+  .modal-backdrop .modal {
+    width: 100% !important; max-width: 100% !important; max-height: 100%;
+    border-radius: 0; margin: 0;
+    min-height: 100vh; min-height: 100dvh;
+    padding: 32px 20px;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  }
+  .modal-title { font-size: 24px; margin-bottom: 20px; }
+
+  /* Forms — prevent iOS zoom */
+  .form-input, .form-select, .form-textarea, select, input, textarea {
+    font-size: 16px !important; min-height: 44px;
+  }
+  .login-field { font-size: 16px; min-height: 44px; }
+
+  /* Buttons — tap-friendly */
+  .btn-primary, .btn-outline { min-height: 44px; }
+  .btn-outline.btn-sm { min-height: 44px; padding: 10px 16px; font-size: 11px; }
+  .confirm-actions { flex-direction: column; gap: 10px; }
+  .confirm-actions .btn-outline { width: 100%; min-height: 44px; }
+
+  /* Toast */
+  .toast { left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: none; }
+
+  /* Login card */
+  .login-card { padding: 40px 24px; }
+
+  /* Assign grid */
+  .assign-day-grid { grid-template-columns: 1fr; }
+  .assign-slot-item { padding: 12px 10px; min-height: 44px; }
+
+  /* Summary bar */
+  .summary-bar { gap: 16px; }
+
+  /* Notification buttons */
+  #page-notifications .btn-outline.btn-sm { width: 100%; text-align: center; }
 }
+
 @media (max-width: 480px) {
   .stat-grid { grid-template-columns: 1fr; }
+  .topbar-logo { font-size: 18px; letter-spacing: 0.2em; }
+  .page-title { font-size: 24px; }
+  .stat-value { font-size: 24px; }
+  .modal-backdrop .modal { padding: 24px 16px; }
 }
 
 /* ─── CALENDAR ─── */
@@ -572,14 +661,41 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .cal-cell-member { font-size: 10px; }
 }
 @media (max-width: 768px) {
-  .cal-week-grid { grid-template-columns: 50px repeat(6, 1fr); }
-  .cal-week-header { font-size: 8px; padding: 6px 4px; }
-  .cal-time-label { font-size: 12px; padding: 6px 4px; }
-  .cal-toolbar { flex-direction: column; align-items: flex-start; }
-}
-@media (max-width: 600px) {
-  .cal-month-grid { grid-template-columns: repeat(7, 1fr); }
+  /* Calendar toolbar */
+  .cal-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .cal-toolbar-left { flex-wrap: wrap; gap: 8px; }
+  .cal-toolbar-right { justify-content: flex-start; }
+  .cal-period-label { font-size: 16px; min-width: 140px; }
+  .cal-view-btn { padding: 10px 14px; min-height: 44px; font-size: 11px; }
+  .cal-nav-btn { width: 44px; height: 44px; font-size: 20px; }
+  .cal-today-btn { min-height: 44px; padding: 10px 18px; }
+
+  /* Week view: show 3 days with horizontal scroll */
+  .cal-week-grid {
+    grid-template-columns: 50px repeat(6, minmax(120px, 1fr));
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .cal-week-header { font-size: 8px; padding: 8px 4px; }
+  .cal-week-header-date { font-size: 15px; }
+  .cal-time-label { font-size: 13px; padding: 8px 4px; min-height: 70px; }
+  .cal-week-cell { padding: 6px; min-height: 70px; }
+  .cal-cell-member { font-size: 10px; }
+
+  /* Month view */
+  .cal-month-header { font-size: 8px; letter-spacing: 0.08em; padding: 6px 2px; }
   .cal-month-cell { min-height: 60px; padding: 4px; }
+  .cal-month-day-num { font-size: 15px; }
+  .cal-month-info { font-size: 8px; }
+
+  /* Day view */
+  .cal-day-card { padding: 16px; }
+  .cal-day-card-time { font-size: 22px; }
+  .cal-day-add-btn { min-height: 44px; padding: 10px 18px; }
+}
+@media (max-width: 480px) {
+  .cal-week-grid { grid-template-columns: 40px repeat(6, minmax(100px, 1fr)); }
+  .cal-month-cell { min-height: 48px; }
+  .cal-month-day-num { font-size: 13px; }
 }
 </style>
 </head>
@@ -627,6 +743,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
       <li><button onclick="showPage('contacts')" data-page="contacts"><span class="nav-icon">&#9998;</span> Messages</button></li>
     </ul>
   </div>
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
 
   <!-- MAIN CONTENT -->
   <div class="main-content">
@@ -1208,7 +1327,7 @@ function showPage(page) {
   });
 
   // Close mobile sidebar
-  document.getElementById('sidebar').classList.remove('mobile-open');
+  closeMobileSidebar();
 
   switch (page) {
     case 'overview': loadOverview(); break;
@@ -1226,7 +1345,22 @@ function showPage(page) {
 }
 
 function toggleMobileSidebar() {
-  document.getElementById('sidebar').classList.toggle('mobile-open');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var isOpen = sidebar.classList.toggle('mobile-open');
+  if (isOpen) {
+    overlay.classList.add('active');
+    document.body.classList.add('body-no-scroll');
+  } else {
+    overlay.classList.remove('active');
+    document.body.classList.remove('body-no-scroll');
+  }
+}
+
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+  document.body.classList.remove('body-no-scroll');
 }
 
 // ─── OVERVIEW ───
