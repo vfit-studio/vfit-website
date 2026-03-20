@@ -1350,7 +1350,12 @@ function initCountdownWidget(pre, config, isRunClub) {
   if (!config) {
     var label = isRunClub ? 'Run Club' : "Pi'lattes";
     document.getElementById(pre + 'CountdownLabel').textContent = 'No Upcoming Sessions';
-    document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--bark);font-style:italic;margin:16px 0;">Check back soon</p>';
+    // Rebuild timer HTML so it can be restored later
+    document.getElementById(pre + 'Countdown').innerHTML =
+      '<div class="countdown-unit"><span class="countdown-num" id="' + pre + 'Days">–</span><span class="countdown-txt">Days</span></div><span class="countdown-sep">:</span>' +
+      '<div class="countdown-unit"><span class="countdown-num" id="' + pre + 'Hours">–</span><span class="countdown-txt">Hrs</span></div><span class="countdown-sep">:</span>' +
+      '<div class="countdown-unit"><span class="countdown-num" id="' + pre + 'Mins">–</span><span class="countdown-txt">Min</span></div><span class="countdown-sep">:</span>' +
+      '<div class="countdown-unit"><span class="countdown-num" id="' + pre + 'Secs">–</span><span class="countdown-txt">Sec</span></div>';
     document.getElementById(pre + 'SpotsBar').classList.add('hidden');
     document.getElementById(pre + 'SessionDate').style.display = 'none';
     var followEl = document.getElementById(pre + 'FollowText');
