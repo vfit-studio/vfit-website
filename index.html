@@ -54,15 +54,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
    ============================================ */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:200;
-  padding:32px 48px;
+  padding:24px 48px;
   display:flex;align-items:center;justify-content:space-between;
-  transition:background .5s,padding .5s,box-shadow .5s;
+  background:var(--warm-white);
+  box-shadow:0 1px 0 rgba(201,185,154,0.1);
 }
 nav.scrolled{
-  background:rgba(254,252,248,.95);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  background:var(--warm-white);
   padding:18px 48px;
-  box-shadow:0 1px 0 rgba(201,185,154,.15);
+  box-shadow:0 1px 0 rgba(201,185,154,0.2);
 }
 .nav-logo{
   font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;
@@ -203,10 +203,11 @@ nav.scrolled{
   display:grid;grid-template-columns:1fr 1fr;
   background:var(--warm-white);
   position:relative;overflow:hidden;
+  padding-top:80px;
 }
 .home-hero-left{
   display:flex;flex-direction:column;justify-content:center;
-  padding:140px 80px 80px;
+  padding:60px 80px 80px;
   position:relative;z-index:2;
 }
 .home-hero-eyebrow{
@@ -275,10 +276,66 @@ nav.scrolled{
    OFFERING PANELS — HOME PAGE
    ============================================ */
 .offering-panel{
+  position:relative;
   min-height:100vh;min-height:100dvh;
-  display:grid;grid-template-columns:1fr 1fr;
-  position:relative;overflow:hidden;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
 }
+.panel-video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:0;
+}
+.panel-overlay{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to right, rgba(61,53,48,0.85) 0%, rgba(61,53,48,0.5) 60%, rgba(61,53,48,0.3) 100%);
+  z-index:1;
+}
+.panel-content{
+  position:relative;
+  z-index:2;
+  padding:120px 72px;
+  max-width:650px;
+  color:var(--warm-white);
+}
+.panel-content .op-eyebrow{color:rgba(254,252,248,.6)}
+.panel-content .op-eyebrow::before{background:var(--clay)}
+.panel-content .op-title{color:var(--warm-white)}
+.panel-content .op-title em{color:var(--clay)}
+.panel-content .op-desc{color:rgba(254,252,248,.65)}
+.panel-content .op-badge{background:rgba(254,252,248,.12);color:var(--warm-white);border:1px solid rgba(254,252,248,.2)}
+.panel-content .gold-line{width:60px;height:1px;background:linear-gradient(to right,var(--clay),transparent);margin-bottom:28px}
+
+/* Panel CTA — light outline button */
+.btn-outline-light{
+  display:inline-block;padding:15px 42px;
+  background:transparent;color:var(--warm-white);
+  font-family:'Jost',sans-serif;font-size:11px;font-weight:400;
+  letter-spacing:.22em;text-transform:uppercase;text-decoration:none;
+  border:1px solid rgba(254,252,248,.4);cursor:pointer;
+  transition:border-color .3s,background .3s,color .3s;
+  min-height:44px;
+}
+.btn-outline-light:hover{background:var(--warm-white);color:var(--deep);border-color:var(--warm-white)}
+
+/* Panel countdown dark-on-video variant */
+.panel-countdown-video{
+  background:rgba(255,255,255,.06);border:1px solid rgba(254,252,248,.12);
+  padding:40px 36px;text-align:center;width:100%;max-width:400px;margin-top:36px;
+}
+.panel-countdown-video .countdown-label{font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--clay);margin-bottom:16px}
+.panel-countdown-video .countdown-timer{display:flex;justify-content:center;gap:10px;margin-bottom:20px}
+.panel-countdown-video .countdown-unit{display:flex;flex-direction:column;align-items:center;min-width:48px}
+.panel-countdown-video .countdown-num{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;line-height:1;color:var(--warm-white)}
+.panel-countdown-video .countdown-txt{font-size:9px;letter-spacing:.25em;text-transform:uppercase;margin-top:4px;color:rgba(201,185,154,.5)}
+.panel-countdown-video .countdown-sep{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1;padding-top:4px;color:rgba(201,185,154,.3)}
+
+/* Legacy classes kept for non-video panels if needed */
 .offering-panel-content{
   display:flex;flex-direction:column;justify-content:center;
   padding:80px 80px;position:relative;z-index:2;
@@ -306,30 +363,10 @@ nav.scrolled{
   text-transform:uppercase;padding:5px 14px;margin-bottom:24px;
 }
 
-/* Studio Sessions Panel — LIGHT (primary offering) */
-.panel-studio{background:var(--sand);color:var(--deep)}
-.panel-studio .op-eyebrow{color:var(--bark)}
-.panel-studio .op-eyebrow::before{background:var(--clay)}
-.panel-studio .op-title{color:var(--deep)}
-.panel-studio .op-title em{color:var(--bark)}
-.panel-studio .op-desc{color:#6b5e52}
-.panel-studio .gold-line{width:60px;height:1px;background:linear-gradient(to right,var(--clay),transparent);margin-bottom:28px}
-
-/* Pi'lattes Panel — CREAM */
-.panel-pilattes{background:var(--cream)}
-.panel-pilattes .op-eyebrow{color:var(--bark)}
-.panel-pilattes .op-eyebrow::before{background:var(--clay)}
-.panel-pilattes .op-title{color:var(--deep)}
-.panel-pilattes .op-title em{color:var(--bark)}
-.panel-pilattes .op-desc{color:#6b5e52}
-
-/* Run Club Panel — DEEPER for contrast */
-.panel-runclub{background:var(--deep);color:var(--warm-white)}
-.panel-runclub .op-eyebrow{color:var(--clay)}
-.panel-runclub .op-eyebrow::before{background:var(--clay)}
-.panel-runclub .op-title{color:var(--warm-white)}
-.panel-runclub .op-title em{color:var(--clay)}
-.panel-runclub .op-desc{color:rgba(254,252,248,.5)}
+/* All panels now use video backgrounds — colors handled by .panel-content */
+.panel-studio{background:var(--deep)}
+.panel-pilattes{background:var(--deep)}
+.panel-runclub{background:var(--deep)}
 
 /* ============================================
    PANEL COUNTDOWN WIDGETS
@@ -504,7 +541,7 @@ nav.scrolled{
    ============================================ */
 .page-hero{
   min-height:70vh;display:flex;flex-direction:column;
-  justify-content:flex-end;padding:0 80px 80px;
+  justify-content:flex-end;padding:90px 80px 80px;
   position:relative;overflow:hidden;
   background:var(--warm-white);
 }
@@ -551,7 +588,7 @@ nav.scrolled{
 /* Cinematic Hero (for Run Club dark variant) */
 .cinematic-hero{
   min-height:60vh;display:flex;flex-direction:column;
-  justify-content:flex-end;padding:0 80px 80px;
+  justify-content:flex-end;padding:90px 80px 80px;
   position:relative;overflow:hidden;background:var(--deep);
 }
 .cinematic-hero-bg-text{
@@ -615,7 +652,7 @@ nav.scrolled{
    COMPACT HEADER — WARM LIGHT VERSION
    ============================================ */
 .compact-header{
-  padding:140px 80px 70px;
+  padding:160px 80px 70px;
   background:var(--sand);
   position:relative;overflow:hidden;
 }
@@ -988,7 +1025,8 @@ footer{
   .home-hero{grid-template-columns:1fr;min-height:auto}
   .home-hero-left{padding:140px 36px 60px}
   .home-hero-right{min-height:50vw}
-  .offering-panel{grid-template-columns:1fr;min-height:auto}
+  .offering-panel{min-height:auto}
+  .panel-content{padding:100px 36px 80px}
   .offering-panel-content{padding:80px 36px 40px}
   .offering-panel-visual{padding:0 36px 60px}
   .georgie-editorial{grid-template-columns:1fr;min-height:auto}
@@ -1011,6 +1049,7 @@ footer{
 
 @media(max-width:480px){
   .home-hero-left{padding:120px 24px 48px}
+  .panel-content{padding:80px 24px 60px}
   .offering-panel-content{padding:64px 24px 32px}
   .offering-panel-visual{padding:0 24px 48px}
   .georgie-editorial-content{padding:48px 24px}
@@ -1049,6 +1088,7 @@ footer{
      FULL-SCREEN MENU — LIGHT
      ============================================ -->
 <div class="mobile-overlay" id="mobileMenu">
+  <button onclick="mobileNav('home')">Home</button>
   <button onclick="mobileNav('memberships')">Studio Sessions</button>
   <button onclick="mobileNav('pilattes')">Pi'lattes</button>
   <button onclick="mobileNav('runclub')">Run Club</button>
@@ -1086,92 +1126,83 @@ footer{
   </div>
 </section>
 
-<!-- VIDEO SECTION — between hero and first offering -->
-<div class="video-section">
-  <div class="video-wrapper" id="homeVideoWrapper">
-    <video autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
-      <source src="https://videos.pexels.com/video-files/6111088/6111088-hd_1920_1080_25fps.mp4" type="video/mp4">
-    </video>
-  </div>
-  <p class="video-caption">The VFIT Experience</p>
-</div>
-
-<!-- OFFERING 1: STUDIO SESSIONS (Primary — Light Sand) -->
+<!-- OFFERING 1: STUDIO SESSIONS (Video Background) -->
 <section class="offering-panel panel-studio" id="panel-studio">
-  <div class="offering-panel-content">
-    <span class="op-badge" style="background:var(--clay);color:var(--deep);">Exclusive &middot; Members Only</span>
+  <video class="panel-video" autoplay muted loop playsinline>
+    <source src="https://videos.pexels.com/video-files/4108054/4108054-hd_1920_1080_25fps.mp4" type="video/mp4">
+  </video>
+  <div class="panel-overlay"></div>
+  <div class="panel-content">
+    <span class="op-badge reveal">Exclusive &middot; Members Only</span>
     <div class="gold-line reveal"></div>
     <p class="op-eyebrow reveal">Private Gym Access</p>
     <h2 class="op-title reveal rd1">Studio<br><em>Sessions.</em></h2>
     <p class="op-desc reveal rd2">Private gym access. Small group training with a maximum of four people. Recurring weekly sessions, expert coaching in an intimate, purposeful environment.</p>
-    <p class="reveal rd2" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--bark);margin-bottom:32px;font-style:italic;">From $60 per session</p>
+    <p class="reveal rd2" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--clay);margin-bottom:32px;font-style:italic;">From $60 per session</p>
     <div class="reveal rd3" style="display:flex;gap:16px;flex-wrap:wrap;">
-      <button class="btn-ghost" onclick="showPage('memberships')">View Plans</button>
+      <button class="btn-outline-light" onclick="showPage('memberships')">View Plans</button>
     </div>
-  </div>
-  <div class="offering-panel-visual" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;">
-    <div style="text-align:center;">
-      <p style="font-size:10px;letter-spacing:.38em;text-transform:uppercase;color:var(--bark);margin-bottom:20px;">From</p>
-      <p style="font-family:'Cormorant Garamond',serif;font-size:clamp(60px,8vw,90px);font-weight:300;color:var(--deep);line-height:1;">$60</p>
-      <p style="font-size:14px;color:#6b5e52;margin-top:8px;">per session</p>
-    </div>
-    <div style="width:60px;height:1px;background:linear-gradient(to right,transparent,var(--clay),transparent);"></div>
-    <p style="font-size:13px;color:#6b5e52;text-align:center;max-width:260px;line-height:1.8;">Three plans tailored to your commitment level. Signature, Flexible, or VIP.</p>
   </div>
 </section>
 
-<!-- OFFERING 2: PI'LATTES (Cream) -->
+<!-- OFFERING 2: PI'LATTES (Video Background) -->
 <section class="offering-panel panel-pilattes">
-  <div class="offering-panel-visual" style="order:-1;">
-    <div class="panel-countdown light" id="homePlWidget">
-      <p class="countdown-label">Next Session</p>
-      <div class="home-cd-event-date" id="homePlDate" style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--bark);margin-bottom:16px;min-height:22px;"></div>
-      <div class="countdown-timer" id="homePlTimer">
-        <div class="countdown-unit"><span class="countdown-num" style="color:var(--deep);" id="homePlDays">0</span><span class="countdown-txt" style="color:var(--bark);">Days</span></div>
-        <span class="countdown-sep" style="color:var(--clay);">:</span>
-        <div class="countdown-unit"><span class="countdown-num" style="color:var(--deep);" id="homePlHours">0</span><span class="countdown-txt" style="color:var(--bark);">Hrs</span></div>
-        <span class="countdown-sep" style="color:var(--clay);">:</span>
-        <div class="countdown-unit"><span class="countdown-num" style="color:var(--deep);" id="homePlMins">00</span><span class="countdown-txt" style="color:var(--bark);">Min</span></div>
-        <span class="countdown-sep" style="color:var(--clay);">:</span>
-        <div class="countdown-unit"><span class="countdown-num" style="color:var(--deep);" id="homePlSecs">00</span><span class="countdown-txt" style="color:var(--bark);">Sec</span></div>
-      </div>
-      <div class="home-cd-status" id="homePlStatus" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--bark);min-height:20px;margin-top:8px;"></div>
-    </div>
-  </div>
-  <div class="offering-panel-content">
-    <span class="op-badge" style="background:var(--sage);color:var(--warm-white);">Monthly &middot; Open to All</span>
+  <video class="panel-video" autoplay muted loop playsinline>
+    <source src="https://videos.pexels.com/video-files/6111088/6111088-hd_1920_1080_25fps.mp4" type="video/mp4">
+  </video>
+  <div class="panel-overlay"></div>
+  <div class="panel-content">
+    <span class="op-badge reveal">Monthly &middot; Open to All</span>
     <p class="op-eyebrow reveal">The Dairy, Ravensbourne</p>
     <h2 class="op-title reveal rd1">Pi'lattes at<br><em>The Dairy.</em></h2>
     <p class="op-desc reveal rd2">Mat Pilates at one of SEQ's most stunning venues. A burn that fires up your core, followed by a complimentary coffee from Then Bakehouse Caf&eacute;.</p>
-    <div class="reveal rd3">
-      <button class="btn-ghost" onclick="showPage('pilattes')">View Details</button>
+    <div class="reveal rd3" style="margin-bottom:24px;">
+      <button class="btn-outline-light" onclick="showPage('pilattes')">View Details</button>
+    </div>
+    <!-- Countdown Widget -->
+    <div class="panel-countdown-video reveal rd4" id="homePlWidget">
+      <p class="countdown-label">Next Session</p>
+      <div class="home-cd-event-date" id="homePlDate" style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--clay);margin-bottom:16px;min-height:22px;"></div>
+      <div class="countdown-timer" id="homePlTimer">
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homePlDays">0</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Days</span></div>
+        <span class="countdown-sep" style="color:rgba(201,185,154,.3);">:</span>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homePlHours">0</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Hrs</span></div>
+        <span class="countdown-sep" style="color:rgba(201,185,154,.3);">:</span>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homePlMins">00</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Min</span></div>
+        <span class="countdown-sep" style="color:rgba(201,185,154,.3);">:</span>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homePlSecs">00</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Sec</span></div>
+      </div>
+      <div class="home-cd-status" id="homePlStatus" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--clay);min-height:20px;margin-top:8px;"></div>
     </div>
   </div>
 </section>
 
-<!-- OFFERING 3: RUN CLUB / TRACK TUESDAY (Dark) -->
+<!-- OFFERING 3: RUN CLUB / TRACK TUESDAY (Video Background) -->
 <section class="offering-panel panel-runclub" id="panel-rc">
-  <div class="offering-panel-content">
-    <span class="op-badge" style="background:var(--sage);color:var(--warm-white);">Weekly &middot; Open to All</span>
+  <video class="panel-video" autoplay muted loop playsinline>
+    <source src="https://videos.pexels.com/video-files/8459966/8459966-hd_1080_1920_25fps.mp4" type="video/mp4">
+  </video>
+  <div class="panel-overlay"></div>
+  <div class="panel-content">
+    <span class="op-badge reveal">Weekly &middot; Open to All</span>
     <p class="op-eyebrow reveal">Every Tuesday &middot; 5:15 AM</p>
     <h2 class="op-title reveal rd1">Track<br><em>Tuesday.</em></h2>
     <p class="op-desc reveal rd2">All fitness levels welcome — intervals, tempo runs, strength circuits. No two sessions are the same. Led by Georgie Valdal with world-class credentials in Track &amp; Field.</p>
-    <div class="reveal rd3">
-      <button class="btn-ghost btn-ghost-light" onclick="showPage('runclub')">View Details</button>
+    <div class="reveal rd3" style="margin-bottom:24px;">
+      <button class="btn-outline-light" onclick="showPage('runclub')">View Details</button>
     </div>
-  </div>
-  <div class="offering-panel-visual">
-    <div class="panel-countdown dark" id="homeRcWidget">
+    <!-- Countdown Widget -->
+    <div class="panel-countdown-video reveal rd4" id="homeRcWidget">
       <p class="countdown-label">Next Session</p>
       <div class="home-cd-event-date" id="homeRcDate" style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--clay);margin-bottom:16px;min-height:22px;"></div>
       <div class="countdown-timer" id="homeRcTimer">
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcDays">0</span><span class="countdown-txt">Days</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcHours">0</span><span class="countdown-txt">Hrs</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcMins">00</span><span class="countdown-txt">Min</span></div>
-        <span class="countdown-sep">:</span>
-        <div class="countdown-unit"><span class="countdown-num" id="homeRcSecs">00</span><span class="countdown-txt">Sec</span></div>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homeRcDays">0</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Days</span></div>
+        <span class="countdown-sep" style="color:rgba(201,185,154,.3);">:</span>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homeRcHours">0</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Hrs</span></div>
+        <span class="countdown-sep" style="color:rgba(201,185,154,.3);">:</span>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homeRcMins">00</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Min</span></div>
+        <span class="countdown-sep" style="color:rgba(201,185,154,.3);">:</span>
+        <div class="countdown-unit"><span class="countdown-num" style="color:var(--warm-white);" id="homeRcSecs">00</span><span class="countdown-txt" style="color:rgba(201,185,154,.5);">Sec</span></div>
       </div>
       <div class="home-cd-status" id="homeRcStatus" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--clay);min-height:20px;margin-top:8px;"></div>
     </div>
