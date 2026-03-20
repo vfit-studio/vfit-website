@@ -656,7 +656,7 @@
     <p class="section-label reveal">Join Us</p>
     <h2 class="reveal rd1">See you at the <em>track.</em></h2>
     <p class="reveal rd2">Tuesdays at 5:15 AM · Glennie School Track · All levels welcome.</p>
-    <button class="btn-primary reveal rd3" onclick="openSimpleModal('Run Club (Track Tuesday)','Book Run Club')">Book Your Spot</button>
+    <button class="btn-primary reveal rd3" id="rcCtaBtn" onclick="openSimpleModal('Run Club (Track Tuesday)','Book Run Club')">Book Your Spot</button>
   </div></div>
 
   <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openSimpleModal('General Enquiry','Book Now')">Book Now</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
@@ -721,7 +721,7 @@
     <p class="section-label reveal">Monthly Classes</p>
     <h2 class="reveal rd1">Spots are <em>limited.</em></h2>
     <p class="reveal rd2">Monthly Sundays · The Dairy, Ravensbourne · 7:00–8:00 AM · Coffee included.</p>
-    <button class="btn-primary reveal rd3" onclick="openSimpleModal('Pi\'lattes','Book Pi\'lattes')">Book Your Spot</button>
+    <button class="btn-primary reveal rd3" id="plCtaBtn" onclick="openSimpleModal('Pi\'lattes','Book Pi\'lattes')">Book Your Spot</button>
   </div></div>
 
   <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openSimpleModal('General Enquiry','Book Now')">Book Now</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
@@ -1198,6 +1198,9 @@ function initCountdownWidget(pre, config, isRunClub) {
         btn.className = 'widget-btn notify';
         btn.textContent = 'Get Notified';
         btn.onclick = function() { openSimpleModal("Pi'lattes — Notify Me", "Get Notified"); };
+        // Sync hero button
+        var heroBtn = document.getElementById(pre + 'HeroBtn');
+        if (heroBtn) { heroBtn.textContent = 'Get Notified'; heroBtn.onclick = btn.onclick; }
         return;
       }
     }
@@ -1216,6 +1219,11 @@ function initCountdownWidget(pre, config, isRunClub) {
         var label = isRunClub ? 'Run Club — Notify Me' : "Pi'lattes — Notify Me";
         openSimpleModal(label, 'Get Notified');
       };
+      // Sync hero + CTA buttons
+      var heroBtn = document.getElementById(pre + 'HeroBtn');
+      var ctaBtn = document.getElementById(pre + 'CtaBtn');
+      if (heroBtn) { heroBtn.textContent = 'Get Notified'; heroBtn.onclick = btn.onclick; }
+      if (ctaBtn) { ctaBtn.textContent = 'Get Notified'; ctaBtn.onclick = btn.onclick; }
       updateCountdown(ticketsOpen, pre);
       return;
     }
@@ -1243,6 +1251,11 @@ function initCountdownWidget(pre, config, isRunClub) {
         var label = isRunClub ? 'Run Club — Waitlist' : "Pi'lattes — Waitlist";
         openSimpleModal(label, 'Join Waitlist');
       };
+      // Sync hero + CTA buttons
+      var heroBtn = document.getElementById(pre + 'HeroBtn');
+      var ctaBtn = document.getElementById(pre + 'CtaBtn');
+      if (heroBtn) { heroBtn.textContent = 'Join Waitlist'; heroBtn.onclick = btn.onclick; }
+      if (ctaBtn) { ctaBtn.textContent = 'Join Waitlist'; ctaBtn.onclick = btn.onclick; }
       return;
     }
 
@@ -1272,6 +1285,11 @@ function initCountdownWidget(pre, config, isRunClub) {
       var label = isRunClub ? 'Run Club (Track Tuesday)' : "Pi'lattes";
       openSimpleModal(label, 'Book ' + (isRunClub ? 'Run Club' : "Pi'lattes"));
     };
+    // Sync hero + CTA buttons
+    var heroBtn = document.getElementById(pre + 'HeroBtn');
+    var ctaBtn = document.getElementById(pre + 'CtaBtn');
+    if (heroBtn) { heroBtn.textContent = 'Book Now'; heroBtn.onclick = btn.onclick; }
+    if (ctaBtn) { ctaBtn.textContent = 'Book Now'; ctaBtn.onclick = btn.onclick; }
   }
 
   render();
