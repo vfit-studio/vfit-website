@@ -74,6 +74,7 @@
 
 const { supabase } = require('./utils/supabase');
 const Stripe = require('stripe');
+const { sendNotifyConfirmation, sendBookingsOpenEmail, sendBookingConfirmation, sendMembershipConfirmation, sendOwnerAlert } = require('./utils/email');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
@@ -113,6 +114,15 @@ function requireAdmin(adminKey) {
 }
 
 // ─── Count taken spots for an event (confirmed + held) ───
+function formatSessionDate(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()];
+  } catch(e) { return dateStr; }
+}
+
 async function spotsTaken(eventId) {
   const { count, error } = await supabase
     .from('bookings')
@@ -288,8 +298,19 @@ async function handleBook(body) {
   // Free event — skip Stripe, already confirmed
   if (event.price_cents === 0) {
     const spotsRemaining = Math.max(0, event.spots_total - taken - 1);
+    const sessionInfo = event.type === 'runclub'
+      ? 'Every Tuesday · 5:15 AM · Glennie School Track'
+      : formatSessionDate(event.session_date) + ' · 7:00 AM · The Dairy, Ravensbourne';
+    // Send confirmation email to booker
+    await sendBookingConfirmation(email, name, event.name, sessionInfo);
+    // Alert Georgie
+    await sendOwnerAlert(
+      `New Booking — ${event.name} (${taken + 1}/${event.spots_total})`,
+      `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'}) booked <strong>${event.name}</strong>.</p><p>Spots: ${taken + 1} / ${event.spots_total}</p>`
+    );
     return respond(200, {
       success: true,
+      message: 'Booking confirmed! Check your email.',
       booking_id: booking.id,
       spots_remaining: spotsRemaining,
       free: true,
@@ -345,7 +366,13 @@ async function handleNotify(body) {
     type: 'notify',
   });
   if (error) throw error;
-  return respond(200, { success: true });
+
+  // Send confirmation email
+  await sendNotifyConfirmation(email, name, interest);
+  // Alert Georgie
+  await sendOwnerAlert('New notification signup', `<p><strong>${name || 'Unknown'}</strong> (${email}) wants to be notified about <strong>${interest || 'upcoming sessions'}</strong>.</p>`);
+
+  return respond(200, { success: true, message: "You're on the list! We'll email you when bookings open." });
 }
 
 async function handleWaitlist(body) {
@@ -359,7 +386,13 @@ async function handleWaitlist(body) {
     type: 'waitlist',
   });
   if (error) throw error;
-  return respond(200, { success: true });
+
+  // Send confirmation email
+  await sendNotifyConfirmation(email, name, interest);
+  // Alert Georgie
+  await sendOwnerAlert('New waitlist signup', `<p><strong>${name || 'Unknown'}</strong> (${email}) joined the waitlist for <strong>${interest || 'upcoming sessions'}</strong>.</p>`);
+
+  return respond(200, { success: true, message: "You're on the waitlist! We'll email you if a spot opens up." });
 }
 
 async function handleContact(body) {
@@ -373,7 +406,12 @@ async function handleContact(body) {
     message: message || null,
   });
   if (error) throw error;
-  return respond(200, { success: true });
+  // Alert Georgie
+  await sendOwnerAlert(
+    'New Contact Message — ' + name,
+    `<p><strong>From:</strong> ${name} (${email}${phone ? ', ' + phone : ''})</p><p><strong>Message:</strong> ${message || 'No message'}</p>`
+  );
+  return respond(200, { success: true, message: 'Message sent!' });
 }
 
 async function handleMembership(body) {
@@ -393,7 +431,14 @@ async function handleMembership(body) {
     notes: notes || null,
   });
   if (error) throw error;
-  return respond(200, { success: true });
+  // Send confirmation to the person
+  await sendMembershipConfirmation(email, name, plan);
+  // Alert Georgie
+  await sendOwnerAlert(
+    'New Membership Enquiry — ' + plan,
+    `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'})</p><p><strong>Plan:</strong> ${plan}</p><p><strong>Sessions/wk:</strong> ${sessions || '—'}</p><p><strong>Days:</strong> ${days || '—'}</p><p><strong>Times:</strong> ${times || '—'}</p><p><strong>Notes:</strong> ${notes || 'None'}</p>`
+  );
+  return respond(200, { success: true, message: 'Enquiry sent! Check your email.' });
 }
 
 async function handleCreateEvent(body) {
@@ -495,9 +540,25 @@ async function handleSendNotifications(body) {
       .in('id', ids);
   }
 
-  // Return the list of emails for the admin page to handle
-  const emails = (signups || []).map((s) => ({ email: s.email, name: s.name }));
-  return respond(200, { success: true, count: emails.length, emails });
+  // Send "bookings are open" email to each signup
+  const siteUrl = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
+  let sent = 0;
+  for (const signup of (signups || [])) {
+    try {
+      await sendBookingsOpenEmail(signup.email, signup.name, event_type, siteUrl);
+      sent++;
+    } catch (e) {
+      console.error('Failed to email:', signup.email, e);
+    }
+  }
+
+  // Alert Georgie
+  await sendOwnerAlert(
+    `Notifications sent — ${event_type}`,
+    `<p>Sent <strong>${sent}</strong> "bookings are open" emails for <strong>${event_type}</strong>.</p>`
+  );
+
+  return respond(200, { success: true, count: sent, message: `${sent} notification emails sent!` });
 }
 
 async function handleCleanupHolds() {

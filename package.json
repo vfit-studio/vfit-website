@@ -4,7 +4,8 @@
   "private": true,
   "description": "VFIT Studio booking system - Netlify serverless backend",
   "dependencies": {
-    "stripe": "^14.14.0",
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "resend": "^6.9.4",
+    "stripe": "^14.14.0"
   }
 }
