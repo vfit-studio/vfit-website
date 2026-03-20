@@ -552,6 +552,11 @@ exports.handler = async (event) => {
       await cleanupExpiredHolds();
 
       switch (postAction) {
+        case 'verify_admin':
+          if (body.admin_key === process.env.ADMIN_KEY) {
+            return respond(200, { success: true });
+          }
+          return respond(401, { success: false, error: 'Invalid password' });
         case 'book':
           return await handleBook(body);
         case 'notify':

@@ -35,8 +35,9 @@
   .nav-links { display: flex; gap: 36px; list-style: none; align-items: center; }
   .nav-links button { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--deep); text-decoration: none; opacity: 0.55; transition: opacity 0.3s; cursor: pointer; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; padding: 0; min-height: 44px; }
   .nav-links button:hover, .nav-links button.active { opacity: 1; }
-  .nav-cta { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--warm-white); background: var(--deep); padding: 11px 26px; border: 1px solid var(--deep); cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: background 0.3s, color 0.3s, transform 0.25s ease-out; min-height: 44px; }
-  .nav-cta:hover { background: var(--bark); border-color: var(--bark); color: var(--warm-white); transform: translateY(-1px); }
+  .nav-actions { display: flex; gap: 6px; align-items: center; }
+  .nav-action-btn { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--warm-white); background: var(--deep); padding: 10px 20px; border: 1px solid var(--deep); cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: background 0.3s, border-color 0.3s, transform 0.25s ease-out; min-height: 44px; }
+  .nav-action-btn:hover { background: var(--bark); border-color: var(--bark); transform: translateY(-1px); }
 
   /* ─── HAMBURGER ─── */
   .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; z-index: 300; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
@@ -434,6 +435,50 @@
   .footer-bottom { grid-column: 1 / -1; border-top: 1px solid rgba(201,185,154,0.08); padding-top: 26px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
   .footer-bottom p { font-size: 11px; color: rgba(254,252,248,0.2); letter-spacing: 0.07em; }
 
+  /* ─── HOME COUNTDOWNS ─── */
+  .home-countdowns {
+    display: grid; grid-template-columns: 1fr auto 1fr; background: var(--deep);
+    overflow: hidden;
+  }
+  .home-cd-card {
+    padding: 72px 60px; text-align: center; cursor: pointer;
+    transition: background 0.4s;
+  }
+  .home-cd-card:hover { background: rgba(255,255,255,0.03); }
+  .home-cd-divider {
+    width: 1px; background: rgba(201,185,154,0.12); margin: 40px 0;
+  }
+  .home-cd-label {
+    font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase;
+    color: var(--clay); margin-bottom: 12px;
+  }
+  .home-cd-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300;
+    font-style: italic; color: rgba(254,252,248,0.5); margin-bottom: 28px;
+  }
+  .home-cd-timer {
+    display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;
+  }
+  .home-cd-unit { display: flex; flex-direction: column; align-items: center; min-width: 52px; }
+  .home-cd-num {
+    font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300;
+    color: var(--warm-white); line-height: 1;
+  }
+  .home-cd-txt {
+    font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: rgba(201,185,154,0.4); margin-top: 6px;
+  }
+  .home-cd-sep {
+    font-family: 'Cormorant Garamond', serif; font-size: 36px;
+    color: rgba(201,185,154,0.2); line-height: 1; padding-top: 6px;
+  }
+  .home-cd-status {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--clay); min-height: 20px;
+  }
+  .home-cd-card .btn-ghost { color: var(--clay); }
+  .home-cd-card .btn-ghost::after { background: rgba(201,185,154,0.3); }
+
   /* ─── ANIMATIONS ─── */
   @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slowZoom { from { transform: scale(1.04); } to { transform: scale(1.0); } }
@@ -445,8 +490,13 @@
   /* ─── RESPONSIVE ─── */
   @media (max-width: 1024px) {
     nav { padding: 20px 28px; } nav.scrolled { padding: 14px 28px; }
-    .nav-links, .nav-cta { display: none; } .hamburger { display: flex; }
-    .home-hero, .about-split, .contact-grid, .split-hero { grid-template-columns: 1fr; }
+    .nav-links, .nav-actions { display: none; } .hamburger { display: flex; }
+    .home-hero, .about-split, .contact-grid, .split-hero, .home-countdowns { grid-template-columns: 1fr; }
+    .home-cd-divider { width: auto; height: 1px; margin: 0; }
+    .home-cd-card { padding: 48px 36px; }
+    .home-cd-num { font-size: 36px; }
+    .nav-actions { gap: 4px; }
+    .nav-action-btn { padding: 8px 14px; font-size: 9px; }
     .split-hero-left { padding: 120px 36px 60px; justify-content: center; }
     .split-hero-right { padding: 40px 36px; }
     .compact-header { padding: 100px 36px 48px; }
@@ -488,12 +538,14 @@
 <nav id="navbar">
   <button class="nav-logo" onclick="showPage('home')">VFIT</button>
   <ul class="nav-links">
-    <li><button onclick="showPage('runclub')">Run Club</button></li>
-    <li><button onclick="showPage('pilattes')">Pi'lattes</button></li>
-    <li><button onclick="showPage('memberships')">Memberships</button></li>
     <li><button onclick="showPage('about')">About</button></li>
+    <li><button onclick="showPage('contact')">Contact</button></li>
   </ul>
-  <button class="nav-cta" onclick="showPage('contact')">Contact</button>
+  <div class="nav-actions">
+    <button class="nav-action-btn" onclick="showPage('runclub')">Run Club</button>
+    <button class="nav-action-btn" onclick="showPage('pilattes')">Pi'lattes</button>
+    <button class="nav-action-btn" onclick="showPage('memberships')">Memberships</button>
+  </div>
   <button class="hamburger" onclick="toggleMobile()" aria-label="Toggle navigation menu" aria-expanded="false"><span></span><span></span><span></span></button>
 </nav>
 <div class="mobile-overlay" id="mobileMenu">
@@ -547,6 +599,41 @@
       <span class="btn-ghost">Explore</span>
     </div>
   </div></div>
+
+  <!-- Home Countdowns -->
+  <div class="home-countdowns">
+    <div class="home-cd-card reveal" onclick="showPage('runclub')">
+      <div class="home-cd-label">Run Club · Track Tuesday</div>
+      <div class="home-cd-title">Next session</div>
+      <div class="home-cd-timer" id="homeRcTimer">
+        <div class="home-cd-unit"><span class="home-cd-num" id="homeRcDays">0</span><span class="home-cd-txt">Days</span></div>
+        <span class="home-cd-sep">:</span>
+        <div class="home-cd-unit"><span class="home-cd-num" id="homeRcHours">0</span><span class="home-cd-txt">Hrs</span></div>
+        <span class="home-cd-sep">:</span>
+        <div class="home-cd-unit"><span class="home-cd-num" id="homeRcMins">00</span><span class="home-cd-txt">Min</span></div>
+        <span class="home-cd-sep">:</span>
+        <div class="home-cd-unit"><span class="home-cd-num" id="homeRcSecs">00</span><span class="home-cd-txt">Sec</span></div>
+      </div>
+      <div class="home-cd-status" id="homeRcStatus"></div>
+      <span class="btn-ghost" style="margin-top:16px;">View Details</span>
+    </div>
+    <div class="home-cd-divider"></div>
+    <div class="home-cd-card reveal rd1" onclick="showPage('pilattes')">
+      <div class="home-cd-label">Pi'lattes · The Dairy</div>
+      <div class="home-cd-title">Next session</div>
+      <div class="home-cd-timer" id="homePlTimer">
+        <div class="home-cd-unit"><span class="home-cd-num" id="homePlDays">0</span><span class="home-cd-txt">Days</span></div>
+        <span class="home-cd-sep">:</span>
+        <div class="home-cd-unit"><span class="home-cd-num" id="homePlHours">0</span><span class="home-cd-txt">Hrs</span></div>
+        <span class="home-cd-sep">:</span>
+        <div class="home-cd-unit"><span class="home-cd-num" id="homePlMins">00</span><span class="home-cd-txt">Min</span></div>
+        <span class="home-cd-sep">:</span>
+        <div class="home-cd-unit"><span class="home-cd-num" id="homePlSecs">00</span><span class="home-cd-txt">Sec</span></div>
+      </div>
+      <div class="home-cd-status" id="homePlStatus"></div>
+      <span class="btn-ghost" style="margin-top:16px;">View Details</span>
+    </div>
+  </div>
 
   <!-- Photo Gallery -->
   <div class="gallery-section">
@@ -1390,6 +1477,57 @@ initCountdownWidget('pl', PILATTES_CONFIG, false);
 
 // Fetch live data from API (overrides defaults above)
 fetchLiveConfig();
+
+// ═══════════════════════════════════
+// HOME PAGE COUNTDOWNS (mirror the page widgets)
+// ═══════════════════════════════════
+function updateHomeCountdowns() {
+  var configs = [
+    { config: RUNCLUB_CONFIG, pre: 'homeRc', isRunClub: true },
+    { config: PILATTES_CONFIG, pre: 'homePl', isRunClub: false }
+  ];
+  configs.forEach(function(item) {
+    var c = item.config, pre = item.pre;
+    var now = new Date();
+    var ticketsOpen = new Date(c.ticketsOpen);
+    var session = new Date(c.sessionDate);
+    var statusEl = document.getElementById(pre + 'Status');
+    var target, label;
+
+    if (isNaN(session.getTime())) {
+      document.getElementById(pre + 'Timer').innerHTML = '<div class="home-cd-title" style="margin:0;">Date TBA</div>';
+      if (statusEl) statusEl.textContent = 'Follow @valdalfit';
+      return;
+    }
+    if (now < ticketsOpen) {
+      target = ticketsOpen;
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--clay);">Bookings open soon</span>';
+    } else if (c.spotsRemaining > 0) {
+      target = session;
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--sage);">&#9679; ' + c.spotsRemaining + ' spots remaining</span>';
+    } else {
+      target = session;
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--red);">Sold Out</span>';
+    }
+
+    var diff = target - now;
+    if (diff <= 0) diff = 0;
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    var dEl = document.getElementById(pre + 'Days');
+    var hEl = document.getElementById(pre + 'Hours');
+    var mEl = document.getElementById(pre + 'Mins');
+    var sEl = document.getElementById(pre + 'Secs');
+    if (dEl) dEl.textContent = d;
+    if (hEl) hEl.textContent = h;
+    if (mEl) mEl.textContent = String(m).padStart(2, '0');
+    if (sEl) sEl.textContent = String(s).padStart(2, '0');
+  });
+}
+updateHomeCountdowns();
+setInterval(updateHomeCountdowns, 1000);
 
 // Check if returning from Stripe checkout
 (function() {
