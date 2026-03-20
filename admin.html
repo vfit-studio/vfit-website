@@ -917,6 +917,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   </div>
 </div>
 
+<!-- ─── CALENDAR SLOT MODAL ─── -->
+<div class="modal-backdrop" id="cal-slot-modal">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" onclick="closeCalSlotModal()">&times;</button>
+    <h2 class="modal-title" id="cal-slot-title"></h2>
+    <div id="cal-slot-content"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
 <!-- ─── ADD MEMBER MODAL ─── -->
 <div class="modal-backdrop" id="addmember-modal">
   <div class="modal">
@@ -2059,6 +2068,112 @@ function calToggleDemo() {
   calRender();
 }
 
+// Click empty cell — create a slot there
+function calClickEmpty(dayIndex, time) {
+  // Pre-fill the add slot modal with this day and time
+  document.getElementById('slot-day').value = dayIndex;
+  document.getElementById('slot-time').value = time;
+  document.getElementById('slot-capacity').value = 4;
+  openAddSlotModal();
+}
+
+// Click an existing slot — open a manage modal showing members + assign option
+function calClickSlot(slotId, dayIndex, time, maxCap) {
+  if (!slotId || calUseDemo) return;
+  openCalSlotModal(slotId, dayIndex, time, maxCap);
+}
+
+var calCurrentSlotId = null;
+function openCalSlotModal(slotId, dayIndex, time, maxCap) {
+  calCurrentSlotId = slotId;
+  var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var modal = document.getElementById('cal-slot-modal');
+  document.getElementById('cal-slot-title').innerHTML = dayNames[dayIndex] + ' <em>' + esc(time) + '</em>';
+  modal.classList.add('open');
+  loadCalSlotMembers(slotId, maxCap);
+}
+function closeCalSlotModal() {
+  document.getElementById('cal-slot-modal').classList.remove('open');
+  calCurrentSlotId = null;
+}
+
+async function loadCalSlotMembers(slotId, maxCap) {
+  var content = document.getElementById('cal-slot-content');
+  content.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    // Get all members to show who's assignable
+    var membersData = await apiGet({ action: 'members' });
+    var allMembers = membersData.members || [];
+
+    // Get current schedule to find who's in this slot
+    var schedData = await apiGet({ action: 'schedule' });
+    var schedule = schedData.schedule || {};
+    var slotMembers = [];
+    for (var d in schedule) {
+      (schedule[d] || []).forEach(function(s) {
+        if (s.id === slotId) slotMembers = s.members || [];
+      });
+    }
+
+    var assignedIds = slotMembers.map(function(m) { return m.id; });
+    var count = slotMembers.length;
+    maxCap = maxCap || 4;
+
+    var html = '<div style="margin-bottom:20px;"><strong>' + count + '/' + maxCap + '</strong> booked</div>';
+
+    // Current members
+    if (slotMembers.length > 0) {
+      html += '<h4 style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin-bottom:10px;">Currently Assigned</h4>';
+      slotMembers.forEach(function(m) {
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--stone);">';
+        html += '<span>' + esc(m.name) + ' ' + calPlanBadge(m.plan) + '</span>';
+        html += '<button class="btn-outline btn-sm btn-danger" onclick="calUnassign(\'' + esc(m.id) + '\',\'' + esc(slotId) + '\')">Remove</button>';
+        html += '</div>';
+      });
+    }
+
+    // Available members to add
+    var available = allMembers.filter(function(m) { return assignedIds.indexOf(m.id) === -1 && m.status === 'active'; });
+    if (available.length > 0 && count < maxCap) {
+      html += '<h4 style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin:20px 0 10px;">Add Member</h4>';
+      available.forEach(function(m) {
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--stone);">';
+        html += '<span>' + esc(m.name) + ' ' + calPlanBadge(m.plan) + ' <span style="color:var(--clay);font-size:11px;">' + (m.sessions_per_week || 1) + 'x/wk</span></span>';
+        html += '<button class="btn-outline btn-sm" onclick="calAssign(\'' + esc(m.id) + '\',\'' + esc(slotId) + '\')">Assign</button>';
+        html += '</div>';
+      });
+    } else if (count >= maxCap) {
+      html += '<p style="color:var(--red);font-size:12px;margin-top:16px;">This slot is full.</p>';
+    }
+
+    content.innerHTML = html;
+  } catch (err) {
+    content.innerHTML = '<div class="empty-state">Error: ' + esc(err.message) + '</div>';
+  }
+}
+
+async function calAssign(memberId, slotId) {
+  try {
+    await apiPost({ action: 'assign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Member assigned', 'success');
+    loadCalSlotMembers(slotId);
+    loadCalendar(); // refresh calendar in background
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+async function calUnassign(memberId, slotId) {
+  try {
+    await apiPost({ action: 'unassign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Member removed', 'success');
+    loadCalSlotMembers(slotId);
+    loadCalendar();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
 function calSwitchToDay(dateStr) {
   calCurrentDate = new Date(dateStr);
   calSetView('day');
@@ -2158,7 +2273,7 @@ function calRenderWeek(container, label) {
     for (var d = 0; d < 6; d++) {
       var slot = calFindSlot(data[d] || [], time);
       if (!slot) {
-        html += '<div class="cal-week-cell cell-empty"></div>';
+        html += '<div class="cal-week-cell cell-empty" onclick="calClickEmpty(' + d + ',\'' + esc(time) + '\')" style="cursor:pointer;" title="Add time slot"></div>';
       } else {
         var members = slot.members || [];
         var count = members.length;
@@ -2169,7 +2284,8 @@ function calRenderWeek(container, label) {
         else if (count > 0) cls += ' cell-has-spots';
         else cls += ' cell-empty';
 
-        html += '<div class="' + cls + '">';
+        var slotId = slot.id || '';
+        html += '<div class="' + cls + '" onclick="calClickSlot(\'' + esc(slotId) + '\',' + d + ',\'' + esc(time) + '\',' + max + ')" style="cursor:pointer;">';
         if (members.length > 0) {
           html += '<div class="cal-cell-members">';
           members.forEach(function(m) {
@@ -2481,7 +2597,7 @@ document.getElementById('confirm-dialog').addEventListener('mouseup', function(e
 });
 
 // ─── NEW MODAL BACKDROP CLOSE ───
-['accept-modal','assign-modal','addslot-modal','addmember-modal'].forEach(function(id) {
+['accept-modal','assign-modal','addslot-modal','addmember-modal','cal-slot-modal'].forEach(function(id) {
   var el = document.getElementById(id);
   var downTarget = null;
   el.addEventListener('mousedown', function(e) { downTarget = e.target; });

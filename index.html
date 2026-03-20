@@ -168,13 +168,13 @@
 
   /* --- COUNTDOWN WIDGET --- */
   .countdown-widget { background: var(--warm-white); border: 1px solid var(--stone); padding: 48px 40px; text-align: center; max-width: 460px; margin: 0 auto; width: 100%; }
-  .countdown-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--bark); margin-bottom: 16px; }
+  .countdown-label { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; font-style: italic; color: var(--deep); margin-bottom: 8px; letter-spacing: 0.02em; }
   .countdown-timer { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
   .countdown-unit { display: flex; flex-direction: column; align-items: center; min-width: 50px; }
   .countdown-num { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--deep); line-height: 1; }
   .countdown-txt { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-top: 4px; }
   .countdown-sep { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--clay); line-height: 1; padding-top: 4px; }
-  .countdown-session-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--clay); margin-bottom: 16px; }
+  .countdown-session-date { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--bark); margin-bottom: 16px; }
   .countdown-follow-text { font-size: 11px; color: var(--bark); margin-top: 10px; }
   .countdown-follow-text a { color: var(--bark); font-weight: 400; text-decoration: underline; }
   .spots-bar { margin: 20px 0; }
@@ -1407,10 +1407,10 @@ function initCountdownWidget(pre, config, isRunClub) {
 
     // TEASE state (now < ticketsOpen)
     if (now < ticketsOpen) {
-      document.getElementById(pre + 'CountdownLabel').innerHTML = 'Next Session <span style="color:var(--warm-white);font-weight:400;">' + formatSessionDate(config.sessionDate) + '</span>';
+      document.getElementById(pre + 'CountdownLabel').innerHTML = formatSessionDate(config.sessionDate);
       document.getElementById(pre + 'SpotsBar').classList.add('hidden');
       document.getElementById(pre + 'SessionDate').style.display = 'block';
-      document.getElementById(pre + 'SessionDate').innerHTML = 'Bookings open ' + formatSessionDate(config.ticketsOpen);
+      document.getElementById(pre + 'SessionDate').innerHTML = 'Bookings open in';
       document.getElementById(pre + 'FollowText').style.display = 'none';
       var btn = document.getElementById(pre + 'Btn');
       btn.className = 'widget-btn notify';
@@ -1430,9 +1430,9 @@ function initCountdownWidget(pre, config, isRunClub) {
 
     // SOLD OUT (spotsRemaining === 0)
     if (config.spotsRemaining === 0) {
-      document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
+      document.getElementById(pre + 'CountdownLabel').innerHTML = formatSessionDate(config.sessionDate);
       document.getElementById(pre + 'SessionDate').style.display = 'block';
-      document.getElementById(pre + 'SessionDate').textContent = formatSessionDate(config.sessionDate);
+      document.getElementById(pre + 'SessionDate').textContent = 'Sold Out';
       updateCountdown(session, pre);
       var spotsBar = document.getElementById(pre + 'SpotsBar');
       spotsBar.classList.remove('hidden');
@@ -1461,9 +1461,9 @@ function initCountdownWidget(pre, config, isRunClub) {
     }
 
     // URGENCY state (now >= ticketsOpen AND spotsRemaining > 0)
-    document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
+    document.getElementById(pre + 'CountdownLabel').innerHTML = formatSessionDate(config.sessionDate);
     document.getElementById(pre + 'SessionDate').style.display = 'block';
-    document.getElementById(pre + 'SessionDate').textContent = formatSessionDate(config.sessionDate);
+    document.getElementById(pre + 'SessionDate').textContent = 'Session starts in';
     document.getElementById(pre + 'FollowText').style.display = 'none';
     updateCountdown(session, pre);
     var spotsBar = document.getElementById(pre + 'SpotsBar');
