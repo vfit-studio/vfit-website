@@ -382,50 +382,164 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .stat-grid { grid-template-columns: 1fr; }
 }
 
-/* ─── CALENDAR GRID ─── */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 2px;
-  background: var(--stone);
+/* ─── CALENDAR ─── */
+.cal-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
 }
-.calendar-day-header {
-  background: var(--deep);
-  color: var(--warm-white);
-  padding: 12px;
-  text-align: center;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+.cal-toolbar-left { display: flex; align-items: center; gap: 10px; }
+.cal-toolbar-right { display: flex; align-items: center; gap: 10px; }
+.cal-view-toggle {
+  display: inline-flex; border: 1px solid var(--stone); overflow: hidden;
 }
-.calendar-slot {
-  background: var(--warm-white);
-  padding: 12px;
-  min-height: 80px;
+.cal-view-btn {
+  padding: 8px 18px; font-family: 'Jost', sans-serif; font-size: 10px;
+  letter-spacing: 0.15em; text-transform: uppercase; background: var(--warm-white);
+  color: var(--bark); border: none; cursor: pointer; transition: all 0.2s;
+  border-right: 1px solid var(--stone);
 }
-.calendar-slot-time {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 18px;
-  font-weight: 300;
-  color: var(--deep);
-  margin-bottom: 6px;
+.cal-view-btn:last-child { border-right: none; }
+.cal-view-btn.active { background: var(--deep); color: var(--warm-white); }
+.cal-view-btn:hover:not(.active) { background: var(--sand); }
+
+.cal-nav-btn {
+  width: 34px; height: 34px; border: 1px solid var(--stone); background: var(--warm-white);
+  color: var(--bark); cursor: pointer; font-size: 16px; display: flex;
+  align-items: center; justify-content: center; transition: all 0.2s;
 }
-.calendar-slot-count {
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
+.cal-nav-btn:hover { background: var(--sand); color: var(--deep); }
+.cal-period-label {
+  font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300;
+  color: var(--deep); min-width: 180px; text-align: center;
 }
-.calendar-slot-member {
-  font-size: 12px;
-  color: #6b5e52;
-  padding: 3px 0;
-  border-bottom: 1px solid var(--stone);
+.cal-today-btn {
+  padding: 6px 14px; font-family: 'Jost', sans-serif; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; background: transparent;
+  border: 1px solid var(--clay); color: var(--bark); cursor: pointer; transition: all 0.2s;
 }
-.calendar-slot-member:last-child { border-bottom: none; }
-.calendar-slot.full .calendar-slot-count { color: var(--red); }
-.calendar-slot.available .calendar-slot-count { color: var(--moss); }
-.calendar-slot.inactive-slot { opacity: 0.5; background: var(--sand); }
+.cal-today-btn:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
+
+.cal-demo-toggle {
+  display: flex; align-items: center; gap: 6px; font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--bark); cursor: pointer;
+  user-select: none;
+}
+.cal-demo-toggle input { accent-color: var(--bark); cursor: pointer; }
+
+/* Week view */
+.cal-week-grid {
+  display: grid; grid-template-columns: 80px repeat(6, 1fr);
+  border: 1px solid var(--stone); background: var(--stone); gap: 1px;
+}
+.cal-week-header {
+  background: var(--deep); color: var(--warm-white); padding: 10px 8px;
+  text-align: center; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.cal-week-header-date {
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300;
+  margin-top: 2px; letter-spacing: 0;
+}
+.cal-week-header.today-col { background: #4a3f39; }
+.cal-time-label {
+  background: var(--sand); padding: 10px 8px; font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 300; color: var(--deep); display: flex;
+  align-items: flex-start; justify-content: center; min-height: 90px;
+}
+.cal-week-cell {
+  background: var(--warm-white); padding: 8px; min-height: 90px; position: relative;
+  transition: background 0.2s;
+}
+.cal-week-cell.cell-full { background: rgba(184,92,92,0.06); }
+.cal-week-cell.cell-empty { border: 1px dashed var(--stone); background: transparent; }
+.cal-week-cell.cell-has-spots { border-left: 3px solid var(--sage); }
+.cal-cell-members { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.cal-cell-member {
+  font-size: 11px; color: var(--deep); display: flex; align-items: center; gap: 4px;
+  cursor: pointer; transition: color 0.2s;
+}
+.cal-cell-member:hover { color: var(--bark); text-decoration: underline; }
+.cal-cell-spots {
+  display: flex; align-items: center; gap: 6px; font-size: 10px;
+  letter-spacing: 0.1em; color: var(--bark);
+}
+.cal-spots-bar {
+  flex: 1; height: 3px; background: var(--stone); border-radius: 2px; overflow: hidden;
+}
+.cal-spots-fill {
+  height: 100%; border-radius: 2px; transition: width 0.3s;
+}
+.cal-spots-fill.fill-low { background: var(--sage); }
+.cal-spots-fill.fill-med { background: var(--clay); }
+.cal-spots-fill.fill-full { background: var(--red); }
+
+/* Day view */
+.cal-day-timeline { display: flex; flex-direction: column; gap: 16px; }
+.cal-day-card {
+  background: var(--warm-white); border: 1px solid var(--stone); padding: 20px 24px;
+  transition: box-shadow 0.2s;
+}
+.cal-day-card:hover { box-shadow: 0 4px 16px rgba(61,53,48,0.06); }
+.cal-day-card.card-full { border-left: 4px solid var(--red); }
+.cal-day-card.card-has-spots { border-left: 4px solid var(--sage); }
+.cal-day-card-time {
+  font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300;
+  color: var(--deep); margin-bottom: 8px;
+}
+.cal-day-card-capacity {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.cal-day-card-capacity span {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bark);
+}
+.cal-day-cap-bar { width: 120px; height: 5px; background: var(--stone); border-radius: 3px; overflow: hidden; }
+.cal-day-cap-fill { height: 100%; border-radius: 3px; }
+.cal-day-members-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.cal-day-member-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  border-bottom: 1px solid var(--stone); font-size: 13px;
+}
+.cal-day-member-row:last-child { border-bottom: none; }
+.cal-day-member-name { font-weight: 400; color: var(--deep); cursor: pointer; }
+.cal-day-member-name:hover { text-decoration: underline; }
+.cal-day-member-detail { font-size: 11px; color: var(--bark); }
+.cal-day-add-btn {
+  padding: 6px 14px; font-family: 'Jost', sans-serif; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; background: transparent;
+  border: 1px solid var(--stone); color: var(--bark); cursor: pointer; transition: all 0.2s;
+}
+.cal-day-add-btn:hover { background: var(--sand); border-color: var(--bark); }
+
+/* Month view */
+.cal-month-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--stone); background: var(--stone); gap: 1px;
+}
+.cal-month-header {
+  background: var(--deep); color: var(--warm-white); padding: 8px;
+  text-align: center; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.cal-month-cell {
+  background: var(--warm-white); min-height: 80px; padding: 8px; cursor: pointer;
+  transition: background 0.2s; position: relative;
+}
+.cal-month-cell:hover { background: var(--sand); }
+.cal-month-cell.other-month { opacity: 0.35; }
+.cal-month-cell.has-sessions { background: rgba(168,184,154,0.12); }
+.cal-month-cell.today-cell { box-shadow: inset 0 0 0 2px var(--bark); }
+.cal-month-day-num {
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300;
+  color: var(--deep); margin-bottom: 4px;
+}
+.cal-month-info {
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bark);
+  line-height: 1.5;
+}
+
+/* Plan badges */
+.plan-badge { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; padding: 2px 6px; display: inline-block; }
+.plan-vip { background: var(--deep); color: var(--clay); }
+.plan-signature { background: var(--sage); color: var(--warm-white); }
+.plan-flexible { border: 1px solid var(--clay); color: var(--bark); }
 
 /* ─── ASSIGN GRID ─── */
 .assign-day-grid {
@@ -453,10 +567,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .badge-cancelled { background: rgba(184,92,92,0.12); color: var(--red); }
 
 @media (max-width: 1024px) {
-  .calendar-grid { grid-template-columns: repeat(3, 1fr); }
+  .cal-week-grid { grid-template-columns: 60px repeat(6, 1fr); }
+  .cal-week-cell { padding: 6px; min-height: 70px; }
+  .cal-cell-member { font-size: 10px; }
+}
+@media (max-width: 768px) {
+  .cal-week-grid { grid-template-columns: 50px repeat(6, 1fr); }
+  .cal-week-header { font-size: 8px; padding: 6px 4px; }
+  .cal-time-label { font-size: 12px; padding: 6px 4px; }
+  .cal-toolbar { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 600px) {
-  .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+  .cal-month-grid { grid-template-columns: repeat(7, 1fr); }
+  .cal-month-cell { min-height: 60px; padding: 4px; }
 }
 </style>
 </head>
@@ -676,14 +799,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     <!-- CALENDAR -->
     <div class="admin-page" id="page-calendar">
       <div class="page-header">
-        <h1 class="page-title"><em>Weekly Calendar</em></h1>
+        <h1 class="page-title"><em>Calendar</em></h1>
+        <button class="btn-primary" onclick="openAddSlotModal()">+ Add Time Slot</button>
+      </div>
+      <div class="cal-toolbar">
+        <div class="cal-toolbar-left">
+          <div class="cal-view-toggle">
+            <button class="cal-view-btn" data-view="day" onclick="calSetView('day')">Day</button>
+            <button class="cal-view-btn active" data-view="week" onclick="calSetView('week')">Week</button>
+            <button class="cal-view-btn" data-view="month" onclick="calSetView('month')">Month</button>
+          </div>
+          <button class="cal-nav-btn" onclick="calNav(-1)">&#8249;</button>
+          <span class="cal-period-label" id="cal-period-label"></span>
+          <button class="cal-nav-btn" onclick="calNav(1)">&#8250;</button>
+          <button class="cal-today-btn" onclick="calGoToday()">Today</button>
+        </div>
+        <div class="cal-toolbar-right">
+          <label class="cal-demo-toggle"><input type="checkbox" id="cal-demo-check" onchange="calToggleDemo()"> Show Demo Data</label>
+        </div>
       </div>
       <div id="cal-loading" class="loading">Loading schedule...</div>
       <div id="cal-content" style="display:none;">
-        <div id="cal-grid" class="calendar-grid"></div>
-        <div style="margin-top:24px;">
-          <button class="btn-primary" onclick="openAddSlotModal()">+ Add Time Slot</button>
-        </div>
+        <div id="cal-render"></div>
       </div>
     </div>
 
@@ -1798,6 +1935,135 @@ async function unassignSlot(memberId, slotId) {
 
 // ─── CALENDAR ───
 
+var calView = 'week';
+var calCurrentDate = new Date();
+var calScheduleData = {};
+var calUseDemo = false;
+
+var CAL_DEMO_DATA = {
+  '0': [
+    { id:'d1', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm1', name:'Sarah Chen', email:'sarah@example.com', phone:'0412 345 678', plan:'VIP' },
+      { id:'dm2', name:'Marcus Webb', email:'marcus@example.com', phone:'0423 456 789', plan:'Signature' }
+    ]},
+    { id:'d2', time:'6:15 AM', max_capacity:4, members:[
+      { id:'dm3', name:'Olivia Hart', email:'olivia@example.com', phone:'0434 567 890', plan:'Signature' },
+      { id:'dm4', name:'Tom Richards', email:'tom@example.com', phone:'0445 678 901', plan:'Flexible' },
+      { id:'dm5', name:'Emma Blake', email:'emma@example.com', phone:'0456 789 012', plan:'Signature' }
+    ]},
+    { id:'d3', time:'7:15 AM', max_capacity:4, members:[] }
+  ],
+  '1': [
+    { id:'d4', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm6', name:'James Patel', email:'james@example.com', phone:'0467 890 123', plan:'VIP' }
+    ]},
+    { id:'d5', time:'6:15 AM', max_capacity:4, members:[] }
+  ],
+  '2': [
+    { id:'d6', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm1', name:'Sarah Chen', email:'sarah@example.com', phone:'0412 345 678', plan:'VIP' },
+      { id:'dm3', name:'Olivia Hart', email:'olivia@example.com', phone:'0434 567 890', plan:'Signature' },
+      { id:'dm7', name:'Lisa Murray', email:'lisa@example.com', phone:'0478 901 234', plan:'Signature' },
+      { id:'dm8', name:'Kate Wong', email:'kate@example.com', phone:'0489 012 345', plan:'Flexible' }
+    ]}
+  ],
+  '3': [
+    { id:'d7', time:'6:15 AM', max_capacity:4, members:[
+      { id:'dm2', name:'Marcus Webb', email:'marcus@example.com', phone:'0423 456 789', plan:'Signature' },
+      { id:'dm4', name:'Tom Richards', email:'tom@example.com', phone:'0445 678 901', plan:'Flexible' }
+    ]}
+  ],
+  '4': [
+    { id:'d8', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm5', name:'Emma Blake', email:'emma@example.com', phone:'0456 789 012', plan:'Signature' },
+      { id:'dm6', name:'James Patel', email:'james@example.com', phone:'0467 890 123', plan:'VIP' }
+    ]}
+  ],
+  '5': []
+};
+
+function calGetDayNames() { return ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; }
+function calGetDayNamesShort() { return ['Mon','Tue','Wed','Thu','Fri','Sat']; }
+var CAL_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function calGetMonday(d) {
+  var dt = new Date(d);
+  var day = dt.getDay();
+  var diff = day === 0 ? -6 : 1 - day;
+  dt.setDate(dt.getDate() + diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function calFormatShortDate(d) {
+  return d.getDate() + ' ' + CAL_MONTH_NAMES[d.getMonth()].slice(0,3);
+}
+
+function calPlanBadge(plan) {
+  if (!plan) return '';
+  var p = plan.toLowerCase();
+  var cls = p === 'vip' ? 'plan-vip' : p === 'signature' ? 'plan-signature' : p === 'flexible' ? 'plan-flexible' : '';
+  return '<span class="plan-badge ' + cls + '">' + esc(plan) + '</span>';
+}
+
+function calSpotsFill(count, max) {
+  var pct = max > 0 ? Math.round((count / max) * 100) : 0;
+  var cls = pct >= 100 ? 'fill-full' : pct >= 50 ? 'fill-med' : 'fill-low';
+  return '<div class="cal-spots-bar"><div class="cal-spots-fill ' + cls + '" style="width:' + pct + '%"></div></div>';
+}
+
+function calGetEffectiveData() {
+  var data = calScheduleData;
+  var hasData = false;
+  for (var k in data) {
+    if (data[k] && data[k].length > 0) { hasData = true; break; }
+  }
+  if (!hasData && calUseDemo) return CAL_DEMO_DATA;
+  if (calUseDemo) {
+    // Merge demo into real - only for days with no real data
+    var merged = {};
+    for (var d = 0; d < 6; d++) {
+      merged[d] = (data[d] && data[d].length > 0) ? data[d] : (CAL_DEMO_DATA[d] || []);
+    }
+    return merged;
+  }
+  return data;
+}
+
+function calSetView(view) {
+  calView = view;
+  document.querySelectorAll('.cal-view-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  calRender();
+}
+
+function calNav(dir) {
+  if (calView === 'day') {
+    calCurrentDate.setDate(calCurrentDate.getDate() + dir);
+  } else if (calView === 'week') {
+    calCurrentDate.setDate(calCurrentDate.getDate() + (dir * 7));
+  } else {
+    calCurrentDate.setMonth(calCurrentDate.getMonth() + dir);
+  }
+  calRender();
+}
+
+function calGoToday() {
+  calCurrentDate = new Date();
+  calRender();
+}
+
+function calToggleDemo() {
+  calUseDemo = document.getElementById('cal-demo-check').checked;
+  calRender();
+}
+
+function calSwitchToDay(dateStr) {
+  calCurrentDate = new Date(dateStr);
+  calSetView('day');
+}
+
 async function loadCalendar() {
   var loading = document.getElementById('cal-loading');
   var content = document.getElementById('cal-content');
@@ -1806,70 +2072,272 @@ async function loadCalendar() {
 
   try {
     var resp = await apiGet({ action: 'schedule' });
-    var slots = resp.data || resp.slots || [];
-    var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
-    // Group by day
-    var byDay = {};
-    for (var d = 0; d < 6; d++) byDay[d] = [];
-    slots.forEach(function(s) {
-      var day = s.day_of_week;
-      if (day >= 0 && day <= 5) byDay[day].push(s);
-    });
-
-    var grid = document.getElementById('cal-grid');
-    var html = '';
-
-    // Day headers
-    dayNames.forEach(function(name) {
-      html += '<div class="calendar-day-header">' + name + '</div>';
-    });
-
-    // Find max rows needed
-    var maxSlots = 0;
-    for (var d = 0; d < 6; d++) {
-      if (byDay[d].length > maxSlots) maxSlots = byDay[d].length;
-    }
-
-    // Render rows
-    for (var row = 0; row < maxSlots; row++) {
-      for (var day = 0; day < 6; day++) {
-        var s = byDay[day][row];
-        if (!s) {
-          html += '<div class="calendar-slot" style="background:transparent;"></div>';
-          continue;
-        }
-        var members = s.members || [];
-        var count = members.length;
-        var max = s.max_capacity || 4;
-        var isFull = count >= max;
-        var isActive = s.status !== 'inactive';
-        var cls = 'calendar-slot' + (isFull ? ' full' : ' available') + (!isActive ? ' inactive-slot' : '');
-
-        html += '<div class="' + cls + '">';
-        html += '<div class="calendar-slot-time">' + esc(s.time || '') + '</div>';
-        html += '<div class="calendar-slot-count">' + count + '/' + max + ' booked</div>';
-        members.forEach(function(m) {
-          html += '<div class="calendar-slot-member">' + esc(m.name || 'Unknown') + '</div>';
-        });
-        html += '</div>';
-      }
-    }
-
-    if (maxSlots === 0) {
-      grid.innerHTML = '';
-      grid.insertAdjacentHTML('afterend', '<div class="empty-state" id="cal-empty-msg">No time slots yet. Add your first slot to get started.</div>');
+    // Support both { schedule: { "0": [...] } } and { data/slots: [...] }
+    if (resp.schedule && typeof resp.schedule === 'object' && !Array.isArray(resp.schedule)) {
+      calScheduleData = resp.schedule;
     } else {
-      var oldEmpty = document.getElementById('cal-empty-msg');
-      if (oldEmpty) oldEmpty.remove();
-      grid.innerHTML = html;
+      var slots = resp.data || resp.slots || [];
+      var byDay = {};
+      for (var d = 0; d < 6; d++) byDay[d] = [];
+      slots.forEach(function(s) {
+        var day = s.day_of_week;
+        if (day >= 0 && day <= 5) byDay[day].push(s);
+      });
+      calScheduleData = byDay;
+    }
+    // Ensure all days exist
+    for (var d = 0; d < 6; d++) {
+      if (!calScheduleData[d]) calScheduleData[d] = [];
     }
 
     loading.style.display = 'none';
     content.style.display = 'block';
+    calRender();
   } catch (err) {
     loading.innerHTML = '<div class="empty-state">Could not load schedule. ' + esc(err.message) + '</div>';
   }
+}
+
+function calRender() {
+  var container = document.getElementById('cal-render');
+  var label = document.getElementById('cal-period-label');
+
+  if (calView === 'week') {
+    calRenderWeek(container, label);
+  } else if (calView === 'day') {
+    calRenderDay(container, label);
+  } else {
+    calRenderMonth(container, label);
+  }
+}
+
+function calRenderWeek(container, label) {
+  var monday = calGetMonday(calCurrentDate);
+  var saturday = new Date(monday);
+  saturday.setDate(saturday.getDate() + 5);
+  label.textContent = calFormatShortDate(monday) + ' — ' + calFormatShortDate(saturday);
+
+  var data = calGetEffectiveData();
+  var dayNamesShort = calGetDayNamesShort();
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Collect all unique times across all days, sorted
+  var allTimes = {};
+  for (var d = 0; d < 6; d++) {
+    (data[d] || []).forEach(function(slot) {
+      allTimes[slot.time] = calTimeToMinutes(slot.time);
+    });
+  }
+  var sortedTimes = Object.keys(allTimes).sort(function(a, b) {
+    return allTimes[a] - allTimes[b];
+  });
+
+  if (sortedTimes.length === 0) {
+    container.innerHTML = '<div class="empty-state">No time slots this week. Add your first slot to get started.</div>';
+    return;
+  }
+
+  var html = '<div class="cal-week-grid">';
+
+  // Header row: empty corner + 6 day headers
+  html += '<div class="cal-week-header" style="background:var(--sand);"></div>';
+  for (var d = 0; d < 6; d++) {
+    var dayDate = new Date(monday);
+    dayDate.setDate(dayDate.getDate() + d);
+    var isToday = dayDate.getTime() === today.getTime();
+    html += '<div class="cal-week-header' + (isToday ? ' today-col' : '') + '">';
+    html += dayNamesShort[d];
+    html += '<div class="cal-week-header-date">' + dayDate.getDate() + '</div>';
+    html += '</div>';
+  }
+
+  // Time rows
+  sortedTimes.forEach(function(time) {
+    html += '<div class="cal-time-label">' + esc(time) + '</div>';
+    for (var d = 0; d < 6; d++) {
+      var slot = calFindSlot(data[d] || [], time);
+      if (!slot) {
+        html += '<div class="cal-week-cell cell-empty"></div>';
+      } else {
+        var members = slot.members || [];
+        var count = members.length;
+        var max = slot.max_capacity || 4;
+        var isFull = count >= max;
+        var cls = 'cal-week-cell';
+        if (isFull) cls += ' cell-full';
+        else if (count > 0) cls += ' cell-has-spots';
+        else cls += ' cell-empty';
+
+        html += '<div class="' + cls + '">';
+        if (members.length > 0) {
+          html += '<div class="cal-cell-members">';
+          members.forEach(function(m) {
+            html += '<div class="cal-cell-member" onclick="event.stopPropagation()" title="' + esc(m.email || '') + '">';
+            html += esc(m.name || 'Unknown') + ' ' + calPlanBadge(m.plan);
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        html += '<div class="cal-cell-spots">' + count + '/' + max + ' ' + calSpotsFill(count, max) + '</div>';
+        html += '</div>';
+      }
+    }
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calRenderDay(container, label) {
+  var dayOfWeek = calCurrentDate.getDay();
+  // Convert JS day (0=Sun) to our index (0=Mon)
+  var calDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  var dayNames = calGetDayNames();
+
+  label.textContent = dayNames[calDayIndex < 6 ? calDayIndex : 0] + ', ' + calCurrentDate.getDate() + ' ' + CAL_MONTH_NAMES[calCurrentDate.getMonth()] + ' ' + calCurrentDate.getFullYear();
+
+  if (calDayIndex >= 6) {
+    container.innerHTML = '<div class="empty-state">Sunday — no sessions scheduled.</div>';
+    return;
+  }
+
+  var data = calGetEffectiveData();
+  var daySlots = data[calDayIndex] || [];
+
+  if (daySlots.length === 0) {
+    container.innerHTML = '<div class="empty-state">No time slots for this day.</div>';
+    return;
+  }
+
+  // Sort by time
+  daySlots.sort(function(a, b) {
+    return calTimeToMinutes(a.time) - calTimeToMinutes(b.time);
+  });
+
+  var html = '<div class="cal-day-timeline">';
+  daySlots.forEach(function(slot) {
+    var members = slot.members || [];
+    var count = members.length;
+    var max = slot.max_capacity || 4;
+    var isFull = count >= max;
+    var pct = max > 0 ? Math.round((count / max) * 100) : 0;
+    var fillCls = pct >= 100 ? 'fill-full' : pct >= 50 ? 'fill-med' : 'fill-low';
+    var cardCls = 'cal-day-card' + (isFull ? ' card-full' : count > 0 ? ' card-has-spots' : '');
+
+    html += '<div class="' + cardCls + '">';
+    html += '<div class="cal-day-card-time">' + esc(slot.time) + '</div>';
+    html += '<div class="cal-day-card-capacity">';
+    html += '<span>' + count + ' / ' + max + ' booked</span>';
+    html += '<div class="cal-day-cap-bar"><div class="cal-day-cap-fill ' + fillCls + '" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+
+    if (members.length > 0) {
+      html += '<div class="cal-day-members-list">';
+      members.forEach(function(m) {
+        html += '<div class="cal-day-member-row">';
+        html += '<span class="cal-day-member-name">' + esc(m.name || 'Unknown') + '</span>';
+        html += ' ' + calPlanBadge(m.plan);
+        if (m.email) html += '<span class="cal-day-member-detail">' + esc(m.email) + '</span>';
+        if (m.phone) html += '<span class="cal-day-member-detail">' + esc(m.phone) + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (!isFull) {
+      html += '<button class="cal-day-add-btn" onclick="openAddSlotModal()">+ Add Member</button>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calRenderMonth(container, label) {
+  var year = calCurrentDate.getFullYear();
+  var month = calCurrentDate.getMonth();
+  label.textContent = CAL_MONTH_NAMES[month] + ' ' + year;
+
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  // Monday-based: 0=Mon
+  var startDow = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  var data = calGetEffectiveData();
+
+  // Precompute session counts per day-of-week
+  var daySummary = {};
+  for (var d = 0; d < 6; d++) {
+    var slots = data[d] || [];
+    var totalSessions = slots.length;
+    var totalBookings = 0;
+    slots.forEach(function(s) { totalBookings += (s.members || []).length; });
+    daySummary[d] = { sessions: totalSessions, bookings: totalBookings };
+  }
+
+  var allDayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var html = '<div class="cal-month-grid">';
+  allDayNames.forEach(function(n) {
+    html += '<div class="cal-month-header">' + n + '</div>';
+  });
+
+  // Fill leading blanks
+  var prevMonth = new Date(year, month, 0);
+  for (var i = startDow - 1; i >= 0; i--) {
+    var pd = prevMonth.getDate() - i;
+    html += '<div class="cal-month-cell other-month"><div class="cal-month-day-num">' + pd + '</div></div>';
+  }
+
+  // Days of month
+  for (var day = 1; day <= lastDay.getDate(); day++) {
+    var dt = new Date(year, month, day);
+    var dow = dt.getDay() === 0 ? 6 : dt.getDay() - 1;
+    var isToday = dt.getTime() === today.getTime();
+    var info = dow < 6 ? daySummary[dow] : { sessions: 0, bookings: 0 };
+    var hasSess = info.sessions > 0;
+    var cls = 'cal-month-cell' + (hasSess ? ' has-sessions' : '') + (isToday ? ' today-cell' : '');
+    var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+
+    html += '<div class="' + cls + '" onclick="calSwitchToDay(\'' + dateStr + '\')">';
+    html += '<div class="cal-month-day-num">' + day + '</div>';
+    if (hasSess) {
+      html += '<div class="cal-month-info">' + info.sessions + ' session' + (info.sessions > 1 ? 's' : '') + '<br>' + info.bookings + ' booked</div>';
+    }
+    html += '</div>';
+  }
+
+  // Trailing blanks
+  var totalCells = startDow + lastDay.getDate();
+  var trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (var i = 1; i <= trailing; i++) {
+    html += '<div class="cal-month-cell other-month"><div class="cal-month-day-num">' + i + '</div></div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calFindSlot(daySlots, time) {
+  for (var i = 0; i < daySlots.length; i++) {
+    if (daySlots[i].time === time) return daySlots[i];
+  }
+  return null;
+}
+
+function calTimeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  var match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return 0;
+  var h = parseInt(match[1]);
+  var m = parseInt(match[2]);
+  var ampm = match[3].toUpperCase();
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  return h * 60 + m;
 }
 
 function openAddSlotModal() {
