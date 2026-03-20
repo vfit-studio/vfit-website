@@ -1047,9 +1047,8 @@
 // CONFIG
 // ═══════════════════════════════════
 
-// Google Apps Script API endpoint — set this after deploying your Apps Script
-// Leave empty to use Formspree as fallback
-var BOOKING_API = '';
+// API endpoint — uses Netlify Functions
+var BOOKING_API = '/.netlify/functions/api';
 
 // Formspree fallback (used when BOOKING_API is not set)
 var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgalnnp';
@@ -1072,7 +1071,7 @@ var PILATTES_CONFIG = {
 // Fetch live data from Google Sheets API
 function fetchLiveConfig() {
   if (!BOOKING_API) return;
-  fetch(BOOKING_API)
+  fetch(BOOKING_API + '?action=config')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.runclub) {
@@ -1105,6 +1104,11 @@ function submitToAPI(data, onSuccess, onError) {
     .then(function(r) { return r.json(); })
     .then(function(result) {
       if (result.success) {
+        // Redirect to Stripe checkout if URL returned (paid event)
+        if (result.checkout_url) {
+          window.location.href = result.checkout_url;
+          return;
+        }
         // Update spots in real time if returned
         if (result.spotsRemaining !== undefined && data.type === 'runclub') {
           RUNCLUB_CONFIG.spotsRemaining = result.spotsRemaining;
@@ -1384,8 +1388,24 @@ function initCountdownWidget(pre, config, isRunClub) {
 initCountdownWidget('rc', RUNCLUB_CONFIG, true);
 initCountdownWidget('pl', PILATTES_CONFIG, false);
 
-// Fetch live data from Google Sheets (overrides defaults above)
+// Fetch live data from API (overrides defaults above)
 fetchLiveConfig();
+
+// Check if returning from Stripe checkout
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('booking') === 'success') {
+    // Show success message
+    setTimeout(function() {
+      alert('Booking confirmed! Check your email for details.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }, 500);
+  } else if (params.get('booking') === 'cancelled') {
+    setTimeout(function() {
+      window.history.replaceState({}, '', window.location.pathname);
+    }, 100);
+  }
+})();
 
 // ═══════════════════════════════════
 // SIMPLE BOOKING MODAL
@@ -1428,14 +1448,16 @@ function submitBooking(e) {
   btn.textContent = 'Sending...';
   var interest = document.getElementById('bInterest').value;
 
-  // Determine submission type for the API
-  var type = 'contact';
-  if (interest.indexOf('Run Club') !== -1 && interest.indexOf('Notify') === -1 && interest.indexOf('Waitlist') === -1) type = 'runclub';
-  else if (interest.indexOf("Pi'lattes") !== -1 && interest.indexOf('Notify') === -1 && interest.indexOf('Waitlist') === -1) type = 'pilattes';
-  else if (interest.indexOf('Notify') !== -1 || interest.indexOf('Waitlist') !== -1) type = 'notification';
+  // Determine submission action for the API
+  var action = 'contact';
+  if (interest.indexOf('Run Club') !== -1 && interest.indexOf('Notify') === -1 && interest.indexOf('Waitlist') === -1) action = 'book';
+  else if (interest.indexOf("Pi'lattes") !== -1 && interest.indexOf('Notify') === -1 && interest.indexOf('Waitlist') === -1) action = 'book';
+  else if (interest.indexOf('Notify') !== -1) action = 'notify';
+  else if (interest.indexOf('Waitlist') !== -1) action = 'waitlist';
 
   var data = {
-    type: type,
+    action: action,
+    type: interest.indexOf('Run Club') !== -1 ? 'runclub' : 'pilattes',
     interest: interest,
     name: document.getElementById('bName').value.trim(),
     email: document.getElementById('bEmail').value.trim(),

@@ -1,0 +1,10 @@
+{
+  "name": "vfit-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VFIT Studio booking system - Netlify serverless backend",
+  "dependencies": {
+    "stripe": "^14.14.0",
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}

@@ -1,0 +1,588 @@
+/*
+ * VFIT Studio - Main API Endpoint
+ * Handles all operations via query parameter ?action=...
+ *
+ * Environment variables required:
+ *   SUPABASE_URL, SUPABASE_SERVICE_KEY, STRIPE_SECRET_KEY,
+ *   STRIPE_WEBHOOK_SECRET, ADMIN_KEY, SITE_URL
+ *
+ * ──────────────────────────────────────────────
+ * SUPABASE DATABASE SCHEMA
+ * Run this in the Supabase SQL Editor:
+ * ──────────────────────────────────────────────
+ *
+ * create table events (
+ *   id uuid default gen_random_uuid() primary key,
+ *   name text not null,
+ *   type text not null,                        -- 'runclub' or 'pilattes'
+ *   tickets_open timestamptz not null,
+ *   session_date timestamptz not null,
+ *   spots_total integer not null default 20,
+ *   price_cents integer not null default 0,    -- 0 = free, 1500 = $15.00
+ *   status text not null default 'active',     -- active, closed, archived
+ *   created_at timestamptz default now()
+ * );
+ *
+ * create table bookings (
+ *   id uuid default gen_random_uuid() primary key,
+ *   event_id uuid references events(id),
+ *   name text not null,
+ *   email text not null,
+ *   phone text,
+ *   status text not null default 'held',       -- held, confirmed, cancelled, expired
+ *   stripe_session_id text,
+ *   stripe_payment_id text,
+ *   amount_cents integer default 0,
+ *   held_at timestamptz default now(),
+ *   confirmed_at timestamptz,
+ *   created_at timestamptz default now()
+ * );
+ *
+ * create table memberships (
+ *   id uuid default gen_random_uuid() primary key,
+ *   name text not null,
+ *   email text not null,
+ *   phone text,
+ *   plan text not null,
+ *   sessions text,
+ *   days text,
+ *   times text,
+ *   notes text,
+ *   status text not null default 'new',        -- new, contacted, active, inactive
+ *   created_at timestamptz default now()
+ * );
+ *
+ * create table notifications (
+ *   id uuid default gen_random_uuid() primary key,
+ *   email text not null,
+ *   name text,
+ *   interest text,
+ *   type text default 'notify',                -- notify, waitlist
+ *   notified boolean default false,
+ *   created_at timestamptz default now()
+ * );
+ *
+ * create table contacts (
+ *   id uuid default gen_random_uuid() primary key,
+ *   name text not null,
+ *   email text not null,
+ *   phone text,
+ *   message text,
+ *   created_at timestamptz default now()
+ * );
+ */
+
+const { supabase } = require('./utils/supabase');
+const Stripe = require('stripe');
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
+const ADMIN_KEY = process.env.ADMIN_KEY;
+const HOLD_EXPIRY_MINUTES = 10;
+
+// ─── CORS headers applied to every response ───
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
+
+function respond(statusCode, body) {
+  return {
+    statusCode,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  };
+}
+
+// ─── Cleanup expired holds ───
+async function cleanupExpiredHolds() {
+  const cutoff = new Date(Date.now() - HOLD_EXPIRY_MINUTES * 60 * 1000).toISOString();
+  await supabase
+    .from('bookings')
+    .update({ status: 'expired' })
+    .eq('status', 'held')
+    .lt('held_at', cutoff);
+}
+
+// ─── Validate admin key ───
+function requireAdmin(adminKey) {
+  if (!adminKey || adminKey !== ADMIN_KEY) {
+    throw new Error('unauthorized');
+  }
+}
+
+// ─── Count taken spots for an event (confirmed + held) ───
+async function spotsTaken(eventId) {
+  const { count, error } = await supabase
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .in('status', ['confirmed', 'held']);
+  if (error) throw error;
+  return count || 0;
+}
+
+// ═══════════════════════════════════════════════
+// GET handlers
+// ═══════════════════════════════════════════════
+
+async function handleConfig() {
+  // Clean up expired holds before returning live counts
+  await cleanupExpiredHolds();
+
+  const { data: events, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'active')
+    .order('session_date', { ascending: true });
+
+  if (error) throw error;
+
+  const config = [];
+  for (const event of events) {
+    const taken = await spotsTaken(event.id);
+    config.push({
+      id: event.id,
+      name: event.name,
+      type: event.type,
+      tickets_open: event.tickets_open,
+      session_date: event.session_date,
+      spots_total: event.spots_total,
+      spots_remaining: Math.max(0, event.spots_total - taken),
+      price_cents: event.price_cents,
+      status: event.status,
+    });
+  }
+
+  return respond(200, { success: true, events: config });
+}
+
+async function handleEvents() {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .order('session_date', { ascending: false });
+  if (error) throw error;
+  return respond(200, { success: true, events: data });
+}
+
+async function handleBookings(eventId) {
+  if (!eventId) return respond(400, { success: false, error: 'event_id required' });
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return respond(200, { success: true, bookings: data });
+}
+
+async function handleNotifications() {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return respond(200, { success: true, notifications: data });
+}
+
+async function handleDashboard() {
+  // Total bookings (confirmed)
+  const { count: totalBookings } = await supabase
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'confirmed');
+
+  // Total revenue
+  const { data: revenueRows } = await supabase
+    .from('bookings')
+    .select('amount_cents')
+    .eq('status', 'confirmed');
+  const totalRevenue = (revenueRows || []).reduce((sum, r) => sum + (r.amount_cents || 0), 0);
+
+  // Upcoming events
+  const { data: upcoming } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'active')
+    .gte('session_date', new Date().toISOString())
+    .order('session_date', { ascending: true });
+
+  // Membership enquiries
+  const { count: totalMemberships } = await supabase
+    .from('memberships')
+    .select('*', { count: 'exact', head: true });
+
+  // Contact messages
+  const { count: totalContacts } = await supabase
+    .from('contacts')
+    .select('*', { count: 'exact', head: true });
+
+  return respond(200, {
+    success: true,
+    dashboard: {
+      total_bookings: totalBookings || 0,
+      total_revenue_cents: totalRevenue,
+      upcoming_events: upcoming || [],
+      total_memberships: totalMemberships || 0,
+      total_contacts: totalContacts || 0,
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════
+// POST handlers
+// ═══════════════════════════════════════════════
+
+async function handleBook(body) {
+  const { name, email, phone, event_id } = body;
+  if (!name || !email || !event_id) {
+    return respond(400, { success: false, error: 'name, email, and event_id are required' });
+  }
+
+  // Fetch event
+  const { data: event, error: eventErr } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', event_id)
+    .single();
+  if (eventErr || !event) {
+    return respond(404, { success: false, error: 'event_not_found' });
+  }
+
+  // Check spots
+  const taken = await spotsTaken(event_id);
+  if (taken >= event.spots_total) {
+    return respond(200, { success: false, error: 'sold_out' });
+  }
+
+  // Check duplicate
+  const { count: dupeCount } = await supabase
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', event_id)
+    .eq('email', email.toLowerCase().trim())
+    .in('status', ['confirmed', 'held']);
+  if (dupeCount > 0) {
+    return respond(200, { success: false, error: 'duplicate' });
+  }
+
+  // Create booking row (held)
+  const { data: booking, error: bookErr } = await supabase
+    .from('bookings')
+    .insert({
+      event_id,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone ? phone.trim() : null,
+      status: event.price_cents === 0 ? 'confirmed' : 'held',
+      amount_cents: event.price_cents,
+      held_at: new Date().toISOString(),
+      confirmed_at: event.price_cents === 0 ? new Date().toISOString() : null,
+    })
+    .select()
+    .single();
+  if (bookErr) throw bookErr;
+
+  // Free event — skip Stripe, already confirmed
+  if (event.price_cents === 0) {
+    const spotsRemaining = Math.max(0, event.spots_total - taken - 1);
+    return respond(200, {
+      success: true,
+      booking_id: booking.id,
+      spots_remaining: spotsRemaining,
+      free: true,
+    });
+  }
+
+  // Create Stripe Checkout Session
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price_data: {
+          currency: 'aud',
+          unit_amount: event.price_cents,
+          product_data: { name: event.name },
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `${SITE_URL}?booking=success`,
+    cancel_url: `${SITE_URL}?booking=cancelled`,
+    metadata: {
+      booking_id: booking.id,
+      event_id: event.id,
+    },
+    customer_email: email.toLowerCase().trim(),
+    expires_at: Math.floor(Date.now() / 1000) + 600, // 10 minutes
+  });
+
+  // Update booking with stripe session id
+  await supabase
+    .from('bookings')
+    .update({ stripe_session_id: session.id })
+    .eq('id', booking.id);
+
+  const spotsRemaining = Math.max(0, event.spots_total - taken - 1);
+  return respond(200, {
+    success: true,
+    checkout_url: session.url,
+    booking_id: booking.id,
+    spots_remaining: spotsRemaining,
+  });
+}
+
+async function handleNotify(body) {
+  const { name, email, interest } = body;
+  if (!email) return respond(400, { success: false, error: 'email is required' });
+
+  const { error } = await supabase.from('notifications').insert({
+    email: email.toLowerCase().trim(),
+    name: name ? name.trim() : null,
+    interest: interest || null,
+    type: 'notify',
+  });
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleWaitlist(body) {
+  const { name, email, interest } = body;
+  if (!email) return respond(400, { success: false, error: 'email is required' });
+
+  const { error } = await supabase.from('notifications').insert({
+    email: email.toLowerCase().trim(),
+    name: name ? name.trim() : null,
+    interest: interest || null,
+    type: 'waitlist',
+  });
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleContact(body) {
+  const { name, email, phone, message } = body;
+  if (!name || !email) return respond(400, { success: false, error: 'name and email are required' });
+
+  const { error } = await supabase.from('contacts').insert({
+    name: name.trim(),
+    email: email.toLowerCase().trim(),
+    phone: phone ? phone.trim() : null,
+    message: message || null,
+  });
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleMembership(body) {
+  const { name, email, phone, plan, sessions, days, times, notes } = body;
+  if (!name || !email || !plan) {
+    return respond(400, { success: false, error: 'name, email, and plan are required' });
+  }
+
+  const { error } = await supabase.from('memberships').insert({
+    name: name.trim(),
+    email: email.toLowerCase().trim(),
+    phone: phone ? phone.trim() : null,
+    plan,
+    sessions: sessions || null,
+    days: days || null,
+    times: times || null,
+    notes: notes || null,
+  });
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleCreateEvent(body) {
+  requireAdmin(body.admin_key);
+  const { name, type, tickets_open, session_date, spots_total, price_cents } = body;
+  if (!name || !type || !tickets_open || !session_date) {
+    return respond(400, { success: false, error: 'name, type, tickets_open, and session_date are required' });
+  }
+
+  const { data, error } = await supabase
+    .from('events')
+    .insert({
+      name,
+      type,
+      tickets_open,
+      session_date,
+      spots_total: spots_total || 20,
+      price_cents: price_cents || 0,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, event: data });
+}
+
+async function handleUpdateEvent(body) {
+  requireAdmin(body.admin_key);
+  const { event_id, ...fields } = body;
+  if (!event_id) return respond(400, { success: false, error: 'event_id is required' });
+
+  // Strip non-updatable fields
+  delete fields.admin_key;
+  delete fields.action;
+  delete fields.id;
+  delete fields.created_at;
+
+  const { data, error } = await supabase
+    .from('events')
+    .update(fields)
+    .eq('id', event_id)
+    .select()
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, event: data });
+}
+
+async function handleCancelBooking(body) {
+  requireAdmin(body.admin_key);
+  const { booking_id } = body;
+  if (!booking_id) return respond(400, { success: false, error: 'booking_id is required' });
+
+  const { data: booking, error: fetchErr } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', booking_id)
+    .single();
+  if (fetchErr || !booking) {
+    return respond(404, { success: false, error: 'booking_not_found' });
+  }
+
+  // Process Stripe refund if there was a payment
+  if (booking.stripe_payment_id && booking.amount_cents > 0) {
+    try {
+      await stripe.refunds.create({ payment_intent: booking.stripe_payment_id });
+    } catch (refundErr) {
+      // Log but don't fail — the payment may already be refunded
+      console.error('Stripe refund error:', refundErr.message);
+    }
+  }
+
+  const { error } = await supabase
+    .from('bookings')
+    .update({ status: 'cancelled' })
+    .eq('id', booking_id);
+  if (error) throw error;
+
+  return respond(200, { success: true });
+}
+
+async function handleSendNotifications(body) {
+  requireAdmin(body.admin_key);
+  const { event_type } = body;
+  if (!event_type) return respond(400, { success: false, error: 'event_type is required' });
+
+  // Fetch un-notified signups matching interest/type
+  const { data: signups, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('notified', false)
+    .or(`interest.eq.${event_type},interest.is.null`);
+  if (error) throw error;
+
+  // Mark them as notified
+  if (signups && signups.length > 0) {
+    const ids = signups.map((s) => s.id);
+    await supabase
+      .from('notifications')
+      .update({ notified: true })
+      .in('id', ids);
+  }
+
+  // Return the list of emails for the admin page to handle
+  const emails = (signups || []).map((s) => ({ email: s.email, name: s.name }));
+  return respond(200, { success: true, count: emails.length, emails });
+}
+
+async function handleCleanupHolds() {
+  await cleanupExpiredHolds();
+  return respond(200, { success: true });
+}
+
+// ═══════════════════════════════════════════════
+// Main handler
+// ═══════════════════════════════════════════════
+
+exports.handler = async (event) => {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: CORS_HEADERS, body: '' };
+  }
+
+  try {
+    const params = event.queryStringParameters || {};
+    const action = params.action;
+
+    // ─── GET requests ───
+    if (event.httpMethod === 'GET') {
+      switch (action) {
+        case 'config':
+          return await handleConfig();
+        case 'events':
+          return await handleEvents();
+        case 'bookings':
+          return await handleBookings(params.event_id);
+        case 'notifications':
+          return await handleNotifications();
+        case 'dashboard':
+          return await handleDashboard();
+        default:
+          return respond(400, { success: false, error: 'unknown action' });
+      }
+    }
+
+    // ─── POST requests ───
+    if (event.httpMethod === 'POST') {
+      let body;
+      try {
+        body = JSON.parse(event.body);
+      } catch {
+        return respond(400, { success: false, error: 'invalid JSON body' });
+      }
+
+      const postAction = body.action || action;
+
+      // Clean up expired holds before every POST operation
+      await cleanupExpiredHolds();
+
+      switch (postAction) {
+        case 'book':
+          return await handleBook(body);
+        case 'notify':
+          return await handleNotify(body);
+        case 'waitlist':
+          return await handleWaitlist(body);
+        case 'contact':
+          return await handleContact(body);
+        case 'membership':
+          return await handleMembership(body);
+        case 'create_event':
+          return await handleCreateEvent(body);
+        case 'update_event':
+          return await handleUpdateEvent(body);
+        case 'cancel_booking':
+          return await handleCancelBooking(body);
+        case 'send_notifications':
+          return await handleSendNotifications(body);
+        case 'cleanup_holds':
+          return await handleCleanupHolds();
+        default:
+          return respond(400, { success: false, error: 'unknown action' });
+      }
+    }
+
+    return respond(405, { success: false, error: 'method not allowed' });
+  } catch (err) {
+    console.error('API error:', err);
+    if (err.message === 'unauthorized') {
+      return respond(401, { success: false, error: 'unauthorized' });
+    }
+    return respond(500, { success: false, error: err.message || 'internal server error' });
+  }
+};
