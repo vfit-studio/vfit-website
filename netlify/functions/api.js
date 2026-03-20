@@ -443,9 +443,10 @@ async function handleMembership(body) {
 
 async function handleCreateEvent(body) {
   requireAdmin(body.admin_key);
-  const { name, type, tickets_open, session_date, spots_total, price_cents } = body;
-  if (!name || !type || !tickets_open || !session_date) {
-    return respond(400, { success: false, error: 'name, type, tickets_open, and session_date are required' });
+  const { name, type, session_date, spots_total, price_cents } = body;
+  const tickets_open = body.tickets_open || session_date;
+  if (!name || !type || !session_date) {
+    return respond(400, { success: false, error: 'name, type, and session_date are required' });
   }
 
   const { data, error } = await supabase
