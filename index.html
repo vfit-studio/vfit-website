@@ -240,10 +240,6 @@
   }
   .select-btn:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
 
-  /* ─── PRICING TOGGLE ─── */
-  .pricing-toggle { display: flex; justify-content: center; margin-top: 24px; margin-bottom: 8px; flex-wrap: wrap; }
-  .pricing-toggle button { padding: 8px 22px; border: 1px solid var(--stone); background: transparent; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bark); cursor: pointer; transition: all 0.3s; min-height: 44px; }
-  .pricing-toggle button.active { background: var(--deep); border-color: var(--deep); color: var(--warm-white); }
 
   /* ─── PILLARS ─── */
   .pillars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 52px 80px; margin-top: 56px; max-width: 780px; }
@@ -741,17 +737,12 @@
 
   <section class="section" style="background:var(--cream);padding-top:0;">
     <div class="section-inner">
-      <div class="pricing-toggle">
-        <button class="active" onclick="setPricing('session',this)">Per Session</button>
-        <button onclick="setPricing('week',this)">Per Week (x2)</button>
-        <button onclick="setPricing('month',this)">Per Month (x8)</button>
-      </div>
 
       <div class="membership-grid">
         <div class="membership-card reveal">
           <span class="card-badge badge-pop">Most Popular</span>
           <div class="card-title">Signature</div>
-          <div class="card-price"><span class="card-price-num" data-base="60">$60</span><span class="card-price-unit">&nbsp;/ <span class="price-period">session</span></span></div>
+          <div class="card-price"><span class="card-price-num">$60</span><span class="card-price-unit">&nbsp;/ session</span></div>
           <div class="card-divider"></div>
           <ul class="card-features">
             <li class="card-feature">Weekly recurring group session/s (max 4 ppl)</li>
@@ -763,7 +754,7 @@
         <div class="membership-card reveal rd1">
           <span class="card-badge badge-flex">No Commitment</span>
           <div class="card-title">Flexible</div>
-          <div class="card-price"><span class="card-price-num" data-base="70">$70</span><span class="card-price-unit">&nbsp;/ <span class="price-period">session</span></span></div>
+          <div class="card-price"><span class="card-price-num">$70</span><span class="card-price-unit">&nbsp;/ session</span></div>
           <div class="card-divider"></div>
           <ul class="card-features">
             <li class="card-feature">Weekly recurring group session/s (max 4 ppl)</li>
@@ -775,7 +766,7 @@
         <div class="membership-card reveal rd2">
           <span class="card-badge badge-vip">&#x2726; VIP</span>
           <div class="card-title">VIP</div>
-          <div class="card-price"><span class="card-price-num" data-base="190">$190</span><span class="card-price-unit">&nbsp;/ <span class="price-period">session</span></span></div>
+          <div class="card-price"><span class="card-price-num">$190</span><span class="card-price-unit">&nbsp;/ session</span></div>
           <div class="card-divider"></div>
           <p class="card-desc">1-on-1 coaching, premium access, full lifestyle support.</p>
           <ul class="card-features">
@@ -1055,8 +1046,15 @@
 // ═══════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════
+
+// Google Apps Script API endpoint — set this after deploying your Apps Script
+// Leave empty to use Formspree as fallback
+var BOOKING_API = '';
+
+// Formspree fallback (used when BOOKING_API is not set)
 var FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgalnnp';
 
+// Default config (overridden by live API data when BOOKING_API is set)
 var RUNCLUB_CONFIG = {
   ticketsOpen: '2026-03-22T08:00:00+10:00',
   sessionDate: '2026-03-24T05:15:00+10:00',
@@ -1070,6 +1068,75 @@ var PILATTES_CONFIG = {
   spotsTotal: 15,
   spotsRemaining: 15,
 };
+
+// Fetch live data from Google Sheets API
+function fetchLiveConfig() {
+  if (!BOOKING_API) return;
+  fetch(BOOKING_API)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.runclub) {
+        RUNCLUB_CONFIG.ticketsOpen = data.runclub.ticketsOpen || RUNCLUB_CONFIG.ticketsOpen;
+        RUNCLUB_CONFIG.sessionDate = data.runclub.sessionDate || RUNCLUB_CONFIG.sessionDate;
+        RUNCLUB_CONFIG.spotsTotal = data.runclub.spotsTotal || RUNCLUB_CONFIG.spotsTotal;
+        RUNCLUB_CONFIG.spotsRemaining = data.runclub.spotsRemaining;
+      }
+      if (data.pilattes) {
+        PILATTES_CONFIG.ticketsOpen = data.pilattes.ticketsOpen || PILATTES_CONFIG.ticketsOpen;
+        PILATTES_CONFIG.sessionDate = data.pilattes.sessionDate || PILATTES_CONFIG.sessionDate;
+        PILATTES_CONFIG.spotsTotal = data.pilattes.spotsTotal || PILATTES_CONFIG.spotsTotal;
+        PILATTES_CONFIG.spotsRemaining = data.pilattes.spotsRemaining;
+      }
+      // Re-render countdowns with live data
+      initCountdownWidget('rc', RUNCLUB_CONFIG, true);
+      initCountdownWidget('pl', PILATTES_CONFIG, false);
+    })
+    .catch(function(err) { console.log('Using fallback config', err); });
+}
+
+// Smart submit — uses API if available, Formspree as fallback
+function submitToAPI(data, onSuccess, onError) {
+  if (BOOKING_API) {
+    fetch(BOOKING_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.success) {
+        // Update spots in real time if returned
+        if (result.spotsRemaining !== undefined && data.type === 'runclub') {
+          RUNCLUB_CONFIG.spotsRemaining = result.spotsRemaining;
+          initCountdownWidget('rc', RUNCLUB_CONFIG, true);
+        }
+        if (result.spotsRemaining !== undefined && data.type === 'pilattes') {
+          PILATTES_CONFIG.spotsRemaining = result.spotsRemaining;
+          initCountdownWidget('pl', PILATTES_CONFIG, false);
+        }
+        onSuccess(result.message || 'Success!');
+      } else {
+        if (result.error === 'sold_out' || result.error === 'duplicate') {
+          onError(result.message || 'Something went wrong.');
+        } else {
+          onError(result.message || 'Something went wrong.');
+        }
+      }
+    })
+    .catch(function() { onError('Connection error. Please try again.'); });
+  } else {
+    // Formspree fallback
+    var formData = { _subject: 'VFIT — ' + (data.type || 'Enquiry') };
+    Object.keys(data).forEach(function(k) { formData[k] = data[k]; });
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(formData)
+    })
+    .then(function(r) { if (r.ok) onSuccess('Sent!'); else onError('Something went wrong.'); })
+    .catch(function() { onError('Something went wrong.'); });
+  }
+}
 
 // ═══════════════════════════════════
 // PAGE NAV
@@ -1317,6 +1384,9 @@ function initCountdownWidget(pre, config, isRunClub) {
 initCountdownWidget('rc', RUNCLUB_CONFIG, true);
 initCountdownWidget('pl', PILATTES_CONFIG, false);
 
+// Fetch live data from Google Sheets (overrides defaults above)
+fetchLiveConfig();
+
 // ═══════════════════════════════════
 // SIMPLE BOOKING MODAL
 // ═══════════════════════════════════
@@ -1356,33 +1426,33 @@ function submitBooking(e) {
   var btn = document.getElementById('btnBooking');
   btn.disabled = true;
   btn.textContent = 'Sending...';
+  var interest = document.getElementById('bInterest').value;
+
+  // Determine submission type for the API
+  var type = 'contact';
+  if (interest.indexOf('Run Club') !== -1 && interest.indexOf('Notify') === -1 && interest.indexOf('Waitlist') === -1) type = 'runclub';
+  else if (interest.indexOf("Pi'lattes") !== -1 && interest.indexOf('Notify') === -1 && interest.indexOf('Waitlist') === -1) type = 'pilattes';
+  else if (interest.indexOf('Notify') !== -1 || interest.indexOf('Waitlist') !== -1) type = 'notification';
+
   var data = {
-    interest: document.getElementById('bInterest').value,
+    type: type,
+    interest: interest,
     name: document.getElementById('bName').value.trim(),
     email: document.getElementById('bEmail').value.trim(),
     phone: document.getElementById('bPhone').value.trim(),
-    _subject: 'VFIT Booking — ' + document.getElementById('bInterest').value
   };
-  fetch(FORMSPREE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  .then(function(r) {
-    if (r.ok) {
+
+  submitToAPI(data,
+    function(msg) {
       document.getElementById('modalForm').style.display = 'none';
       document.getElementById('modalSuccess').classList.add('show');
-    } else {
-      alert('Something went wrong.');
+    },
+    function(msg) {
+      alert(msg);
       btn.disabled = false;
       btn.textContent = 'Send Enquiry';
     }
-  })
-  .catch(function() {
-    alert('Something went wrong.');
-    btn.disabled = false;
-    btn.textContent = 'Send Enquiry';
-  });
+  );
   return false;
 }
 
@@ -1395,31 +1465,21 @@ function submitContact(e) {
   btn.disabled = true;
   btn.textContent = 'Sending...';
   var data = {
+    type: 'contact',
     name: document.getElementById('cName').value.trim(),
     email: document.getElementById('cEmail').value.trim(),
     phone: document.getElementById('cPhone').value.trim(),
     message: document.getElementById('cMessage').value.trim(),
-    _subject: 'VFIT Contact Enquiry'
   };
-  fetch(FORMSPREE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  .then(function(r) {
-    if (r.ok) {
+  submitToAPI(data,
+    function(msg) {
       document.getElementById('contactForm').style.display = 'none';
       document.getElementById('contactSuccess').style.display = 'block';
-    } else {
-      alert('Something went wrong.');
+    },
+    function(msg) {
+      alert(msg);
       btn.disabled = false;
       btn.textContent = 'Send Message';
-    }
-  })
-  .catch(function() {
-    alert('Something went wrong.');
-    btn.disabled = false;
-    btn.textContent = 'Send Message';
   });
   return false;
 }
@@ -1464,20 +1524,6 @@ function changeTestimonial(dir) { goTestimonial((tIdx + dir + testimonials.lengt
 tQ.style.transition = 'opacity 0.4s';
 tA.style.transition = 'opacity 0.4s';
 setInterval(function() { changeTestimonial(1); }, 7000);
-
-// ═══════════════════════════════════
-// PRICING TOGGLE
-// ═══════════════════════════════════
-function setPricing(mode, btn) {
-  document.querySelectorAll('.pricing-toggle button').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  var mult = mode === 'week' ? 2 : mode === 'month' ? 8 : 1;
-  var label = mode === 'week' ? 'week' : mode === 'month' ? 'month' : 'session';
-  document.querySelectorAll('.card-price-num[data-base]').forEach(function(el) {
-    el.textContent = '$' + (parseInt(el.dataset.base) * mult);
-  });
-  document.querySelectorAll('.price-period').forEach(function(el) { el.textContent = label; });
-}
 
 // ═══════════════════════════════════
 // PHOTO LIGHTBOX
@@ -1675,30 +1721,20 @@ function wizSubmit() {
     email: wizData.email,
     phone: wizData.phone,
     notes: wizData.notes || 'None',
-    _subject: 'VFIT Membership Enquiry — ' + wizData.plan
   };
 
-  fetch(FORMSPREE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  .then(function(r) {
-    if (r.ok) {
+  submitToAPI(data,
+    function(msg) {
       document.querySelector('.wiz-viewport').style.display = 'none';
       document.getElementById('wizStepLabel').style.display = 'none';
       document.getElementById('wizSuccess').classList.add('show');
-    } else {
-      alert('Something went wrong. Please try again.');
+    },
+    function(msg) {
+      alert(msg);
       btn.disabled = false;
       btn.textContent = 'Send Enquiry';
     }
-  })
-  .catch(function() {
-    alert('Something went wrong. Please try again.');
-    btn.disabled = false;
-    btn.textContent = 'Send Enquiry';
-  });
+  );
 }
 
 // ═══════════════════════════════════
