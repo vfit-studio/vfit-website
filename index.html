@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VFIT — Boutique Fitness Studio, Toowoomba</title>
+<meta name="description" content="VFIT is Toowoomba's boutique fitness studio offering Run Club, Pi'lattes at The Dairy Ravensbourne, and exclusive small group training. Led by Georgie Valdal.">
+<meta property="og:title" content="VFIT — Boutique Fitness Studio, Toowoomba">
+<meta property="og:description" content="Three distinct ways to move — Run Club, Pi'lattes, and exclusive small group training in our private studio.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sand: #f5f0e8; --cream: #faf7f2; --stone: #e8e0d4; --clay: #c9b99a;
+    --bark: #8c7660; --moss: #7a8c6e; --deep: #3d3530; --warm-white: #fefcf8;
+    --sage: #a8b89a; --red: #b85c5c;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--deep); font-weight: 300; overflow-x: hidden; }
+
+  /* ─── SKIP NAV ─── */
+  .skip-nav { position: absolute; top: -100%; left: 16px; z-index: 999; padding: 12px 24px; background: var(--deep); color: var(--warm-white); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none; }
+  .skip-nav:focus { top: 16px; }
+
+  /* ─── NAV ─── */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; padding: 26px 60px; display: flex; align-items: center; justify-content: space-between; transition: background 0.4s, padding 0.4s, box-shadow 0.4s; }
+  nav.scrolled { background: rgba(254,252,248,0.95); backdrop-filter: blur(12px); padding: 16px 60px; box-shadow: 0 1px 0 var(--stone); }
+  .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; letter-spacing: 0.32em; color: var(--deep); text-decoration: none; cursor: pointer; background: none; border: none; }
+  .nav-links { display: flex; gap: 36px; list-style: none; align-items: center; }
+  .nav-links button { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--deep); text-decoration: none; opacity: 0.55; transition: opacity 0.3s; cursor: pointer; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; padding: 0; }
+  .nav-links button:hover, .nav-links button.active { opacity: 1; }
+  .nav-cta { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--warm-white); background: var(--deep); padding: 11px 26px; border: none; cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: background 0.3s, transform 0.3s; }
+  .nav-cta:hover { background: var(--bark); transform: translateY(-1px); }
+
+  /* ─── HAMBURGER ─── */
+  .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; z-index: 300; }
+  .hamburger span { width: 24px; height: 1.5px; background: var(--deep); display: block; transition: transform 0.3s, opacity 0.3s; }
+  .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4.5px, 4.5px); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4.5px, -4.5px); }
+  .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(254,252,248,0.98); z-index: 199; flex-direction: column; align-items: center; justify-content: center; gap: 32px; }
+  .mobile-overlay.open { display: flex; }
+  .mobile-overlay button { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--deep); background: none; border: none; cursor: pointer; transition: color 0.3s; }
+  .mobile-overlay button:hover { color: var(--bark); }
+
+  /* ─── PAGE SYSTEM ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── SHARED ─── */
+  .section { padding: 100px 24px; }
+  .section-inner { max-width: 1100px; margin: 0 auto; }
+  .section-label { font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--bark); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .section-label::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--clay); }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 5vw, 60px); font-weight: 300; line-height: 1.1; margin-bottom: 16px; }
+  .section-title em { font-style: italic; color: var(--bark); }
+
+  .btn-primary { display: inline-block; padding: 15px 42px; background: var(--deep); color: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em; text-transform: uppercase; text-decoration: none; border: none; cursor: pointer; transition: all 0.3s; }
+  .btn-primary:hover { background: var(--bark); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-outline { display: inline-block; padding: 14px 40px; background: transparent; color: var(--bark); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--clay); cursor: pointer; transition: all 0.3s; }
+  .btn-outline:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
+  .btn-ghost { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bark); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; transition: gap 0.3s; }
+  .btn-ghost::after { content: ''; width: 28px; height: 1px; background: var(--clay); display: inline-block; transition: width 0.3s; }
+  .btn-ghost:hover { gap: 14px; }
+  .btn-ghost:hover::after { width: 40px; }
+
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.75s ease, transform 0.75s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .rd1 { transition-delay: 0.1s; } .rd2 { transition-delay: 0.22s; } .rd3 { transition-delay: 0.36s; }
+
+  /* ─── MARQUEE ─── */
+  .marquee { background: var(--deep); padding: 16px 0; overflow: hidden; }
+  .marquee-track { display: flex; gap: 52px; animation: marqueeAnim 24s linear infinite; width: max-content; }
+  .marquee-track span { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; font-weight: 300; letter-spacing: 0.08em; color: var(--clay); white-space: nowrap; }
+  .marquee-dot { font-style: normal !important; color: rgba(201,185,154,0.3) !important; }
+
+  /* ─── HERO ─── */
+  .home-hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--warm-white); overflow: hidden; }
+  .home-hero-left { display: flex; flex-direction: column; justify-content: flex-end; padding: 0 72px 60px; position: relative; z-index: 2; }
+  .home-hero-left::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 60% at 10% 90%, rgba(201,185,154,0.2) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 90% 10%, rgba(168,184,154,0.1) 0%, transparent 55%); }
+  .home-hero-eyebrow { font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--bark); margin-bottom: 26px; display: flex; align-items: center; gap: 14px; opacity: 0; animation: fadeUp 0.8s ease 0.3s forwards; }
+  .home-hero-eyebrow::before { content: ''; width: 36px; height: 1px; background: var(--clay); display: inline-block; }
+  .home-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(52px, 5.5vw, 88px); font-weight: 300; line-height: 0.95; letter-spacing: -0.01em; color: var(--deep); margin-bottom: 26px; opacity: 0; animation: fadeUp 0.8s ease 0.45s forwards; }
+  .home-hero h1 em { font-style: italic; color: var(--bark); display: block; }
+  .home-hero-desc { font-size: 14px; line-height: 1.95; color: #6b5e52; max-width: 380px; margin-bottom: 44px; opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards; }
+  .home-hero-actions { display: flex; gap: 18px; align-items: center; opacity: 0; animation: fadeUp 0.8s ease 0.75s forwards; }
+  .home-hero-right { position: relative; overflow: hidden; }
+  .home-hero-right::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, var(--warm-white) 0%, transparent 25%); z-index: 1; }
+  .home-hero-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: sepia(8%) brightness(0.9); transform: scale(1.04); animation: slowZoom 10s ease-out forwards; }
+
+  /* ─── OFFERINGS ─── */
+  .offerings-strip { background: var(--sand); padding: 0; }
+  .offerings-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .offering-card { padding: 56px 48px; border-right: 1px solid var(--stone); cursor: pointer; transition: background 0.35s; position: relative; overflow: hidden; }
+  .offering-card:last-child { border-right: none; }
+  .offering-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--clay); transform: scaleX(0); transition: transform 0.4s; transform-origin: left; }
+  .offering-card:hover { background: var(--warm-white); }
+  .offering-card:hover::after { transform: scaleX(1); }
+  .offering-badge { display: inline-block; font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase; padding: 4px 10px; margin-bottom: 22px; border: 1px solid var(--clay); color: var(--bark); }
+  .offering-badge.public { background: var(--sage); border-color: var(--sage); color: var(--warm-white); }
+  .offering-badge.private { background: var(--deep); border-color: var(--deep); color: var(--warm-white); }
+  .offering-num { font-family: 'Cormorant Garamond', serif; font-size: 72px; font-weight: 300; color: var(--stone); line-height: 1; margin-bottom: 16px; }
+  .offering-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--deep); line-height: 1.1; margin-bottom: 14px; }
+  .offering-desc { font-size: 13px; line-height: 1.9; color: #6b5e52; margin-bottom: 28px; }
+
+  /* ─── PAGE HERO ─── */
+  .page-hero { min-height: 80vh; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 72px 96px; background: var(--warm-white); position: relative; overflow: hidden; }
+  .page-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 15% 85%, rgba(201,185,154,0.2) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 85% 15%, rgba(168,184,154,0.12) 0%, transparent 55%); }
+  .page-hero-bg { position: absolute; bottom: -30px; right: -20px; font-family: 'Cormorant Garamond', serif; font-size: 260px; font-weight: 300; color: rgba(201,185,154,0.07); line-height: 1; pointer-events: none; white-space: nowrap; }
+  .page-hero-eyebrow { font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--bark); margin-bottom: 22px; display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards; }
+  .page-hero-eyebrow::before { content: ''; width: 36px; height: 1px; background: var(--clay); display: inline-block; }
+  .page-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(58px, 8vw, 120px); font-weight: 300; line-height: 0.93; letter-spacing: -0.02em; color: var(--deep); margin-bottom: 28px; position: relative; z-index: 2; opacity: 0; animation: fadeUp 0.8s ease 0.35s forwards; }
+  .page-hero h1 em { font-style: italic; color: var(--bark); display: block; }
+  .page-hero-desc { font-size: 14px; line-height: 1.95; color: #6b5e52; max-width: 480px; margin-bottom: 44px; position: relative; z-index: 2; opacity: 0; animation: fadeUp 0.8s ease 0.5s forwards; }
+  .page-hero-actions { display: flex; gap: 16px; align-items: center; position: relative; z-index: 2; opacity: 0; animation: fadeUp 0.8s ease 0.65s forwards; }
+
+  /* ─── INFO CARDS ─── */
+  .info-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--stone); }
+  .info-card { background: var(--warm-white); padding: 44px 40px; }
+  .info-card-icon { font-size: 28px; margin-bottom: 16px; display: block; }
+  .info-card-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--bark); margin-bottom: 8px; }
+  .info-card-value { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--deep); line-height: 1.3; }
+
+  /* ─── COUNTDOWN WIDGET ─── */
+  .countdown-widget { background: var(--warm-white); border: 1px solid var(--stone); padding: 36px; text-align: center; max-width: 420px; margin: 0 auto; }
+  .countdown-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--bark); margin-bottom: 16px; }
+  .countdown-timer { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+  .countdown-unit { display: flex; flex-direction: column; align-items: center; min-width: 50px; }
+  .countdown-num { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--deep); line-height: 1; }
+  .countdown-txt { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-top: 4px; }
+  .countdown-sep { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--clay); line-height: 1; padding-top: 4px; }
+  .spots-bar { margin: 20px 0; }
+  .spots-text { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .spots-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .spots-dot.open { background: var(--moss); animation: pulse 2s infinite; }
+  .spots-dot.closed { background: var(--red); }
+  .spots-track { width: 100%; height: 4px; background: var(--stone); border-radius: 2px; overflow: hidden; }
+  .spots-fill { height: 100%; background: var(--moss); border-radius: 2px; transition: width 0.6s; }
+  .spots-fill.low { background: var(--red); }
+  .widget-btn { width: 100%; margin-top: 20px; padding: 16px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-family: 'Jost', sans-serif; font-weight: 400; border: none; cursor: pointer; transition: all 0.3s; }
+  .widget-btn.open { background: var(--deep); color: var(--warm-white); }
+  .widget-btn.open:hover { background: var(--bark); }
+  .widget-btn.closed { background: var(--stone); color: var(--bark); cursor: default; }
+  .widget-btn.waitlist { background: transparent; color: var(--bark); border: 1px solid var(--clay); }
+  .widget-btn.waitlist:hover { background: var(--bark); color: var(--warm-white); }
+
+  /* ─── EXPECT GRID ─── */
+  .expect-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 52px 80px; margin-top: 56px; max-width: 820px; }
+  .expect-num { font-family: 'Cormorant Garamond', serif; font-size: 68px; font-weight: 300; color: var(--stone); line-height: 1; margin-bottom: 14px; }
+  .expect-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; color: var(--deep); margin-bottom: 10px; }
+  .expect-text { font-size: 13px; line-height: 1.95; color: #6b5e52; }
+
+  /* ─── CTA STRIP ─── */
+  .cta-strip { background: var(--deep); padding: 80px 24px; text-align: center; }
+  .cta-strip-inner { max-width: 600px; margin: 0 auto; }
+  .cta-strip h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 5vw, 58px); font-weight: 300; color: var(--warm-white); margin-bottom: 20px; line-height: 1.1; }
+  .cta-strip h2 em { font-style: italic; color: var(--clay); }
+  .cta-strip p { font-size: 14px; color: rgba(254,252,248,0.55); line-height: 1.9; margin-bottom: 40px; }
+  .cta-strip .btn-primary { background: var(--clay); color: var(--deep); }
+  .cta-strip .btn-primary:hover { background: var(--bark); color: var(--warm-white); }
+  .cta-strip .section-label { justify-content: center; color: var(--clay); }
+
+  /* ─── MEMBERSHIPS ─── */
+  .membership-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 44px; }
+  .membership-card { background: var(--warm-white); padding: 48px 40px; transition: all 0.4s; position: relative; overflow: hidden; border: 2px solid transparent; }
+  .membership-card::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--clay); transform: scaleX(0); transition: transform 0.4s; transform-origin: left; }
+  .membership-card:hover::before { transform: scaleX(1); }
+  .membership-card:hover { border-color: var(--stone); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(61,53,48,0.07); }
+  .card-badge { display: inline-block; font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; padding: 4px 10px; margin-bottom: 24px; }
+  .badge-pop { background: var(--clay); color: var(--warm-white); }
+  .badge-flex { border: 1px solid var(--clay); color: var(--bark); }
+  .badge-vip { background: var(--deep); color: var(--warm-white); }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 300; line-height: 1.05; margin-bottom: 6px; color: var(--deep); }
+  .card-price { margin: 20px 0; display: flex; align-items: baseline; gap: 4px; }
+  .card-price-num { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--deep); line-height: 1; }
+  .card-price-unit { font-size: 18px; color: var(--bark); font-weight: 300; }
+  .card-divider { height: 1px; background: var(--stone); margin: 24px 0; }
+  .card-desc { font-size: 13px; line-height: 1.85; color: #6b5e52; margin-bottom: 20px; }
+  .card-features { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  .card-feature { font-size: 12.5px; color: #6b5e52; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+  .card-feature::before { content: '\2014'; color: var(--clay); flex-shrink: 0; }
+  .select-btn { margin-top: 36px; width: 100%; padding: 14px; background: var(--deep); border: none; color: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
+  .select-btn:hover { background: var(--bark); }
+
+  /* ─── PRICING TOGGLE ─── */
+  .pricing-toggle { display: flex; justify-content: center; margin-top: 24px; margin-bottom: 8px; }
+  .pricing-toggle button { padding: 8px 22px; border: 1px solid var(--stone); background: transparent; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bark); cursor: pointer; transition: all 0.3s; }
+  .pricing-toggle button:first-child { border-right: none; }
+  .pricing-toggle button:last-child { border-left: none; }
+  .pricing-toggle button.active { background: var(--deep); border-color: var(--deep); color: var(--warm-white); }
+
+  /* ─── PILLARS ─── */
+  .pillars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 52px 80px; margin-top: 56px; max-width: 780px; }
+  .pillar-num { font-family: 'Cormorant Garamond', serif; font-size: 68px; font-weight: 300; color: var(--stone); line-height: 1; margin-bottom: 14px; }
+  .pillar-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; color: var(--deep); margin-bottom: 10px; }
+  .pillar-text { font-size: 13px; line-height: 1.95; color: #6b5e52; }
+
+  /* ─── ABOUT ─── */
+  .about-split { display: grid; grid-template-columns: 1fr 1fr; background: var(--sand); }
+  .about-img { position: relative; overflow: hidden; min-height: 70vh; }
+  .about-img img { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: sepia(8%) brightness(0.88); transition: transform 0.7s; }
+  .about-img:hover img { transform: scale(1.03); }
+  .about-content { padding: 100px 80px; display: flex; flex-direction: column; justify-content: center; background: var(--sand); }
+  .about-content h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px, 3.5vw, 54px); font-weight: 300; line-height: 1.1; margin-bottom: 26px; }
+  .about-content h2 em { font-style: italic; color: var(--bark); }
+  .about-content p { font-size: 14px; line-height: 1.95; color: #6b5e52; margin-bottom: 18px; max-width: 420px; }
+
+  /* ─── TESTIMONIAL CAROUSEL ─── */
+  .testimonial { background: var(--deep); padding: 110px 24px; text-align: center; position: relative; overflow: hidden; }
+  .testimonial::before { content: '\201C'; position: absolute; top: -80px; left: 5%; font-family: 'Cormorant Garamond', serif; font-size: 340px; color: rgba(201,185,154,0.05); line-height: 1; pointer-events: none; }
+  .testimonial-inner { max-width: 740px; margin: 0 auto; position: relative; z-index: 2; }
+  .testimonial-inner blockquote { font-family: 'Cormorant Garamond', serif; font-size: clamp(22px, 3vw, 36px); font-style: italic; font-weight: 300; color: var(--warm-white); line-height: 1.6; margin-bottom: 40px; transition: opacity 0.5s; }
+  .t-divider { width: 36px; height: 1px; background: var(--clay); margin: 0 auto 24px; }
+  .t-author { font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase; color: rgba(201,185,154,0.5); margin-bottom: 28px; transition: opacity 0.5s; }
+  .carousel-nav { display: flex; justify-content: center; align-items: center; gap: 16px; }
+  .carousel-arrow { background: none; border: 1px solid rgba(201,185,154,0.3); color: var(--clay); width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.3s; border-radius: 50%; }
+  .carousel-arrow:hover { background: rgba(201,185,154,0.15); border-color: var(--clay); }
+  .carousel-dots { display: flex; gap: 8px; }
+  .carousel-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(201,185,154,0.2); border: none; cursor: pointer; transition: background 0.3s; padding: 0; }
+  .carousel-dot.active { background: var(--clay); }
+
+  /* ─── PHOTO GALLERY ─── */
+  .gallery-section { background: var(--sand); padding: 80px 24px; }
+  .gallery-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 4px; max-width: 1100px; margin: 0 auto; }
+  .gallery-item { overflow: hidden; cursor: pointer; position: relative; height: 360px; }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; filter: sepia(8%) brightness(0.88); transition: transform 0.6s, filter 0.5s; }
+  .gallery-item:hover img { transform: scale(1.04); filter: sepia(0%) brightness(0.92); }
+  .gallery-item::after { content: ''; position: absolute; inset: 0; background: rgba(61,53,48,0); transition: background 0.4s; }
+  .gallery-item:hover::after { background: rgba(61,53,48,0.1); }
+
+  /* ─── LIGHTBOX ─── */
+  .lightbox { display: none; position: fixed; inset: 0; z-index: 700; background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 40px; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 85vh; object-fit: contain; animation: modalIn 0.3s ease; }
+  .lightbox-close { position: absolute; top: 24px; right: 32px; background: none; border: none; color: white; font-size: 32px; cursor: pointer; z-index: 2; }
+  .lightbox-arrows { position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; transform: translateY(-50%); }
+  .lightbox-arrow { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+  .lightbox-arrow:hover { background: rgba(255,255,255,0.2); }
+
+  /* ─── INSTAGRAM SECTION ─── */
+  .insta-section { background: var(--warm-white); padding: 80px 24px; text-align: center; }
+  .insta-section h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 300; margin-bottom: 8px; }
+  .insta-section h2 em { font-style: italic; color: var(--bark); }
+  .insta-handle { font-size: 13px; color: var(--bark); margin-bottom: 40px; display: block; }
+  .insta-handle a { color: var(--bark); text-decoration: none; font-weight: 400; }
+  .insta-handle a:hover { text-decoration: underline; }
+  .insta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 900px; margin: 0 auto; }
+  .insta-item { aspect-ratio: 1; overflow: hidden; position: relative; cursor: pointer; }
+  .insta-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; filter: sepia(5%) brightness(0.92); }
+  .insta-item:hover img { transform: scale(1.06); }
+  .insta-item::after { content: ''; position: absolute; inset: 0; background: rgba(61,53,48,0); transition: background 0.4s; }
+  .insta-item:hover::after { background: rgba(61,53,48,0.15); }
+  .insta-cta { margin-top: 36px; }
+
+  /* ─── MAP ─── */
+  .map-embed { width: 100%; height: 320px; border: none; filter: grayscale(30%) contrast(1.05); }
+
+  /* ─── CONTACT ─── */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .contact-info { background: var(--sand); padding: 80px; }
+  .contact-info h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px, 4vw, 54px); font-weight: 300; line-height: 1.1; margin-bottom: 36px; }
+  .contact-info h2 em { font-style: italic; color: var(--bark); }
+  .contact-detail { margin-bottom: 32px; }
+  .contact-detail-label { font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--bark); margin-bottom: 8px; }
+  .contact-detail-value { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--deep); line-height: 1.5; font-style: normal; }
+  .contact-form-wrap { background: var(--warm-white); padding: 80px; }
+  .contact-form-wrap h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 3vw, 42px); font-weight: 300; margin-bottom: 36px; }
+  .contact-form-wrap h2 em { font-style: italic; color: var(--bark); }
+  .form-group { margin-bottom: 26px; }
+  .form-label { display: block; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-bottom: 10px; }
+  .form-input { width: 100%; padding: 13px 17px; border: 1px solid var(--stone); background: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 300; color: var(--deep); outline: none; transition: border-color 0.3s; }
+  .form-input:focus { border-color: var(--clay); }
+  .form-input.readonly { background: var(--sand); color: var(--bark); }
+  .form-textarea { width: 100%; padding: 13px 17px; border: 1px solid var(--stone); background: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 300; color: var(--deep); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.3s; }
+  .form-textarea:focus { border-color: var(--clay); }
+
+  /* ─── BOOKING MODAL ─── */
+  .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(61,53,48,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 24px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--warm-white); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; position: relative; padding: 48px 44px; animation: modalIn 0.3s ease; }
+  .modal-close { position: absolute; top: 20px; right: 24px; background: none; border: none; cursor: pointer; font-size: 24px; color: var(--bark); line-height: 1; transition: color 0.3s; }
+  .modal-close:hover { color: var(--deep); }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; margin-bottom: 8px; color: var(--deep); }
+  .modal-title em { font-style: italic; color: var(--bark); }
+  .modal-subtitle { font-size: 13px; color: #6b5e52; line-height: 1.7; margin-bottom: 32px; }
+  .modal-success { display: none; text-align: center; padding: 40px 0; }
+  .modal-success.show { display: block; }
+  .modal-success h3 { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; margin-bottom: 12px; }
+  .modal-success h3 em { font-style: italic; color: var(--bark); }
+  .modal-success p { font-size: 14px; color: #6b5e52; line-height: 1.8; }
+  .success-icon { width: 60px; height: 60px; border: 1px solid var(--moss); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 20px; color: var(--moss); }
+
+  /* ─── TERMS MODAL ─── */
+  .terms-backdrop { display: none; position: fixed; inset: 0; z-index: 600; background: rgba(61,53,48,0.6); backdrop-filter: blur(4px); align-items: flex-start; justify-content: center; padding: 24px; overflow-y: auto; }
+  .terms-backdrop.open { display: flex; }
+  .terms-modal { background: var(--warm-white); width: 100%; max-width: 720px; margin: 40px auto; padding: 56px 52px; position: relative; animation: modalIn 0.3s ease; }
+  .terms-heading { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--deep); margin-bottom: 16px; }
+  .terms-body { font-size: 13px; line-height: 1.95; color: #6b5e52; margin-bottom: 10px; }
+  .terms-indent { padding-left: 24px; }
+  .terms-section-t { margin-bottom: 36px; padding-bottom: 36px; border-bottom: 1px solid var(--stone); }
+  .terms-section-t:last-child { border-bottom: none; }
+
+  /* ─── COOKIE BANNER ─── */
+  .cookie-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: var(--deep); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; transform: translateY(100%); transition: transform 0.5s ease; }
+  .cookie-banner.show { transform: translateY(0); }
+  .cookie-banner p { font-size: 12px; color: rgba(254,252,248,0.6); line-height: 1.7; flex: 1; }
+  .cookie-banner a { color: var(--clay); }
+  .cookie-accept { padding: 10px 28px; background: var(--clay); color: var(--deep); border: none; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
+  .cookie-accept:hover { background: var(--bark); color: var(--warm-white); }
+
+  /* ─── FOOTER ─── */
+  footer { background: var(--deep); border-top: 1px solid rgba(201,185,154,0.1); color: rgba(254,252,248,0.4); padding: 60px 60px 36px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 48px; }
+  .footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; letter-spacing: 0.28em; color: var(--warm-white); display: block; margin-bottom: 14px; }
+  .footer-tagline { font-size: 12px; line-height: 1.9; color: rgba(254,252,248,0.3); }
+  .footer-col h4 { font-size: 10px; letter-spacing: 0.38em; text-transform: uppercase; color: var(--clay); margin-bottom: 22px; }
+  .footer-col ul { list-style: none; }
+  .footer-col ul li { margin-bottom: 13px; }
+  .footer-col ul button, .footer-col ul span { font-size: 12.5px; color: rgba(254,252,248,0.4); text-decoration: none; letter-spacing: 0.05em; transition: color 0.3s; background: none; border: none; font-family: 'Jost', sans-serif; font-weight: 300; padding: 0; cursor: pointer; }
+  .footer-col ul span { cursor: default; }
+  .footer-col ul button:hover { color: var(--clay); }
+  .footer-terms { font-size: 11px; color: rgba(254,252,248,0.2); letter-spacing: 0.07em; background: none; border: none; cursor: pointer; font-family: 'Jost', sans-serif; font-weight: 300; transition: color 0.3s; }
+  .footer-terms:hover { color: var(--clay); }
+  .footer-bottom { grid-column: 1 / -1; border-top: 1px solid rgba(201,185,154,0.08); padding-top: 26px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .footer-bottom p { font-size: 11px; color: rgba(254,252,248,0.2); letter-spacing: 0.07em; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slowZoom { from { transform: scale(1.04); } to { transform: scale(1.0); } }
+  @keyframes marqueeAnim { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1024px) {
+    nav { padding: 20px 28px; } nav.scrolled { padding: 14px 28px; }
+    .nav-links, .nav-cta { display: none; } .hamburger { display: flex; }
+    .home-hero, .about-split, .contact-grid { grid-template-columns: 1fr; }
+    .home-hero-right { display: none; }
+    .home-hero-left { padding: 120px 36px 80px; justify-content: center; }
+    .offerings-grid, .info-cards, .membership-grid { grid-template-columns: 1fr; }
+    .offering-card { border-right: none; border-bottom: 1px solid var(--stone); }
+    .about-img { min-height: 50vw; }
+    .about-content, .contact-info, .contact-form-wrap { padding: 60px 36px; }
+    .page-hero { padding: 0 36px 80px; }
+    .pillars-grid, .expect-grid { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: 1fr 1fr; }
+    .gallery-item { height: 240px; }
+    .insta-grid { grid-template-columns: repeat(2, 1fr); }
+    footer { grid-template-columns: 1fr; padding: 48px 28px 28px; }
+    .modal { padding: 36px 28px; } .terms-modal { padding: 40px 28px; }
+    .cookie-banner { flex-direction: column; text-align: center; padding: 20px 24px; }
+  }
+  @media (max-width: 480px) {
+    .home-hero-left { padding: 100px 24px 60px; }
+    .page-hero { padding: 0 24px 60px; }
+    .section { padding: 60px 16px; }
+    .contact-info, .contact-form-wrap { padding: 40px 24px; }
+    .gallery-grid { grid-template-columns: 1fr; }
+    .insta-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-nav">Skip to content</a>
+
+<!-- NAV -->
+<nav id="navbar">
+  <button class="nav-logo" onclick="showPage('home')">VFIT</button>
+  <ul class="nav-links">
+    <li><button onclick="showPage('runclub')">Run Club</button></li>
+    <li><button onclick="showPage('pilattes')">Pi'lattes</button></li>
+    <li><button onclick="showPage('memberships')">Memberships</button></li>
+    <li><button onclick="showPage('about')">About</button></li>
+  </ul>
+  <button class="nav-cta" onclick="openModal()">Book Now</button>
+  <button class="hamburger" onclick="toggleMobile()" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-overlay" id="mobileMenu">
+  <button onclick="mobileNav('home')">Home</button>
+  <button onclick="mobileNav('runclub')">Run Club</button>
+  <button onclick="mobileNav('pilattes')">Pi'lattes</button>
+  <button onclick="mobileNav('memberships')">Memberships</button>
+  <button onclick="mobileNav('about')">About</button>
+  <button onclick="mobileNav('contact')">Contact</button>
+  <button onclick="closeMobile();openModal()">Book Now</button>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div class="page active" id="page-home">
+  <main id="main">
+  <section class="home-hero">
+    <div class="home-hero-left">
+      <p class="home-hero-eyebrow">Toowoomba's Boutique Fitness Studio</p>
+      <h1>Move<br>with<br><em>Purpose.</em></h1>
+      <p class="home-hero-desc">Three distinct ways to move — a weekly run club, monthly Pilates at The Dairy, and exclusive small group training in our private studio.</p>
+      <div class="home-hero-actions">
+        <button class="btn-primary" onclick="showPage('memberships')">Explore Memberships</button>
+        <button class="btn-ghost" onclick="showPage('about')">Our Story</button>
+      </div>
+    </div>
+    <div class="home-hero-right">
+      <img class="home-hero-img" src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT boutique fitness studio" loading="eager">
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="marquee-track"><span>Run Club</span><span class="marquee-dot"> · </span><span>Pi'lattes</span><span class="marquee-dot"> · </span><span>Small Group Training</span><span class="marquee-dot"> · </span><span>Pilates</span><span class="marquee-dot"> · </span><span>Strength &amp; Conditioning</span><span class="marquee-dot"> · </span><span>Stretch Therapy</span><span class="marquee-dot"> · </span><span>Toowoomba</span><span class="marquee-dot"> · </span><span>Run Club</span><span class="marquee-dot"> · </span><span>Pi'lattes</span><span class="marquee-dot"> · </span><span>Small Group Training</span><span class="marquee-dot"> · </span><span>Pilates</span><span class="marquee-dot"> · </span><span>Strength &amp; Conditioning</span><span class="marquee-dot"> · </span><span>Stretch Therapy</span><span class="marquee-dot"> · </span><span>Toowoomba</span><span class="marquee-dot"> · </span></div></div>
+
+  <div class="offerings-strip"><div class="offerings-grid">
+    <div class="offering-card reveal" onclick="showPage('runclub')" tabindex="0" role="button">
+      <span class="offering-badge public">Open to Public</span>
+      <div class="offering-num">01</div><div class="offering-title">Run<br>Club</div>
+      <p class="offering-desc">A weekly run session open to all fitness levels. Whether you're starting out or chasing a big goal — we'll get you there.</p>
+      <span class="btn-ghost">Explore</span>
+    </div>
+    <div class="offering-card reveal rd1" onclick="showPage('pilattes')" tabindex="0" role="button">
+      <span class="offering-badge public">Open to Public</span>
+      <div class="offering-num">02</div><div class="offering-title">Pi'lattes</div>
+      <p class="offering-desc">Monthly mat Pilates at the stunning Dairy, Ravensbourne — followed by a complimentary coffee from Then Bakehouse.</p>
+      <span class="btn-ghost">Explore</span>
+    </div>
+    <div class="offering-card reveal rd2" onclick="showPage('memberships')" tabindex="0" role="button">
+      <span class="offering-badge private">Members Only</span>
+      <div class="offering-num">03</div><div class="offering-title">Small Group<br>Training</div>
+      <p class="offering-desc">Exclusive access to our private gym. Small group recurring weekly sessions — expert coaching every time.</p>
+      <span class="btn-ghost">Explore</span>
+    </div>
+  </div></div>
+
+  <!-- Photo Gallery -->
+  <div class="gallery-section">
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(0)"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT Studio session" loading="lazy"></div>
+      <div class="gallery-item" onclick="openLightbox(1)"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg" alt="Georgie Valdal coaching" loading="lazy"></div>
+      <div class="gallery-item" onclick="openLightbox(2)"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT training session" loading="lazy"></div>
+    </div>
+  </div>
+
+  <!-- Testimonial -->
+  <div class="testimonial">
+    <div class="testimonial-inner reveal">
+      <blockquote id="tQuote">"So refreshing to have a trainer that keeps things new, exciting and challenging. No matter what stage of fitness I'm in, VFIT always gets the most out of every session."</blockquote>
+      <div class="t-divider"></div>
+      <p class="t-author" id="tAuthor">Client Testimonial · Toowoomba</p>
+      <div class="carousel-nav">
+        <button class="carousel-arrow" onclick="changeTestimonial(-1)" aria-label="Previous">&#8592;</button>
+        <div class="carousel-dots" id="carouselDots"></div>
+        <button class="carousel-arrow" onclick="changeTestimonial(1)" aria-label="Next">&#8594;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instagram -->
+  <div class="insta-section">
+    <h2>Follow the <em>journey.</em></h2>
+    <span class="insta-handle"><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">@valdalfit</a></span>
+    <div class="insta-grid">
+      <a class="insta-item" href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT Instagram" loading="lazy"></a>
+      <a class="insta-item" href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg" alt="VFIT Instagram" loading="lazy"></a>
+      <a class="insta-item" href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT Instagram" loading="lazy"></a>
+      <a class="insta-item" href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg" alt="VFIT Instagram" loading="lazy"></a>
+    </div>
+    <div class="insta-cta"><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" class="btn-outline">Follow @valdalfit</a></div>
+  </div>
+  </main>
+
+  <footer>
+    <div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div>
+    <div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openModal()">Book Now</button></li><li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li></ul></div>
+    <div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT — Boutique Fitness Studio, Toowoomba</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div>
+  </footer>
+</div>
+
+<!-- ═══ RUN CLUB ═══ -->
+<div class="page" id="page-runclub">
+  <section class="page-hero">
+    <div class="page-hero-bg">Run</div>
+    <p class="page-hero-eyebrow">Open to Public · Weekly</p>
+    <h1>Track<br><em>Tuesday.</em></h1>
+    <p class="page-hero-desc">All fitness levels welcome — intervals, tempo runs, strength circuits. No two sessions are the same. Led by Georgie Valdal with world-class credentials in Track &amp; Field.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" onclick="openModal('Run Club (Track Tuesday)')">Book Your Spot</button>
+      <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <div class="info-cards">
+    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">&#x1F4CD;</span><p class="info-card-label">Location</p><p class="info-card-value">Glennie School Track</p></div>
+    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">&#x1F4C5;</span><p class="info-card-label">When</p><p class="info-card-value">Every Tuesday</p></div>
+    <div class="info-card reveal rd2">
+      <span class="info-card-icon" aria-hidden="true">&#x23F0;</span><p class="info-card-label">Time</p><p class="info-card-value">5:15 – 6:00 AM</p>
+    </div>
+  </div>
+
+  <!-- Countdown Widget -->
+  <section class="section" style="background:var(--warm-white);">
+    <div class="section-inner" style="text-align:center;">
+      <div class="countdown-widget" id="rcWidget">
+        <p class="countdown-label">Next Session</p>
+        <div class="countdown-timer" id="rcCountdown">
+          <div class="countdown-unit"><span class="countdown-num" id="rcDays">0</span><span class="countdown-txt">Days</span></div><span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="rcHours">0</span><span class="countdown-txt">Hrs</span></div><span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="rcMins">0</span><span class="countdown-txt">Min</span></div><span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="rcSecs">0</span><span class="countdown-txt">Sec</span></div>
+        </div>
+        <div class="spots-bar"><div class="spots-text"><span class="spots-dot open" id="rcDot"></span><span id="rcLabel">Loading...</span></div><div class="spots-track"><div class="spots-fill" id="rcFill" style="width:0%"></div></div></div>
+        <button class="widget-btn open" id="rcBtn" onclick="openModal('Run Club (Track Tuesday)')">Book Your Spot</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--sand);">
+    <div class="section-inner">
+      <p class="section-label reveal">What to Expect</p>
+      <h2 class="section-title reveal rd1">Run better,<br><em>every week.</em></h2>
+      <div class="expect-grid">
+        <div class="reveal rd1"><div class="expect-num">01</div><div class="expect-title">All Levels Welcome</div><p class="expect-text">Brand new to running or training for your next event — there's a place for you.</p></div>
+        <div class="reveal rd2"><div class="expect-num">02</div><div class="expect-title">No Two Sessions Alike</div><p class="expect-text">Each Tuesday is programmed differently — intervals, tempo, strength circuits.</p></div>
+        <div class="reveal rd1"><div class="expect-num">03</div><div class="expect-title">Expert Coaching</div><p class="expect-text">Led by Georgie Valdal with world-class Track and Field credentials.</p></div>
+        <div class="reveal rd2"><div class="expect-num">04</div><div class="expect-title">Real Community</div><p class="expect-text">Early mornings are better together. A welcoming group that celebrates every milestone.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-strip"><div class="cta-strip-inner">
+    <p class="section-label reveal">Join Us</p>
+    <h2 class="reveal rd1">See you at the <em>track.</em></h2>
+    <p class="reveal rd2">Tuesdays at 5:15 AM · Glennie School Track · All levels welcome.</p>
+    <button class="btn-primary reveal rd3" onclick="openModal('Run Club (Track Tuesday)')">Book Your Spot</button>
+  </div></div>
+
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openModal()">Book Now</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+</div>
+
+<!-- ═══ PI'LATTES ═══ -->
+<div class="page" id="page-pilattes">
+  <section class="page-hero">
+    <div class="page-hero-bg">Pilates</div>
+    <p class="page-hero-eyebrow">Open to Public · Monthly</p>
+    <h1>Pi'lattes<br><em>at The Dairy.</em></h1>
+    <p class="page-hero-desc">Mat Pilates at one of SEQ's most stunning venues. A burn that fires up your core, followed by a complimentary coffee from Then Bakehouse Caf&eacute;. All equipment provided.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" onclick="openModal('Pi\'lattes')">Book Your Spot</button>
+      <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <div class="info-cards">
+    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">&#x1F3E1;</span><p class="info-card-label">Venue</p><p class="info-card-value">The Dairy<br>Ravensbourne</p></div>
+    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">&#x1F4C5;</span><p class="info-card-label">Frequency</p><p class="info-card-value">Monthly Sundays<br><span style="font-size:12px;color:var(--bark);display:block;margin-top:6px;">Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" style="color:var(--bark);">@valdalfit</a> for dates</span></p></div>
+    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">&#x23F0;</span><p class="info-card-label">Time</p><p class="info-card-value">7:00 – 8:00 AM</p></div>
+  </div>
+
+  <section class="section" style="background:var(--warm-white);">
+    <div class="section-inner" style="text-align:center;">
+      <div class="countdown-widget" id="plWidget">
+        <p class="countdown-label">Next Session</p>
+        <div class="countdown-timer" id="plCountdown">
+          <div class="countdown-unit"><span class="countdown-num" id="plDays">0</span><span class="countdown-txt">Days</span></div><span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="plHours">0</span><span class="countdown-txt">Hrs</span></div><span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="plMins">0</span><span class="countdown-txt">Min</span></div><span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="plSecs">0</span><span class="countdown-txt">Sec</span></div>
+        </div>
+        <div class="spots-bar"><div class="spots-text"><span class="spots-dot open" id="plDot"></span><span id="plLabel">Loading...</span></div><div class="spots-track"><div class="spots-fill" id="plFill" style="width:0%"></div></div></div>
+        <button class="widget-btn open" id="plBtn" onclick="openModal('Pi\'lattes')">Book Your Spot</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--cream);">
+    <div class="section-inner">
+      <p class="section-label reveal">What's Included</p>
+      <h2 class="section-title reveal rd1">Everything you<br><em>need.</em></h2>
+      <div class="expect-grid">
+        <div class="reveal rd1"><div class="expect-num">&#x2726;</div><div class="expect-title">All Equipment Provided</div><p class="expect-text">Just show up. Mats, props and everything you need is taken care of.</p></div>
+        <div class="reveal rd2"><div class="expect-num">&#x2726;</div><div class="expect-title">Complimentary Coffee</div><p class="expect-text">A coffee from Then Bakehouse Caf&eacute; is included in every class ticket.</p></div>
+        <div class="reveal rd1"><div class="expect-num">&#x2726;</div><div class="expect-title">Expert Instruction</div><p class="expect-text">A thoughtfully designed session for all levels by VFIT's instructors.</p></div>
+        <div class="reveal rd2"><div class="expect-num">&#x2726;</div><div class="expect-title">Stunning Setting</div><p class="expect-text">The Dairy is one of South-East Queensland's most beautiful venues.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-strip"><div class="cta-strip-inner">
+    <p class="section-label reveal">Monthly Classes</p>
+    <h2 class="reveal rd1">Spots are <em>limited.</em></h2>
+    <p class="reveal rd2">Monthly Sundays · The Dairy, Ravensbourne · 7:00–8:00 AM · Coffee included.</p>
+    <button class="btn-primary reveal rd3" onclick="openModal('Pi\'lattes')">Book Your Spot</button>
+  </div></div>
+
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openModal()">Book Now</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+</div>
+
+<!-- ═══ MEMBERSHIPS ═══ -->
+<div class="page" id="page-memberships">
+  <section class="page-hero">
+    <div class="page-hero-bg">Members</div>
+    <p class="page-hero-eyebrow">Exclusive · Private Gym Access</p>
+    <h1>Small Group<br><em>Memberships.</em></h1>
+    <p class="page-hero-desc">Exclusive access to our private gym for small group training — recurring weekly sessions, expert coaching every time.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" onclick="openModal('Small Group Membership')">Enquire Now</button>
+      <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--cream);">
+    <div class="section-inner">
+      <p class="section-label reveal">Membership Plans</p>
+      <h2 class="section-title reveal rd1">Choose your<br><em>membership.</em></h2>
+      <p class="reveal rd2" style="font-size:14px;color:#6b5e52;line-height:1.9;max-width:520px;">Priced per session. Select a plan to enquire — we'll match your preferred days and times.</p>
+
+      <div class="pricing-toggle reveal rd2">
+        <button class="active" onclick="setPricing('session',this)">Per Session</button>
+        <button onclick="setPricing('week',this)">Per Week (x2)</button>
+        <button onclick="setPricing('month',this)">Per Month (x8)</button>
+      </div>
+
+      <div class="membership-grid">
+        <div class="membership-card reveal">
+          <span class="card-badge badge-pop">Most Popular</span>
+          <div class="card-title">Signature</div>
+          <div class="card-price"><span class="card-price-num" data-base="60">$60</span><span class="card-price-unit">&nbsp;/ <span class="price-period">session</span></span></div>
+          <div class="card-divider"></div>
+          <ul class="card-features">
+            <li class="card-feature">Weekly recurring group session/s (max 4 ppl)</li>
+            <li class="card-feature">3-month minimum commitment</li>
+            <li class="card-feature">Best value per session</li>
+          </ul>
+          <button class="select-btn" onclick="openModal('Signature Membership — $60/session')">Select &amp; Enquire</button>
+        </div>
+        <div class="membership-card reveal rd1">
+          <span class="card-badge badge-flex">No Commitment</span>
+          <div class="card-title">Flexible</div>
+          <div class="card-price"><span class="card-price-num" data-base="70">$70</span><span class="card-price-unit">&nbsp;/ <span class="price-period">session</span></span></div>
+          <div class="card-divider"></div>
+          <ul class="card-features">
+            <li class="card-feature">Weekly recurring group session/s (max 4 ppl)</li>
+            <li class="card-feature">No minimum contract</li>
+            <li class="card-feature">Full flexibility, no lock-in</li>
+          </ul>
+          <button class="select-btn" onclick="openModal('Flexible Membership — $70/session')">Select &amp; Enquire</button>
+        </div>
+        <div class="membership-card reveal rd2">
+          <span class="card-badge badge-vip">&#x2726; VIP</span>
+          <div class="card-title">VIP</div>
+          <div class="card-price"><span class="card-price-num" data-base="190">$190</span><span class="card-price-unit">&nbsp;/ <span class="price-period">session</span></span></div>
+          <div class="card-divider"></div>
+          <p class="card-desc">1-on-1 coaching, premium access, full lifestyle support.</p>
+          <ul class="card-features">
+            <li class="card-feature">Weekly private 1-on-1 PT session</li>
+            <li class="card-feature">Direct line to Georgie anytime</li>
+            <li class="card-feature">Fridge access (juices, waters &amp; snacks)</li>
+            <li class="card-feature">3-month commitment</li>
+          </ul>
+          <button class="select-btn" onclick="openModal('VIP Membership — $190/session')">Select &amp; Enquire</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--sand);">
+    <div class="section-inner">
+      <p class="section-label reveal">Why Small Group</p>
+      <h2 class="section-title reveal rd1">Small by design,<br><em>powerful by nature.</em></h2>
+      <div class="pillars-grid">
+        <div class="reveal rd1"><div class="pillar-num">01</div><div class="pillar-title">Intimate &amp; Intentional</div><p class="pillar-text">Every member is seen, coached and progressed every single session.</p></div>
+        <div class="reveal rd2"><div class="pillar-num">02</div><div class="pillar-title">Recurring &amp; Consistent</div><p class="pillar-text">Same time, same group, every week. Real results come from routine.</p></div>
+        <div class="reveal rd1"><div class="pillar-num">03</div><div class="pillar-title">Expert Programming</div><p class="pillar-text">Progressively built sessions — a long-term movement practice.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="testimonial"><div class="testimonial-inner reveal"><blockquote>"So refreshing to have a trainer that keeps things new, exciting and challenging. VFIT always gets the most out of every session."</blockquote><div class="t-divider"></div><p class="t-author">Member Testimonial · Toowoomba</p></div></div>
+
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">Exclusive small group training.<br>Private gym access, Toowoomba.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openModal()">Book Now</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+</div>
+
+<!-- ═══ ABOUT ═══ -->
+<div class="page" id="page-about">
+  <section class="page-hero">
+    <div class="page-hero-bg">VFIT</div>
+    <p class="page-hero-eyebrow">Our Story</p>
+    <h1>World-class<br><em>coaching.</em></h1>
+    <p class="page-hero-desc">VFIT was born from a belief that everyone deserves the quality of training found in the world's leading private studios — right here in Toowoomba.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" onclick="openModal()">Get in Touch</button>
+      <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <div class="about-split">
+    <div class="about-img"><img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg" alt="Georgie Valdal, VFIT founder" loading="lazy"></div>
+    <div class="about-content">
+      <p class="section-label reveal">The Founder</p>
+      <h2 class="reveal rd1">Georgie<br><em>Valdal.</em></h2>
+      <p class="reveal rd2">With nearly two decades in the industry, Georgie has built her career at the highest levels of private fitness — training celebrities, executives, and the world's most discerning clients.</p>
+      <p class="reveal rd2">Holding world-class credentials in Pilates, Strength and Conditioning, Stretch Therapy and Track and Field. Now she's brought all of it to Toowoomba — in an intimate studio designed entirely around you.</p>
+    </div>
+  </div>
+
+  <section class="section" style="background:var(--sand);">
+    <div class="section-inner">
+      <p class="section-label reveal">Our Values</p>
+      <h2 class="section-title reveal rd1">What we<br><em>believe in.</em></h2>
+      <div class="pillars-grid">
+        <div class="reveal rd1"><div class="pillar-num">01</div><div class="pillar-title">Quality Over Quantity</div><p class="pillar-text">Smaller groups, better coaching, real attention.</p></div>
+        <div class="reveal rd2"><div class="pillar-num">02</div><div class="pillar-title">Movement for Life</div><p class="pillar-text">Whether you're 18 or 80, movement should build you up.</p></div>
+        <div class="reveal rd1"><div class="pillar-num">03</div><div class="pillar-title">Community First</div><p class="pillar-text">The relationships extend far beyond the studio.</p></div>
+        <div class="reveal rd2"><div class="pillar-num">04</div><div class="pillar-title">Results You Feel</div><p class="pillar-text">Stronger physically and mentally. That's the VFIT standard.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="testimonial"><div class="testimonial-inner reveal"><blockquote>"No matter what stage of fitness I'm in, VFIT always tailor their training to get the most out of my sessions."</blockquote><div class="t-divider"></div><p class="t-author">Client Testimonial · Toowoomba</p></div></div>
+
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="openModal()">Book Now</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+</div>
+
+<!-- ═══ CONTACT ═══ -->
+<div class="page" id="page-contact">
+  <section class="page-hero" style="min-height:55vh;">
+    <p class="page-hero-eyebrow">Get in Touch</p>
+    <h1>Book.<br><em>Connect.</em></h1>
+    <p class="page-hero-desc">Whether you're ready to join, have a question, or just want to know more — we'd love to hear from you.</p>
+  </section>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <p class="section-label reveal">Find Us</p>
+      <h2 class="reveal rd1">Visit the<br><em>Studio.</em></h2>
+      <div class="contact-detail reveal rd2"><p class="contact-detail-label">Address</p><address class="contact-detail-value">Shop 8/203 Margaret St<br>Toowoomba City QLD 4350</address></div>
+      <div class="contact-detail reveal rd2"><p class="contact-detail-label">Run Club</p><p class="contact-detail-value">Glennie School Track<br>Tuesdays · 5:15 AM</p></div>
+      <div class="contact-detail reveal rd2"><p class="contact-detail-label">Pi'lattes</p><p class="contact-detail-value">The Dairy, Ravensbourne<br>Monthly Sundays · 7:00 AM</p></div>
+      <a href="https://maps.app.goo.gl/tEuLFAM49yoJuzKv9" target="_blank" rel="noopener noreferrer" class="btn-primary reveal rd3" style="margin-top:8px;">Get Directions</a>
+    </div>
+    <div class="contact-form-wrap">
+      <p class="section-label reveal">Send a Message</p>
+      <h2 class="reveal rd1">We'd love to<br><em>hear from you.</em></h2>
+      <form id="contactForm" onsubmit="return submitContact(event)">
+        <div class="form-group reveal rd2"><label class="form-label" for="cName">Your Name</label><input class="form-input" id="cName" type="text" placeholder="First & last name" required></div>
+        <div class="form-group reveal rd2"><label class="form-label" for="cEmail">Email</label><input class="form-input" id="cEmail" type="email" placeholder="hello@email.com" required></div>
+        <div class="form-group reveal rd2"><label class="form-label" for="cPhone">Phone</label><input class="form-input" id="cPhone" type="tel" placeholder="04xx xxx xxx"></div>
+        <div class="form-group reveal rd2"><label class="form-label" for="cMessage">Message</label><textarea class="form-textarea" id="cMessage" placeholder="Tell us about your goals..."></textarea></div>
+        <button type="submit" class="btn-primary reveal rd3" id="btnContact" style="width:100%;padding:16px;">Send Message</button>
+      </form>
+      <div id="contactSuccess" style="display:none;text-align:center;padding:60px 0;">
+        <div class="success-icon">&#x2726;</div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;margin-bottom:12px;">Message <em style="font-style:italic;color:var(--bark);">received.</em></h3>
+        <p style="font-size:14px;color:#6b5e52;">We'll be in touch shortly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Google Maps -->
+  <iframe class="map-embed" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3543.5!2d151.9534!3d-27.5598!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b964a47c8cb3333%3A0x0!2s203+Margaret+St%2C+Toowoomba+City+QLD+4350!5e0!3m2!1sen!2sau!4v1" allowfullscreen loading="lazy" title="VFIT Studio Location"></iframe>
+
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr">2025</span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+</div>
+
+<!-- ═══ BOOKING MODAL ═══ -->
+<div class="modal-backdrop" id="bookingModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+    <div id="modalForm">
+      <h3 class="modal-title" id="modalTitle">Book <em>Now</em></h3>
+      <p class="modal-subtitle">Fill in your details and we'll get back to you within 24 hours.</p>
+      <form onsubmit="return submitBooking(event)">
+        <div class="form-group"><label class="form-label" for="bInterest">I'm interested in</label><input class="form-input readonly" id="bInterest" type="text" readonly></div>
+        <div class="form-group"><label class="form-label" for="bName">Your Name</label><input class="form-input" id="bName" type="text" placeholder="First & last name" required></div>
+        <div class="form-group"><label class="form-label" for="bEmail">Email</label><input class="form-input" id="bEmail" type="email" placeholder="hello@email.com" required></div>
+        <div class="form-group"><label class="form-label" for="bPhone">Phone</label><input class="form-input" id="bPhone" type="tel" placeholder="04xx xxx xxx" required></div>
+        <div class="form-group"><label class="form-label" for="bNotes">Preferred days/times &amp; notes <span style="opacity:0.5">(optional)</span></label><textarea class="form-textarea" id="bNotes" placeholder="E.g. Mondays & Wednesdays, mornings preferred..."></textarea></div>
+        <button type="submit" class="btn-primary" id="btnBooking" style="width:100%;padding:16px;">Send Enquiry</button>
+      </form>
+    </div>
+    <div class="modal-success" id="modalSuccess">
+      <div class="success-icon">&#x2726;</div>
+      <h3>You're <em>in.</em></h3>
+      <p>We'll be in touch within 24 hours to confirm your spot.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TERMS MODAL ═══ -->
+<div class="terms-backdrop" id="termsModal" onclick="if(event.target===this)closeTerms()">
+  <div class="terms-modal">
+    <button class="modal-close" onclick="closeTerms()" aria-label="Close">&times;</button>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;margin-bottom:8px;">Terms &amp; <em style="font-style:italic;color:var(--bark);">Conditions</em></h2>
+    <p style="font-size:13px;color:#6b5e52;margin-bottom:36px;">Please read carefully before participating in any VFIT session.</p>
+    <div style="background:var(--sand);padding:28px 32px;margin-bottom:40px;border-left:3px solid var(--clay);"><p class="terms-body">By signing this document I acknowledge and agree to the terms below in consideration of participation in a session with Georgie Valdal and VFit.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">1. Assumption of Risks</h3><p class="terms-body">You understand the Session may involve inherent risks including high physical exertion and potential accidents. You assume full responsibility for any injury or damage.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">2. Medical Conditions</h3><p class="terms-body">It is your responsibility to understand your health condition, maintain appropriate medical insurance, and disclose any limitations. You represent you are in good health and participating voluntarily.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">3. Release &amp; Indemnity</h3><p class="terms-body">To the fullest extent permitted by law, you release and indemnify VFit from any claims, actions, liabilities, costs or expenses arising from your participation.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">4. Governing Law</h3><p class="terms-body">Governed by Australian law. Disputes subject to Queensland courts.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">5. Acknowledgment</h3><p class="terms-body">You have read and understood this agreement and voluntarily agree to be bound by its terms for any Session with VFit.</p></div>
+  </div>
+</div>
+
+<!-- ═══ LIGHTBOX ═══ -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
+  <img id="lightboxImg" src="" alt="Gallery image">
+  <div class="lightbox-arrows">
+    <button class="lightbox-arrow" onclick="navLightbox(-1)">&#8592;</button>
+    <button class="lightbox-arrow" onclick="navLightbox(1)">&#8594;</button>
+  </div>
+</div>
+
+<!-- ═══ COOKIE BANNER ═══ -->
+<div class="cookie-banner" id="cookieBanner">
+  <p>We use cookies to improve your experience. By continuing to use this site you agree to our use of cookies. <button onclick="openTerms()" style="background:none;border:none;color:var(--clay);cursor:pointer;font-family:'Jost',sans-serif;font-size:12px;font-weight:300;text-decoration:underline;padding:0;">Privacy Policy</button></p>
+  <button class="cookie-accept" onclick="acceptCookies()">Accept</button>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// CONFIG — Edit these to manage bookings
+// ═══════════════════════════════════
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mjgalnnp';
+
+const RUNCLUB_SPOTS_OPEN = true;
+const RUNCLUB_SPOTS_TOTAL = 20;
+const RUNCLUB_SPOTS_REMAINING = 12;
+
+const NEXT_PILATTES_DATE = '2026-04-19T07:00:00+10:00';
+const PILATTES_SPOTS_OPEN = true;
+const PILATTES_SPOTS_TOTAL = 15;
+const PILATTES_SPOTS_REMAINING = 8;
+
+// ═══ PAGE NAV ═══
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + name);
+  if (page) page.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  closeMobile();
+  setTimeout(initReveals, 100);
+}
+
+// ═══ MOBILE MENU ═══
+function toggleMobile() {
+  const m = document.getElementById('mobileMenu'), b = document.querySelector('.hamburger');
+  const open = m.classList.toggle('open'); b.classList.toggle('open');
+  b.setAttribute('aria-expanded', open); document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeMobile() {
+  document.getElementById('mobileMenu').classList.remove('open');
+  const b = document.querySelector('.hamburger'); b.classList.remove('open');
+  b.setAttribute('aria-expanded', 'false'); document.body.style.overflow = '';
+}
+function mobileNav(page) { closeMobile(); showPage(page); }
+
+// ═══ NAV SCROLL ═══
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 60));
+
+// ═══ REVEALS ═══
+let revealObs = null;
+function initReveals() {
+  if (revealObs) revealObs.disconnect();
+  revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.page.active .reveal:not(.visible)').forEach(el => revealObs.observe(el));
+}
+setTimeout(initReveals, 100);
+
+// ═══ COPYRIGHT ═══
+document.querySelectorAll('.yr').forEach(el => { el.textContent = new Date().getFullYear(); });
+
+// ═══ COUNTDOWNS ═══
+function getNextTuesday() {
+  const now = new Date(), t = new Date(now), day = now.getDay();
+  let d = (2 - day + 7) % 7;
+  if (d === 0 && (now.getHours() > 6)) d = 7;
+  t.setDate(now.getDate() + d); t.setHours(5, 15, 0, 0);
+  return t;
+}
+function updateCD(target, pre) {
+  const now = new Date(), diff = target - now;
+  if (diff <= 0 && diff > -2700000) {
+    document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:28px;color:var(--moss);animation:pulse 2s infinite;">Happening Now</p>';
+    return;
+  }
+  const ad = diff <= 0 ? getNextTuesday() - now : diff;
+  document.getElementById(pre + 'Days').textContent = Math.floor(ad / 86400000);
+  document.getElementById(pre + 'Hours').textContent = Math.floor((ad % 86400000) / 3600000);
+  document.getElementById(pre + 'Mins').textContent = String(Math.floor((ad % 3600000) / 60000)).padStart(2, '0');
+  document.getElementById(pre + 'Secs').textContent = String(Math.floor((ad % 60000) / 1000)).padStart(2, '0');
+}
+function initWidget(pre, open, total, remaining, targetDate, fallbackFn) {
+  if (targetDate) {
+    const t = new Date(targetDate);
+    if (isNaN(t.getTime()) || t < new Date()) {
+      document.getElementById(pre + 'Countdown').innerHTML = '<p style="font-family:\'Cormorant Garamond\',serif;font-size:22px;color:var(--bark);font-style:italic;">Next date TBA</p>';
+      document.getElementById(pre + 'Label').textContent = 'Follow @valdalfit for dates';
+      document.getElementById(pre + 'Dot').className = 'spots-dot closed';
+      document.getElementById(pre + 'Btn').className = 'widget-btn waitlist';
+      document.getElementById(pre + 'Btn').textContent = 'Get Notified';
+      document.getElementById(pre + 'Btn').onclick = function() { openModal("Pi'lattes — Notify Me"); };
+      return;
+    }
+    updateCD(t, pre); setInterval(() => updateCD(new Date(targetDate), pre), 1000);
+  } else {
+    updateCD(fallbackFn(), pre); setInterval(() => updateCD(fallbackFn(), pre), 1000);
+  }
+  const pct = ((total - remaining) / total) * 100;
+  document.getElementById(pre + 'Fill').style.width = pct + '%';
+  if (remaining <= 3) document.getElementById(pre + 'Fill').classList.add('low');
+  if (open && remaining > 0) {
+    document.getElementById(pre + 'Label').textContent = remaining + ' of ' + total + ' spots remaining';
+    document.getElementById(pre + 'Dot').className = 'spots-dot open';
+    document.getElementById(pre + 'Btn').className = 'widget-btn open';
+  } else {
+    document.getElementById(pre + 'Label').textContent = remaining === 0 ? 'Sold Out' : 'Bookings Closed';
+    document.getElementById(pre + 'Dot').className = 'spots-dot closed';
+    document.getElementById(pre + 'Btn').className = remaining === 0 ? 'widget-btn waitlist' : 'widget-btn closed';
+    document.getElementById(pre + 'Btn').textContent = remaining === 0 ? 'Join Waitlist' : 'Bookings Closed';
+    if (remaining === 0) document.getElementById(pre + 'Btn').onclick = function() { openModal(pre === 'rc' ? 'Run Club — Waitlist' : "Pi'lattes — Waitlist"); };
+    else document.getElementById(pre + 'Btn').disabled = true;
+  }
+}
+initWidget('rc', RUNCLUB_SPOTS_OPEN, RUNCLUB_SPOTS_TOTAL, RUNCLUB_SPOTS_REMAINING, null, getNextTuesday);
+initWidget('pl', PILATTES_SPOTS_OPEN, PILATTES_SPOTS_TOTAL, PILATTES_SPOTS_REMAINING, NEXT_PILATTES_DATE, null);
+
+// ═══ BOOKING MODAL ═══
+function openModal(interest) {
+  const m = document.getElementById('bookingModal');
+  document.getElementById('modalForm').style.display = 'block';
+  document.getElementById('modalSuccess').classList.remove('show');
+  document.getElementById('bInterest').value = interest || 'General Enquiry';
+  document.getElementById('bName').value = ''; document.getElementById('bEmail').value = '';
+  document.getElementById('bPhone').value = ''; document.getElementById('bNotes').value = '';
+  document.getElementById('btnBooking').disabled = false;
+  document.getElementById('btnBooking').textContent = 'Send Enquiry';
+  if (interest) { const w = interest.split(' ')[0].replace("Pi'lattes","Pi'lattes"); document.getElementById('modalTitle').innerHTML = 'Book <em>' + w + '</em>'; }
+  else document.getElementById('modalTitle').innerHTML = 'Book <em>Now</em>';
+  m.classList.add('open'); document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('bName').focus(), 100);
+}
+function closeModal() { document.getElementById('bookingModal').classList.remove('open'); document.body.style.overflow = ''; }
+
+function submitBooking(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnBooking'); btn.disabled = true; btn.textContent = 'Sending...';
+  const data = { interest: document.getElementById('bInterest').value, name: document.getElementById('bName').value.trim(), email: document.getElementById('bEmail').value.trim(), phone: document.getElementById('bPhone').value.trim(), notes: document.getElementById('bNotes').value.trim(), _subject: 'VFIT Booking — ' + document.getElementById('bInterest').value };
+  fetch(FORMSPREE_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data) })
+  .then(r => { if (r.ok) { document.getElementById('modalForm').style.display = 'none'; document.getElementById('modalSuccess').classList.add('show'); } else { alert('Something went wrong.'); btn.disabled = false; btn.textContent = 'Send Enquiry'; } })
+  .catch(() => { alert('Something went wrong.'); btn.disabled = false; btn.textContent = 'Send Enquiry'; });
+  return false;
+}
+
+// ═══ CONTACT FORM ═══
+function submitContact(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnContact'); btn.disabled = true; btn.textContent = 'Sending...';
+  const data = { name: document.getElementById('cName').value.trim(), email: document.getElementById('cEmail').value.trim(), phone: document.getElementById('cPhone').value.trim(), message: document.getElementById('cMessage').value.trim(), _subject: 'VFIT Contact Enquiry' };
+  fetch(FORMSPREE_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data) })
+  .then(r => { if (r.ok) { document.getElementById('contactForm').style.display = 'none'; document.getElementById('contactSuccess').style.display = 'block'; } else { alert('Something went wrong.'); btn.disabled = false; btn.textContent = 'Send Message'; } })
+  .catch(() => { alert('Something went wrong.'); btn.disabled = false; btn.textContent = 'Send Message'; });
+  return false;
+}
+
+// ═══ TERMS MODAL ═══
+function openTerms() { document.getElementById('termsModal').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeTerms() { document.getElementById('termsModal').classList.remove('open'); document.body.style.overflow = ''; }
+
+// ═══ TESTIMONIAL CAROUSEL ═══
+const testimonials = [
+  { q: '"So refreshing to have a trainer that keeps things new, exciting and challenging. No matter what stage of fitness I\'m in, VFIT always gets the most out of every session."', a: 'Client Testimonial · Toowoomba' },
+  { q: '"VFIT always tailor their training to get the most out of my sessions. It is so refreshing to have a trainer that can keep things new, exciting and challenging."', a: 'Client Testimonial · Toowoomba' },
+  { q: '"The best part about training with Georgie is the attention to detail. Every session is purposeful and I always leave feeling stronger."', a: 'Member Testimonial · Toowoomba' },
+];
+let tIdx = 0;
+const tQ = document.getElementById('tQuote'), tA = document.getElementById('tAuthor');
+const dotsC = document.getElementById('carouselDots');
+testimonials.forEach((_, i) => { const d = document.createElement('button'); d.className = 'carousel-dot' + (i === 0 ? ' active' : ''); d.onclick = () => goTestimonial(i); d.setAttribute('aria-label', 'Testimonial ' + (i+1)); dotsC.appendChild(d); });
+function goTestimonial(i) {
+  tIdx = i; tQ.style.opacity = 0; tA.style.opacity = 0;
+  setTimeout(() => { tQ.textContent = testimonials[tIdx].q; tA.textContent = testimonials[tIdx].a; tQ.style.opacity = 1; tA.style.opacity = 1; dotsC.querySelectorAll('.carousel-dot').forEach((d, j) => d.classList.toggle('active', j === tIdx)); }, 400);
+}
+function changeTestimonial(dir) { goTestimonial((tIdx + dir + testimonials.length) % testimonials.length); }
+tQ.style.transition = 'opacity 0.4s'; tA.style.transition = 'opacity 0.4s';
+setInterval(() => changeTestimonial(1), 7000);
+
+// ═══ PRICING TOGGLE ═══
+function setPricing(mode, btn) {
+  document.querySelectorAll('.pricing-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const mult = mode === 'week' ? 2 : mode === 'month' ? 8 : 1;
+  const label = mode === 'week' ? 'week' : mode === 'month' ? 'month' : 'session';
+  document.querySelectorAll('.card-price-num[data-base]').forEach(el => {
+    el.textContent = '$' + (parseInt(el.dataset.base) * mult);
+  });
+  document.querySelectorAll('.price-period').forEach(el => { el.textContent = label; });
+}
+
+// ═══ PHOTO LIGHTBOX ═══
+const galleryImgs = [
+  'https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG',
+  'https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg',
+  'https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG',
+];
+let lbIdx = 0;
+function openLightbox(i) { lbIdx = i; document.getElementById('lightboxImg').src = galleryImgs[i]; document.getElementById('lightbox').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow = ''; }
+function navLightbox(dir) { lbIdx = (lbIdx + dir + galleryImgs.length) % galleryImgs.length; document.getElementById('lightboxImg').src = galleryImgs[lbIdx]; }
+
+// ═══ COOKIE BANNER ═══
+function acceptCookies() { document.getElementById('cookieBanner').classList.remove('show'); localStorage.setItem('vfit_cookies', '1'); }
+if (!localStorage.getItem('vfit_cookies')) { setTimeout(() => document.getElementById('cookieBanner').classList.add('show'), 2000); }
+
+// ═══ ESC KEY ═══
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeTerms(); closeLightbox(); } });
+</script>
+</body>
+</html>
