@@ -174,7 +174,7 @@
   .countdown-num { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--deep); line-height: 1; }
   .countdown-txt { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--bark); margin-top: 4px; }
   .countdown-sep { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--clay); line-height: 1; padding-top: 4px; }
-  .countdown-session-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: var(--bark); margin-bottom: 16px; }
+  .countdown-session-date { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--clay); margin-bottom: 16px; }
   .countdown-follow-text { font-size: 11px; color: var(--bark); margin-top: 10px; }
   .countdown-follow-text a { color: var(--bark); font-weight: 400; text-decoration: underline; }
   .spots-bar { margin: 20px 0; }
@@ -529,7 +529,7 @@
     <ul class="nav-links">
       <li><button onclick="showPage('runclub')">Run Club</button></li>
       <li><button onclick="showPage('pilattes')">Pi'lattes</button></li>
-      <li><button onclick="showPage('memberships')">Memberships</button></li>
+      <li><button onclick="showPage('memberships')">Studio Sessions</button></li>
       <li><button onclick="showPage('about')">About</button></li>
     </ul>
     <button class="nav-cta" onclick="showPage('contact')">Contact</button>
@@ -540,7 +540,7 @@
   <button onclick="mobileNav('home')">Home</button>
   <button onclick="mobileNav('runclub')">Run Club</button>
   <button onclick="mobileNav('pilattes')">Pi'lattes</button>
-  <button onclick="mobileNav('memberships')">Memberships</button>
+  <button onclick="mobileNav('memberships')">Studio Sessions</button>
   <button onclick="mobileNav('about')">About</button>
   <button onclick="mobileNav('contact')">Contact</button>
 </div>
@@ -556,7 +556,7 @@
       <h1>Move<br>with<br><em>Purpose.</em></h1>
       <p class="home-hero-desc">Three distinct ways to move — a weekly run club, monthly Pilates at The Dairy, and exclusive small group training in our private studio.</p>
       <div class="home-hero-actions">
-        <button class="btn-primary" onclick="showPage('memberships')">View Memberships</button>
+        <button class="btn-primary" onclick="showPage('memberships')">View Studio Sessions</button>
         <button class="btn-ghost" onclick="showPage('about')">Our Story</button>
       </div>
     </div>
@@ -589,7 +589,7 @@
     </div>
     <div class="offering-card reveal rd2" onclick="showPage('memberships')" tabindex="0" role="button">
       <span class="offering-badge private">Exclusive · Members Only</span>
-      <div class="offering-title">VFIT Membership</div>
+      <div class="offering-title">Studio Sessions</div>
       <p class="offering-desc">Private gym access. Small group training (max 4), recurring weekly sessions, expert coaching in an intimate, purposeful environment.</p>
       <span class="btn-ghost">View Plans</span>
     </div>
@@ -666,7 +666,7 @@
       <ul>
         <li><button onclick="showPage('runclub')">Run Club</button></li>
         <li><button onclick="showPage('pilattes')">Pi'lattes</button></li>
-        <li><button onclick="showPage('memberships')">Memberships</button></li>
+        <li><button onclick="showPage('memberships')">Studio Sessions</button></li>
         <li><button onclick="showPage('about')">About</button></li>
       </ul>
     </div>
@@ -749,7 +749,7 @@
     <button class="btn-primary reveal rd3" id="rcCtaBtn" onclick="openSimpleModal('Run Club (Track Tuesday)','Book Run Club')">Book Your Spot</button>
   </div></div>
 
-  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
 </div>
 
 <!-- ======================================= -->
@@ -814,7 +814,7 @@
     <button class="btn-primary reveal rd3" id="plCtaBtn" onclick="openSimpleModal('Pi\'lattes','Book Pi\'lattes')">Book Your Spot</button>
   </div></div>
 
-  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('memberships')">Memberships</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li><li><button onclick="showPage('about')">About</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
 </div>
 
 <!-- ======================================= -->
@@ -824,7 +824,7 @@
   <div class="compact-header">
     <div class="compact-header-inner">
       <p class="page-hero-eyebrow">Exclusive &middot; Private Gym Access</p>
-      <h1>Small Group<br><em>Memberships.</em></h1>
+      <h1>Studio<br><em>Sessions.</em></h1>
       <p>Priced per session. Select a plan to enquire — we'll match your preferred days and times.</p>
     </div>
   </div>
@@ -932,7 +932,7 @@
 
   <div class="testimonial"><div class="testimonial-inner reveal"><blockquote>"No matter what stage of fitness I'm in, VFIT always tailor their training to get the most out of my sessions."</blockquote><div class="t-divider"></div><p class="t-author">Client Testimonial &middot; Toowoomba</p></div></div>
 
-  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
 </div>
 
 <!-- ======================================= -->
@@ -975,7 +975,7 @@
   <!-- Google Maps -->
   <iframe class="map-embed" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3543.5!2d151.9534!3d-27.5598!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b964a47c8cb3333%3A0x0!2s203+Margaret+St%2C+Toowoomba+City+QLD+4350!5e0!3m2!1sen!2sau!4v1" allowfullscreen loading="lazy" title="VFIT Studio Location"></iframe>
 
-  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Memberships</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li><li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
+  <footer><div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li></ul></div><div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li><li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li></ul></div><div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div></footer>
 </div>
 
 <!-- ======================================= -->
@@ -1407,10 +1407,10 @@ function initCountdownWidget(pre, config, isRunClub) {
 
     // TEASE state (now < ticketsOpen)
     if (now < ticketsOpen) {
-      document.getElementById(pre + 'CountdownLabel').textContent = 'Bookings Open In';
+      document.getElementById(pre + 'CountdownLabel').innerHTML = 'Next Session <span style="color:var(--warm-white);font-weight:400;">' + formatSessionDate(config.sessionDate) + '</span>';
       document.getElementById(pre + 'SpotsBar').classList.add('hidden');
       document.getElementById(pre + 'SessionDate').style.display = 'block';
-      document.getElementById(pre + 'SessionDate').textContent = formatSessionDate(config.sessionDate);
+      document.getElementById(pre + 'SessionDate').innerHTML = 'Bookings open ' + formatSessionDate(config.ticketsOpen);
       document.getElementById(pre + 'FollowText').style.display = 'none';
       var btn = document.getElementById(pre + 'Btn');
       btn.className = 'widget-btn notify';
@@ -1431,7 +1431,8 @@ function initCountdownWidget(pre, config, isRunClub) {
     // SOLD OUT (spotsRemaining === 0)
     if (config.spotsRemaining === 0) {
       document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
-      document.getElementById(pre + 'SessionDate').style.display = 'none';
+      document.getElementById(pre + 'SessionDate').style.display = 'block';
+      document.getElementById(pre + 'SessionDate').textContent = formatSessionDate(config.sessionDate);
       updateCountdown(session, pre);
       var spotsBar = document.getElementById(pre + 'SpotsBar');
       spotsBar.classList.remove('hidden');
@@ -1461,7 +1462,8 @@ function initCountdownWidget(pre, config, isRunClub) {
 
     // URGENCY state (now >= ticketsOpen AND spotsRemaining > 0)
     document.getElementById(pre + 'CountdownLabel').textContent = 'Next Session';
-    document.getElementById(pre + 'SessionDate').style.display = 'none';
+    document.getElementById(pre + 'SessionDate').style.display = 'block';
+    document.getElementById(pre + 'SessionDate').textContent = formatSessionDate(config.sessionDate);
     document.getElementById(pre + 'FollowText').style.display = 'none';
     updateCountdown(session, pre);
     var spotsBar = document.getElementById(pre + 'SpotsBar');
@@ -1563,7 +1565,8 @@ function updateHomeCountdowns() {
     }
     if (now < ticketsOpen) {
       target = ticketsOpen;
-      if (statusEl) statusEl.innerHTML = '<span style="color:var(--clay);">Tickets open in</span>';
+      var shortDate = formatSessionDate(c.ticketsOpen).split(' \u00B7 ')[0];
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--clay);">Bookings open ' + shortDate + '</span>';
     } else if (c.spotsRemaining > 0) {
       target = session;
       if (statusEl) statusEl.innerHTML = '<span style="color:var(--sage);">&#9679; ' + c.spotsRemaining + ' spots remaining</span>';

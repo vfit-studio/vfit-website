@@ -1010,6 +1010,12 @@ exports.handler = async (event) => {
           return await handleCreateEvent(body);
         case 'update_event':
           return await handleUpdateEvent(body);
+        case 'delete_event':
+          requireAdmin(body.admin_key);
+          if (!body.event_id) return respond(400, { success: false, error: 'event_id required' });
+          const { error: delErr } = await supabase.from('events').delete().eq('id', body.event_id);
+          if (delErr) throw delErr;
+          return respond(200, { success: true });
         case 'cancel_booking':
           return await handleCancelBooking(body);
         case 'send_notifications':

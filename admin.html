@@ -1179,7 +1179,7 @@ async function loadEvents() {
         '<td>' + formatCurrency(ev.price_cents) + '</td>' +
         '<td>' + statusBadge(ev.status || 'open') + '</td>' +
         '<td>' +
-          '<button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button>' +
+          '<button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button>' +
         '</td>' +
       '</tr>';
     }).join('');
@@ -1262,7 +1262,11 @@ async function handleEventSubmit(e) {
     await apiPost(payload);
     showToast(editId ? 'Event updated' : 'Event created', 'success');
     closeEventModal();
-    loadEvents();
+    // Refresh the current page
+    if (currentPage === 'events') loadEvents();
+    else if (currentPage === 'runclub') loadTypePage('rc', 'runclub');
+    else if (currentPage === 'pilattes') loadTypePage('pl', 'pilattes');
+    else loadEvents();
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
   }
@@ -1274,6 +1278,22 @@ async function handleEventSubmit(e) {
 function editEvent(id) {
   var ev = eventsCache.find(function(e) { return e.id === id; });
   if (ev) openEventModal(ev);
+}
+
+function deleteEvent(id) {
+  showConfirm('Delete this event? This cannot be undone.', async function() {
+    try {
+      await apiPost({ action: 'delete_event', event_id: id });
+      showToast('Event deleted', 'success');
+      // Refresh whichever page we're on
+      if (currentPage === 'events') loadEvents();
+      else if (currentPage === 'runclub') loadTypePage('rc', 'runclub');
+      else if (currentPage === 'pilattes') loadTypePage('pl', 'pilattes');
+      else loadOverview();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
 }
 
 // ─── RUN CLUB / PI'LATTES PAGES ───
