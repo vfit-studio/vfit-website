@@ -6,6 +6,9 @@
  *   SUPABASE_URL, SUPABASE_SERVICE_KEY, STRIPE_SECRET_KEY,
  *   STRIPE_WEBHOOK_SECRET, ADMIN_KEY, SITE_URL
  *
+ * Optional (SMS via Twilio):
+ *   TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, OWNER_PHONE
+ *
  * ──────────────────────────────────────────────
  * SUPABASE DATABASE SCHEMA
  * Run this in the Supabase SQL Editor:
@@ -70,11 +73,23 @@
  *   message text,
  *   created_at timestamptz default now()
  * );
+ *
+ * create table if not exists reviews (
+ *   id uuid default gen_random_uuid() primary key,
+ *   event_id uuid references events(id),
+ *   email text not null,
+ *   rating integer not null,
+ *   comment text,
+ *   created_at timestamptz default now()
+ * );
+ *
+ * -- Add to bookings table: referral_code text
  */
 
 const { supabase } = require('./utils/supabase');
 const Stripe = require('stripe');
-const { sendNotifyConfirmation, sendBookingsOpenEmail, sendBookingConfirmation, sendMembershipConfirmation, sendOwnerAlert } = require('./utils/email');
+const { sendNotifyConfirmation, sendBookingsOpenEmail, sendBookingConfirmation, sendMembershipConfirmation, sendOwnerAlert, sendWaitlistSpotEmail, sendReviewRequestEmail } = require('./utils/email');
+const { sendOwnerSMS } = require('./utils/sms');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
@@ -246,7 +261,7 @@ async function handleDashboard() {
 // ═══════════════════════════════════════════════
 
 async function handleBook(body) {
-  const { name, email, phone, event_id } = body;
+  const { name, email, phone, event_id, referral_code } = body;
   if (!name || !email || !event_id) {
     return respond(400, { success: false, error: 'name, email, and event_id are required' });
   }
@@ -290,6 +305,7 @@ async function handleBook(body) {
       amount_cents: event.price_cents,
       held_at: new Date().toISOString(),
       confirmed_at: event.price_cents === 0 ? new Date().toISOString() : null,
+      referral_code: referral_code ? referral_code.trim().toUpperCase() : null,
     })
     .select()
     .single();
@@ -308,6 +324,8 @@ async function handleBook(body) {
       `New Booking — ${event.name} (${taken + 1}/${event.spots_total})`,
       `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'}) booked <strong>${event.name}</strong>.</p><p>Spots: ${taken + 1} / ${event.spots_total}</p>`
     );
+    // SMS alert
+    await sendOwnerSMS(`VFIT: New booking — ${name} for ${event.name}. ${taken + 1}/${event.spots_total} spots taken.`);
     return respond(200, {
       success: true,
       message: 'Booking confirmed! Check your email.',
@@ -411,6 +429,8 @@ async function handleContact(body) {
     'New Contact Message — ' + name,
     `<p><strong>From:</strong> ${name} (${email}${phone ? ', ' + phone : ''})</p><p><strong>Message:</strong> ${message || 'No message'}</p>`
   );
+  // SMS alert
+  await sendOwnerSMS(`VFIT: Message from ${name}.`);
   return respond(200, { success: true, message: 'Message sent!' });
 }
 
@@ -438,6 +458,8 @@ async function handleMembership(body) {
     'New Membership Enquiry — ' + plan,
     `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'})</p><p><strong>Plan:</strong> ${plan}</p><p><strong>Sessions/wk:</strong> ${sessions || '—'}</p><p><strong>Days:</strong> ${days || '—'}</p><p><strong>Times:</strong> ${times || '—'}</p><p><strong>Notes:</strong> ${notes || 'None'}</p>`
   );
+  // SMS alert
+  await sendOwnerSMS(`VFIT: New enquiry — ${name} wants ${plan}.`);
   return respond(200, { success: true, message: 'Enquiry sent! Check your email.' });
 }
 
@@ -515,6 +537,9 @@ async function handleCancelBooking(body) {
     .update({ status: 'cancelled' })
     .eq('id', booking_id);
   if (error) throw error;
+
+  // Auto-promote from waitlist
+  await autoPromoteWaitlist(booking.event_id);
 
   return respond(200, { success: true });
 }
@@ -935,6 +960,239 @@ async function handleUnassignSlot(body) {
 }
 
 // ═══════════════════════════════════════════════
+// Waitlist auto-promote
+// ═══════════════════════════════════════════════
+
+async function autoPromoteWaitlist(eventId) {
+  try {
+    // Fetch the event to know its type/name
+    const { data: event } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+    if (!event) return;
+
+    // Find the oldest un-notified waitlist signup matching this event type
+    const { data: waitlistEntries } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('type', 'waitlist')
+      .eq('notified', false)
+      .or(`interest.ilike.%${event.type}%,interest.ilike.%${event.name}%,interest.is.null`)
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (!waitlistEntries || waitlistEntries.length === 0) return;
+
+    const entry = waitlistEntries[0];
+    const siteUrl = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
+
+    // Send spot-opened email
+    await sendWaitlistSpotEmail(entry.email, entry.name, event.name, siteUrl);
+
+    // SMS alert to owner
+    await sendOwnerSMS(`VFIT: Spot opened — auto-notified ${entry.name || entry.email} from waitlist.`);
+
+    // Mark as notified
+    await supabase
+      .from('notifications')
+      .update({ notified: true })
+      .eq('id', entry.id);
+  } catch (err) {
+    console.error('Waitlist auto-promote error:', err);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Post-session review requests
+// ═══════════════════════════════════════════════
+
+async function handleSendReviewRequests(body) {
+  requireAdmin(body.admin_key);
+  const { event_id } = body;
+  if (!event_id) return respond(400, { success: false, error: 'event_id is required' });
+
+  // Fetch event
+  const { data: event, error: eventErr } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', event_id)
+    .single();
+  if (eventErr || !event) return respond(404, { success: false, error: 'event_not_found' });
+
+  // Get confirmed bookings
+  const { data: bookings, error: bookErr } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('event_id', event_id)
+    .eq('status', 'confirmed');
+  if (bookErr) throw bookErr;
+
+  const siteUrl = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
+  const reviewBaseUrl = `${siteUrl}?review=${event_id}`;
+  let sent = 0;
+
+  for (const booking of (bookings || [])) {
+    try {
+      await sendReviewRequestEmail(booking.email, booking.name, event.name, reviewBaseUrl);
+      sent++;
+    } catch (e) {
+      console.error('Failed to send review request to:', booking.email, e);
+    }
+  }
+
+  return respond(200, { success: true, count: sent, message: `${sent} review request emails sent.` });
+}
+
+async function handleSubmitReview(params) {
+  const { event_id, rating, email, comment } = params;
+  if (!event_id || !rating || !email) {
+    return {
+      statusCode: 400,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'text/html' },
+      body: '<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;"><h2>Missing required fields.</h2></body></html>',
+    };
+  }
+
+  const ratingNum = parseInt(rating, 10);
+  if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+    return {
+      statusCode: 400,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'text/html' },
+      body: '<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;"><h2>Invalid rating.</h2></body></html>',
+    };
+  }
+
+  const { error } = await supabase.from('reviews').insert({
+    event_id,
+    email: email.toLowerCase().trim(),
+    rating: ratingNum,
+    comment: comment || null,
+  });
+
+  if (error) {
+    console.error('Review save error:', error);
+    return {
+      statusCode: 500,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'text/html' },
+      body: '<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;"><h2>Something went wrong. Please try again.</h2></body></html>',
+    };
+  }
+
+  return {
+    statusCode: 200,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'text/html' },
+    body: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#faf7f2;font-family:Arial,'Helvetica Neue',sans-serif;">
+<div style="max-width:540px;margin:80px auto;text-align:center;background:#fefcf8;padding:60px 40px;border-radius:8px;">
+  <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Thank you!</h1>
+  <p style="font-size:16px;color:#6b5e52;line-height:1.7;">Your feedback (${'★'.repeat(ratingNum)}${'☆'.repeat(5 - ratingNum)}) has been recorded.</p>
+  <p style="font-size:14px;color:#8c7660;margin-top:24px;">We appreciate you being part of VFIT.</p>
+</div>
+</body>
+</html>`,
+  };
+}
+
+// ═══════════════════════════════════════════════
+// Referral tracking
+// ═══════════════════════════════════════════════
+
+async function handleReferrals() {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('referral_code')
+    .not('referral_code', 'is', null)
+    .eq('status', 'confirmed');
+  if (error) throw error;
+
+  // Aggregate counts
+  const counts = {};
+  for (const row of (data || [])) {
+    const code = row.referral_code;
+    counts[code] = (counts[code] || 0) + 1;
+  }
+
+  const referrals = Object.entries(counts)
+    .map(([code, count]) => ({ code, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return respond(200, { success: true, referrals });
+}
+
+// ═══════════════════════════════════════════════
+// Google Calendar iCal feed
+// ═══════════════════════════════════════════════
+
+async function handleCalendarFeed() {
+  // Fetch all upcoming active events
+  const { data: events, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'active')
+    .gte('session_date', new Date().toISOString())
+    .order('session_date', { ascending: true });
+  if (error) throw error;
+
+  // Fetch bookings for each event
+  const vevents = [];
+  for (const event of (events || [])) {
+    const { data: bookings } = await supabase
+      .from('bookings')
+      .select('name')
+      .eq('event_id', event.id)
+      .in('status', ['confirmed', 'held']);
+
+    const bookedNames = (bookings || []).map(b => b.name).join(', ');
+    const bookedCount = (bookings || []).length;
+
+    const dtStart = new Date(event.session_date);
+    const dtEnd = new Date(dtStart.getTime() + 45 * 60 * 1000); // 45 min default duration
+
+    const formatDt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+    // Determine location based on event type
+    let location = '';
+    if (event.type === 'runclub') {
+      location = 'Glennie School Track';
+    } else {
+      location = 'The Dairy, Ravensbourne';
+    }
+
+    vevents.push(
+`BEGIN:VEVENT
+DTSTART:${formatDt(dtStart)}
+DTEND:${formatDt(dtEnd)}
+SUMMARY:${event.name} (${bookedCount}/${event.spots_total} booked)
+DESCRIPTION:Booked: ${bookedNames || 'None yet'}
+LOCATION:${location}
+UID:${event.id}@vfit-studio
+END:VEVENT`
+    );
+  }
+
+  const ical = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//VFIT//Booking System//EN
+X-WR-CALNAME:VFIT Studio Schedule
+${vevents.join('\n')}
+END:VCALENDAR`;
+
+  return {
+    statusCode: 200,
+    headers: {
+      ...CORS_HEADERS,
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': 'inline; filename="vfit-schedule.ics"',
+    },
+    body: ical,
+  };
+}
+
+// ═══════════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════════
 
@@ -971,6 +1229,12 @@ exports.handler = async (event) => {
           return await handleGetSchedule();
         case 'member':
           return await handleGetMember(params.id);
+        case 'submit_review':
+          return await handleSubmitReview(params);
+        case 'referrals':
+          return await handleReferrals();
+        case 'calendar_feed':
+          return await handleCalendarFeed();
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -1045,6 +1309,10 @@ exports.handler = async (event) => {
           return await handleAssignSlot(body);
         case 'unassign_slot':
           return await handleUnassignSlot(body);
+        case 'send_review_requests':
+          return await handleSendReviewRequests(body);
+        case 'sync_calendar':
+          return await handleCalendarFeed();
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }

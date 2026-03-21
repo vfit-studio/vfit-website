@@ -114,6 +114,54 @@ async function sendMembershipConfirmation(to, name, plan) {
   }).catch(err => console.error('Email error:', err));
 }
 
+// ─── WAITLIST SPOT OPENED NOTIFICATION ───
+async function sendWaitlistSpotEmail(to, name, eventName, siteUrl) {
+  const resend = getResend();
+  if (!resend) return;
+  const firstName = (name || 'there').split(' ')[0];
+
+  await resend.emails.send({
+    from: 'VFIT Studio <notifications@vfit-studio.netlify.app>',
+    to: [to],
+    subject: `A spot just opened up — ${eventName}!`,
+    html: wrap(`
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Good news, ${firstName}!</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 28px;">A spot just opened up for <strong>${eventName}</strong>! Book now before it's gone.</p>
+      <div style="text-align:center;margin:0 0 32px;">
+        <a href="${siteUrl}" style="display:inline-block;padding:16px 44px;background:#3d3530;color:#fefcf8;text-decoration:none;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-family:Arial,sans-serif;">Book Now</a>
+      </div>
+      <p style="font-size:13px;color:#8c7660;margin:0;text-align:center;">Be quick — once it's gone, it's gone.</p>
+    `)
+  }).catch(err => console.error('Email error:', err));
+}
+
+// ─── POST-SESSION REVIEW REQUEST ───
+async function sendReviewRequestEmail(to, name, eventName, reviewBaseUrl) {
+  const resend = getResend();
+  if (!resend) return;
+  const firstName = (name || 'there').split(' ')[0];
+
+  // Build star links as simple styled buttons
+  const starButtons = [1, 2, 3, 4, 5].map(n => {
+    const url = `${reviewBaseUrl}&rating=${n}&email=${encodeURIComponent(to)}`;
+    return `<a href="${url}" style="display:inline-block;padding:10px 14px;margin:4px;background:${n >= 4 ? '#3d3530' : '#f5f0e8'};color:${n >= 4 ? '#fefcf8' : '#6b5e52'};text-decoration:none;font-size:12px;border-radius:4px;">${n}</a>`;
+  }).join('');
+
+  await resend.emails.send({
+    from: 'VFIT Studio <feedback@vfit-studio.netlify.app>',
+    to: [to],
+    subject: `How was ${eventName}?`,
+    html: wrap(`
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">How was your session, ${firstName}?</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We'd love your feedback on <strong>${eventName}</strong>. Tap a rating below:</p>
+      <div style="text-align:center;margin:0 0 32px;">
+        ${starButtons}
+      </div>
+      <p style="font-size:13px;color:#8c7660;margin:0;text-align:center;">Thanks for being part of VFIT.</p>
+    `)
+  }).catch(err => console.error('Email error:', err));
+}
+
 // ─── OWNER NOTIFICATION (Georgie gets this) ───
 async function sendOwnerAlert(subject, bodyHtml) {
   const resend = getResend();
@@ -133,4 +181,6 @@ module.exports = {
   sendBookingConfirmation,
   sendMembershipConfirmation,
   sendOwnerAlert,
+  sendWaitlistSpotEmail,
+  sendReviewRequestEmail,
 };

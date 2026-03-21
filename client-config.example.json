@@ -1,0 +1,98 @@
+{
+  "business": {
+    "name": "VFIT",
+    "tagline": "Boutique Fitness Studio",
+    "location": "Toowoomba",
+    "address": "Shop 8/203 Margaret St, Toowoomba City QLD 4350",
+    "phone": "",
+    "email": "hello@vfit.com.au",
+    "instagram": "valdalfit",
+    "website": ""
+  },
+  "founder": {
+    "name": "Georgie Valdal",
+    "title": "Founder & Head Coach",
+    "bio": "With nearly two decades in the industry...",
+    "image": "https://images.squarespace-cdn.com/..."
+  },
+  "offerings": [
+    {
+      "id": "studio-sessions",
+      "page_id": "memberships",
+      "name": "Studio Sessions",
+      "subtitle": "Private Gym Access",
+      "badge": "Exclusive \u00b7 Members Only",
+      "description": "Private gym access. Small group training...",
+      "type": "membership",
+      "plans": [
+        { "name": "Signature", "price": 60, "period": "session", "badge": "Most Popular", "features": ["Weekly recurring group session/s (max 4 ppl)", "3-month minimum commitment", "Best value per session"] },
+        { "name": "Flexible", "price": 70, "period": "session", "badge": "No Commitment", "features": ["Weekly recurring group session/s (max 4 ppl)", "No minimum contract", "Full flexibility, no lock-in"] },
+        { "name": "VIP", "price": 190, "period": "session", "badge": "VIP", "features": ["Weekly private 1-on-1 PT session", "Direct line to coach anytime", "Fridge access (juices, waters & snacks)", "3-month commitment"] }
+      ]
+    },
+    {
+      "id": "pilattes",
+      "page_id": "pilattes",
+      "name": "Pi'lattes",
+      "subtitle": "The Dairy, Ravensbourne",
+      "badge": "Monthly \u00b7 Open to All",
+      "description": "Mat Pilates at one of SEQ's most stunning venues...",
+      "type": "event",
+      "location": "The Dairy, Ravensbourne",
+      "frequency": "Monthly Sundays",
+      "time": "7:00 \u2013 8:00 AM"
+    },
+    {
+      "id": "runclub",
+      "page_id": "runclub",
+      "name": "Run Club",
+      "subtitle": "Track Tuesday",
+      "badge": "Weekly \u00b7 Open to All",
+      "description": "All fitness levels welcome...",
+      "type": "event",
+      "location": "Glennie School Track",
+      "frequency": "Every Tuesday",
+      "time": "5:15 \u2013 6:00 AM"
+    }
+  ],
+  "design": {
+    "version": "C",
+    "colors": {
+      "sand": "#f5f0e8",
+      "cream": "#faf7f2",
+      "stone": "#e8e0d4",
+      "clay": "#c9b99a",
+      "bark": "#8c7660",
+      "moss": "#7a8c6e",
+      "deep": "#3d3530",
+      "warm-white": "#fefcf8",
+      "sage": "#a8b89a",
+      "red": "#b85c5c"
+    },
+    "hero_image": "https://images.squarespace-cdn.com/...",
+    "videos": {
+      "studio_sessions": "https://videos.pexels.com/video-files/4108054/4108054-hd_1920_1080_25fps.mp4",
+      "pilattes": "https://videos.pexels.com/video-files/6111088/6111088-hd_1920_1080_25fps.mp4",
+      "runclub": "https://videos.pexels.com/video-files/8459966/8459966-hd_1080_1920_25fps.mp4"
+    }
+  },
+  "testimonials": [
+    { "quote": "So refreshing to have a trainer that keeps things new...", "author": "Client Testimonial \u00b7 Toowoomba" }
+  ],
+  "terms": "By signing this document I acknowledge and agree...",
+  "integrations": {
+    "google_analytics_id": "",
+    "meta_pixel_id": "",
+    "whatsapp_number": "",
+    "google_maps_embed": "https://www.google.com/maps/embed?pb=..."
+  },
+  "infrastructure": {
+    "github_org": "vfit-studio",
+    "repo_name": "vfit-website",
+    "netlify_site_name": "vfit-studio",
+    "supabase_project_name": "vfit",
+    "admin_password": "vfit2026",
+    "owner_email": "",
+    "owner_phone": ""
+  }
+}
