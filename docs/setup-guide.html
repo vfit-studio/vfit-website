@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VFIT Booking System — Setup Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --sand: #f5f0e8; --cream: #faf7f2; --stone: #e8e0d4; --clay: #c9b99a; --bark: #8c7660; --deep: #3d3530; --warm-white: #fefcf8; --moss: #7a8c6e; --sage: #a8b89a; }
+  body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--deep); font-weight: 300; line-height: 1.7; }
+
+  /* Header */
+  .guide-header { background: var(--deep); padding: 60px 40px; text-align: center; }
+  .guide-header h1 { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: var(--warm-white); margin-bottom: 8px; }
+  .guide-header p { font-size: 13px; color: var(--clay); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  /* Nav */
+  .guide-nav { background: var(--warm-white); border-bottom: 1px solid var(--stone); padding: 16px 40px; position: sticky; top: 0; z-index: 100; overflow-x: auto; white-space: nowrap; }
+  .guide-nav a { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--bark); text-decoration: none; margin-right: 24px; transition: color 0.3s; }
+  .guide-nav a:hover { color: var(--deep); }
+
+  /* Content */
+  .guide-content { max-width: 800px; margin: 0 auto; padding: 40px 24px 100px; }
+
+  /* Sections */
+  .guide-section { margin-bottom: 60px; padding-top: 20px; }
+  .guide-section h2 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; margin-bottom: 8px; color: var(--deep); }
+  .guide-section h2 em { font-style: italic; color: var(--bark); }
+  .guide-section h3 { font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bark); margin: 32px 0 12px; }
+  .guide-section p { font-size: 15px; color: #6b5e52; margin-bottom: 16px; }
+
+  /* Steps */
+  .step { background: var(--warm-white); border: 1px solid var(--stone); padding: 28px 32px; margin-bottom: 16px; position: relative; }
+  .step-num { position: absolute; top: -12px; left: 24px; background: var(--deep); color: var(--warm-white); font-size: 11px; letter-spacing: 0.15em; padding: 4px 14px; text-transform: uppercase; }
+  .step h4 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; margin-bottom: 12px; margin-top: 8px; }
+  .step p { font-size: 14px; color: #6b5e52; margin-bottom: 10px; }
+  .step a { color: var(--bark); font-weight: 400; }
+  .step ul { list-style: none; padding: 0; }
+  .step ul li { font-size: 14px; color: #6b5e52; padding: 6px 0; padding-left: 20px; position: relative; }
+  .step ul li::before { content: '—'; position: absolute; left: 0; color: var(--clay); }
+
+  /* Code blocks */
+  .code-block { background: var(--deep); color: var(--clay); padding: 20px 24px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; line-height: 1.8; margin: 16px 0; overflow-x: auto; white-space: pre; border-radius: 0; }
+  .code-inline { background: var(--sand); padding: 2px 8px; font-family: 'SF Mono', monospace; font-size: 13px; color: var(--bark); }
+
+  /* Tables */
+  .guide-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  .guide-table th { text-align: left; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bark); padding: 12px 16px; border-bottom: 2px solid var(--stone); background: var(--sand); }
+  .guide-table td { padding: 12px 16px; border-bottom: 1px solid var(--stone); color: #6b5e52; }
+  .guide-table tr:hover td { background: var(--warm-white); }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 10px; }
+  .badge-free { background: rgba(122,140,110,0.15); color: var(--moss); }
+  .badge-paid { background: rgba(201,185,154,0.3); color: var(--bark); }
+  .badge-required { background: var(--deep); color: var(--warm-white); }
+  .badge-optional { border: 1px solid var(--clay); color: var(--bark); }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { font-size: 14px; color: #6b5e52; padding: 10px 0 10px 36px; border-bottom: 1px solid var(--stone); position: relative; cursor: pointer; }
+  .checklist li::before { content: '○'; position: absolute; left: 8px; font-size: 16px; color: var(--clay); transition: all 0.3s; }
+  .checklist li.done::before { content: '●'; color: var(--moss); }
+  .checklist li:hover { background: var(--warm-white); }
+
+  /* Progress bar */
+  .progress-bar { height: 4px; background: var(--stone); margin: 24px 0; border-radius: 2px; }
+  .progress-fill { height: 100%; background: var(--moss); border-radius: 2px; transition: width 0.5s; }
+
+  /* Time estimate */
+  .time-est { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--bark); background: var(--sand); padding: 4px 12px; margin-bottom: 16px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .guide-header { padding: 40px 24px; }
+    .guide-header h1 { font-size: 32px; }
+    .guide-nav { padding: 12px 20px; }
+    .step { padding: 24px 20px; }
+    .code-block { font-size: 11px; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="guide-header">
+  <h1>Setup Guide</h1>
+  <p>Booking Website System</p>
+</div>
+
+<nav class="guide-nav">
+  <a href="#overview">Overview</a>
+  <a href="#accounts">Accounts</a>
+  <a href="#setup">Setup Flow</a>
+  <a href="#env-vars">Env Vars</a>
+  <a href="#database">Database</a>
+  <a href="#stripe">Stripe</a>
+  <a href="#email">Email</a>
+  <a href="#domain">Domain</a>
+  <a href="#customise">Customise</a>
+  <a href="#checklist">Checklist</a>
+</nav>
+
+<div class="guide-content">
+
+<!-- OVERVIEW -->
+<section class="guide-section" id="overview">
+  <h2>How it <em>works.</em></h2>
+  <p>A single-page website with an admin dashboard, backed by a database, with optional payments and email notifications. Everything auto-deploys from GitHub.</p>
+
+  <h3>The Stack</h3>
+  <table class="guide-table">
+    <tr><th>Layer</th><th>Service</th><th>Purpose</th><th>Cost</th></tr>
+    <tr><td>Hosting</td><td>Netlify</td><td>Website + serverless API</td><td><span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Code</td><td>GitHub</td><td>Version control + auto-deploy</td><td><span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Database</td><td>Supabase</td><td>PostgreSQL — stores everything</td><td><span class="badge badge-free">Free</span></td></tr>
+    <tr><td>Payments</td><td>Stripe</td><td>Checkout + spot holds</td><td><span class="badge badge-paid">1.75% + 30c</span></td></tr>
+    <tr><td>Email</td><td>Resend</td><td>Confirmations + notifications</td><td><span class="badge badge-free">Free (100/day)</span></td></tr>
+  </table>
+
+  <h3>Monthly Cost</h3>
+  <p><strong>$0</strong> for most clients. Stripe only charges per transaction. You only pay if you scale past the free tiers (which handles thousands of bookings).</p>
+</section>
+
+<!-- ACCOUNTS -->
+<section class="guide-section" id="accounts">
+  <h2>Accounts <em>needed.</em></h2>
+  <p>Create these once. Each client gets their own Supabase project but shares your Netlify and GitHub accounts.</p>
+
+  <div class="step">
+    <div class="step-num">Required</div>
+    <h4>GitHub</h4>
+    <ul>
+      <li>Sign up at <a href="https://github.com" target="_blank">github.com</a></li>
+      <li>Create an organization per client (e.g., <span class="code-inline">vfit-studio</span>)</li>
+      <li>Keeps client projects separate from your personal repos</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Required</div>
+    <h4>Netlify</h4>
+    <ul>
+      <li>Sign up at <a href="https://netlify.com" target="_blank">netlify.com</a> (use GitHub login)</li>
+      <li>One account manages all client sites</li>
+      <li>Install the CLI: <span class="code-inline">npm install -g netlify-cli</span></li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Required</div>
+    <h4>Supabase</h4>
+    <ul>
+      <li>Sign up at <a href="https://supabase.com" target="_blank">supabase.com</a> (use GitHub login)</li>
+      <li>Create one project per client</li>
+      <li>Free tier: 2 projects, 500MB, 50K rows</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Optional</div>
+    <h4>Stripe (for payments)</h4>
+    <ul>
+      <li>Sign up at <a href="https://stripe.com" target="_blank">stripe.com</a></li>
+      <li>Ideally the CLIENT creates this (their bank account for payouts)</li>
+      <li>Use test mode first, switch to live when ready</li>
+      <li>Select "Non-recurring payments" during setup</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Optional</div>
+    <h4>Resend (for emails)</h4>
+    <ul>
+      <li>Sign up at <a href="https://resend.com" target="_blank">resend.com</a></li>
+      <li>One account for all clients</li>
+      <li>Free: 100 emails/day, $20/mo for 50K</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SETUP FLOW -->
+<section class="guide-section" id="setup">
+  <h2>Setup <em>flow.</em></h2>
+  <span class="time-est">⏱ Total: ~30 minutes</span>
+
+  <div class="step">
+    <div class="step-num">Step 1</div>
+    <h4>Create the repo</h4>
+    <span class="time-est">⏱ 2 min</span>
+    <p>Copy the template project folder. Create a GitHub org and repo for the client.</p>
+    <div class="code-block">gh api user/orgs -X POST -f login=clientname-studio
+gh repo create clientname-studio/website --public --source=. --push</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 2</div>
+    <h4>Deploy to Netlify</h4>
+    <span class="time-est">⏱ 2 min</span>
+    <p>Link the repo and deploy. Every future push auto-deploys.</p>
+    <div class="code-block">netlify link --name clientname
+netlify deploy --prod</div>
+    <p>Or: Netlify dashboard → Add new site → Import from GitHub → Select repo</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 3</div>
+    <h4>Create Supabase project</h4>
+    <span class="time-est">⏱ 5 min</span>
+    <ul>
+      <li>Go to <a href="https://supabase.com/dashboard" target="_blank">Supabase dashboard</a></li>
+      <li>New Project → name it after the client → region: Sydney</li>
+      <li>Wait ~30 seconds for it to spin up</li>
+      <li>Go to SQL Editor → paste the schema (see <a href="#database">Database section</a>)</li>
+      <li>Go to Settings → API → copy <strong>Project URL</strong> and <strong>service_role key</strong></li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 4</div>
+    <h4>Set environment variables</h4>
+    <span class="time-est">⏱ 2 min</span>
+    <div class="code-block">netlify env:set SUPABASE_URL "https://xxxxx.supabase.co"
+netlify env:set SUPABASE_SERVICE_KEY "eyJhbGci..."
+netlify env:set ADMIN_KEY "choose-a-password"
+netlify env:set SITE_URL "https://clientname.netlify.app"</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 5</div>
+    <h4>Test everything</h4>
+    <span class="time-est">⏱ 5 min</span>
+    <ul>
+      <li>Open the site → check it loads</li>
+      <li>Go to /admin.html → log in with your ADMIN_KEY</li>
+      <li>Create an event → check it appears on the website</li>
+      <li>Submit a booking → check it appears in admin</li>
+      <li>Submit a membership enquiry → check it appears in Requests</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 6</div>
+    <h4>Customise for the client</h4>
+    <span class="time-est">⏱ Varies</span>
+    <p>See the <a href="#customise">Customisation section</a> below.</p>
+  </div>
+</section>
+
+<!-- ENV VARS -->
+<section class="guide-section" id="env-vars">
+  <h2>Environment <em>variables.</em></h2>
+
+  <table class="guide-table">
+    <tr><th>Variable</th><th>Required</th><th>Where to get it</th></tr>
+    <tr><td><span class="code-inline">SUPABASE_URL</span></td><td><span class="badge badge-required">Required</span></td><td>Supabase → Settings → API → Project URL</td></tr>
+    <tr><td><span class="code-inline">SUPABASE_SERVICE_KEY</span></td><td><span class="badge badge-required">Required</span></td><td>Supabase → Settings → API → service_role key (NOT anon)</td></tr>
+    <tr><td><span class="code-inline">ADMIN_KEY</span></td><td><span class="badge badge-required">Required</span></td><td>You choose — this is the admin login password</td></tr>
+    <tr><td><span class="code-inline">SITE_URL</span></td><td><span class="badge badge-required">Required</span></td><td>Your Netlify URL (e.g., https://site.netlify.app)</td></tr>
+    <tr><td><span class="code-inline">STRIPE_SECRET_KEY</span></td><td><span class="badge badge-optional">Optional</span></td><td>Stripe → Developers → API Keys → Secret key</td></tr>
+    <tr><td><span class="code-inline">STRIPE_WEBHOOK_SECRET</span></td><td><span class="badge badge-optional">Optional</span></td><td>Stripe → Developers → Webhooks → Signing secret</td></tr>
+    <tr><td><span class="code-inline">RESEND_API_KEY</span></td><td><span class="badge badge-optional">Optional</span></td><td>Resend → API Keys → Create</td></tr>
+    <tr><td><span class="code-inline">OWNER_EMAIL</span></td><td><span class="badge badge-optional">Optional</span></td><td>Client's email for booking alerts</td></tr>
+  </table>
+
+  <h3>Setting via CLI</h3>
+  <div class="code-block">netlify env:set VARIABLE_NAME "value"</div>
+
+  <h3>Setting via dashboard</h3>
+  <p>Netlify → Site → Site configuration → Environment variables → Add a variable</p>
+</section>
+
+<!-- DATABASE -->
+<section class="guide-section" id="database">
+  <h2>Database <em>schema.</em></h2>
+  <p>Paste this into Supabase SQL Editor and click Run. Creates all 8 tables.</p>
+
+  <div class="code-block">create table if not exists events (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  type text not null,
+  tickets_open timestamptz not null,
+  session_date timestamptz not null,
+  spots_total integer not null default 20,
+  price_cents integer not null default 0,
+  status text not null default 'active',
+  created_at timestamptz default now()
+);
+
+create table if not exists bookings (
+  id uuid default gen_random_uuid() primary key,
+  event_id uuid references events(id),
+  name text not null,
+  email text not null,
+  phone text,
+  status text not null default 'held',
+  stripe_session_id text,
+  stripe_payment_id text,
+  amount_cents integer default 0,
+  held_at timestamptz default now(),
+  confirmed_at timestamptz,
+  created_at timestamptz default now()
+);
+
+create table if not exists memberships (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  phone text,
+  plan text not null,
+  sessions text,
+  days text,
+  times text,
+  notes text,
+  status text not null default 'new',
+  created_at timestamptz default now()
+);
+
+create table if not exists notifications (
+  id uuid default gen_random_uuid() primary key,
+  email text not null,
+  name text,
+  interest text,
+  type text default 'notify',
+  notified boolean default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists contacts (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  phone text,
+  message text,
+  created_at timestamptz default now()
+);
+
+create table if not exists schedule_slots (
+  id uuid default gen_random_uuid() primary key,
+  day_of_week integer not null,
+  time text not null,
+  max_capacity integer not null default 4,
+  status text not null default 'active',
+  created_at timestamptz default now()
+);
+
+create table if not exists members (
+  id uuid default gen_random_uuid() primary key,
+  membership_id uuid references memberships(id),
+  name text not null,
+  email text not null,
+  phone text,
+  plan text not null,
+  sessions_per_week integer not null default 1,
+  status text not null default 'active',
+  start_date date,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists member_slots (
+  id uuid default gen_random_uuid() primary key,
+  member_id uuid references members(id) on delete cascade,
+  slot_id uuid references schedule_slots(id) on delete cascade,
+  status text not null default 'active',
+  created_at timestamptz default now(),
+  unique(member_id, slot_id)
+);</div>
+</section>
+
+<!-- STRIPE -->
+<section class="guide-section" id="stripe">
+  <h2>Stripe <em>setup.</em></h2>
+  <span class="time-est">⏱ 10 min</span>
+
+  <div class="step">
+    <div class="step-num">Step 1</div>
+    <h4>Create Stripe account</h4>
+    <p>Go to <a href="https://stripe.com" target="_blank">stripe.com</a>. Select "Non-recurring payments". Stay in <strong>test mode</strong> initially.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 2</div>
+    <h4>Get API key</h4>
+    <p>Developers → API Keys → Copy the <strong>Secret key</strong> (starts with <span class="code-inline">sk_test_...</span>)</p>
+    <div class="code-block">netlify env:set STRIPE_SECRET_KEY "sk_test_..."</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 3</div>
+    <h4>Add webhook</h4>
+    <p>Developers → Webhooks → Add endpoint</p>
+    <ul>
+      <li>URL: <span class="code-inline">https://yoursite.netlify.app/.netlify/functions/stripe-webhook</span></li>
+      <li>Events: <span class="code-inline">checkout.session.completed</span> and <span class="code-inline">checkout.session.expired</span></li>
+    </ul>
+    <p>Copy the <strong>Signing secret</strong> (starts with <span class="code-inline">whsec_...</span>)</p>
+    <div class="code-block">netlify env:set STRIPE_WEBHOOK_SECRET "whsec_..."</div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 4</div>
+    <h4>Go live</h4>
+    <p>When ready: toggle Stripe to live mode, replace <span class="code-inline">sk_test_</span> with <span class="code-inline">sk_live_</span>, create a new live webhook and update the secret.</p>
+  </div>
+</section>
+
+<!-- EMAIL -->
+<section class="guide-section" id="email">
+  <h2>Email <em>notifications.</em></h2>
+  <span class="time-est">⏱ 5 min</span>
+
+  <div class="step">
+    <div class="step-num">Step 1</div>
+    <h4>Create Resend account</h4>
+    <p>Go to <a href="https://resend.com" target="_blank">resend.com</a> → sign up → go to API Keys → Create.</p>
+    <div class="code-block">netlify env:set RESEND_API_KEY "re_..."
+netlify env:set OWNER_EMAIL "client@email.com"</div>
+  </div>
+
+  <h3>What gets sent automatically</h3>
+  <table class="guide-table">
+    <tr><th>Event</th><th>To Customer</th><th>To Owner</th></tr>
+    <tr><td>Booking confirmed</td><td>Confirmation email with session details</td><td>Alert with booking count</td></tr>
+    <tr><td>Membership enquiry</td><td>Confirmation email</td><td>Full enquiry details</td></tr>
+    <tr><td>Notification signup</td><td>"You're on the list"</td><td>Alert</td></tr>
+    <tr><td>Contact message</td><td>—</td><td>Message forwarded</td></tr>
+    <tr><td>Bookings open (manual)</td><td>"Bookings are open!" blast</td><td>Summary of emails sent</td></tr>
+  </table>
+</section>
+
+<!-- DOMAIN -->
+<section class="guide-section" id="domain">
+  <h2>Custom <em>domain.</em></h2>
+  <span class="time-est">⏱ 5 min + DNS propagation</span>
+
+  <div class="step">
+    <div class="step-num">Step 1</div>
+    <h4>Buy a domain</h4>
+    <p>Client buys from any registrar (Namecheap, GoDaddy, Crazy Domains, etc.)</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 2</div>
+    <h4>Add to Netlify</h4>
+    <p>Netlify → Site → Domain management → Add custom domain → enter the domain</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 3</div>
+    <h4>Update DNS</h4>
+    <p>Point the domain's DNS to Netlify (they'll show you the exact records). SSL auto-provisions.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">Step 4</div>
+    <h4>Update SITE_URL</h4>
+    <div class="code-block">netlify env:set SITE_URL "https://clientdomain.com.au"</div>
+  </div>
+</section>
+
+<!-- CUSTOMISE -->
+<section class="guide-section" id="customise">
+  <h2>Customise for <em>each client.</em></h2>
+
+  <h3>In index.html</h3>
+  <table class="guide-table">
+    <tr><th>What</th><th>Where</th></tr>
+    <tr><td>Brand colors</td><td>CSS <span class="code-inline">:root</span> variables at the top</td></tr>
+    <tr><td>Logo text</td><td>Search for the brand name in nav + footer</td></tr>
+    <tr><td>Fonts</td><td>Google Fonts link in <span class="code-inline">&lt;head&gt;</span></td></tr>
+    <tr><td>Hero image</td><td>The <span class="code-inline">&lt;img&gt;</span> src in the hero section</td></tr>
+    <tr><td>Videos</td><td><span class="code-inline">&lt;video&gt;</span> source URLs on each page</td></tr>
+    <tr><td>Offerings</td><td>The offering panel sections on home page</td></tr>
+    <tr><td>Pricing</td><td>Membership card prices</td></tr>
+    <tr><td>Session types</td><td>Page names, descriptions, eyebrow text</td></tr>
+    <tr><td>Location</td><td>Address in contact page + footer</td></tr>
+    <tr><td>Social links</td><td>Instagram handle references</td></tr>
+    <tr><td>Google Maps</td><td>iframe embed src on contact page</td></tr>
+    <tr><td>Testimonials</td><td>JS testimonials array</td></tr>
+    <tr><td>About bio</td><td>Founder section text + image</td></tr>
+    <tr><td>Terms</td><td>Terms modal content</td></tr>
+    <tr><td>og:image</td><td>Meta tags in <span class="code-inline">&lt;head&gt;</span></td></tr>
+    <tr><td>Favicon</td><td>SVG favicon in <span class="code-inline">&lt;head&gt;</span></td></tr>
+  </table>
+
+  <h3>In admin.html</h3>
+  <table class="guide-table">
+    <tr><th>What</th><th>Where</th></tr>
+    <tr><td>Sidebar categories</td><td>Sidebar nav HTML (e.g., "Run Club" → client's session types)</td></tr>
+    <tr><td>Event types</td><td>Event creation modal dropdown options</td></tr>
+    <tr><td>Logo</td><td>Topbar logo text</td></tr>
+  </table>
+</section>
+
+<!-- CHECKLIST -->
+<section class="guide-section" id="checklist">
+  <h2>Launch <em>checklist.</em></h2>
+  <p>Click items to mark as done.</p>
+
+  <h3>Setup</h3>
+  <ul class="checklist" id="setupChecklist">
+    <li onclick="this.classList.toggle('done')">GitHub org + repo created</li>
+    <li onclick="this.classList.toggle('done')">Netlify site deployed</li>
+    <li onclick="this.classList.toggle('done')">Supabase project created</li>
+    <li onclick="this.classList.toggle('done')">SQL schema run (8 tables)</li>
+    <li onclick="this.classList.toggle('done')">SUPABASE_URL set</li>
+    <li onclick="this.classList.toggle('done')">SUPABASE_SERVICE_KEY set</li>
+    <li onclick="this.classList.toggle('done')">ADMIN_KEY set</li>
+    <li onclick="this.classList.toggle('done')">SITE_URL set</li>
+  </ul>
+
+  <h3>Customisation</h3>
+  <ul class="checklist">
+    <li onclick="this.classList.toggle('done')">Brand colors updated</li>
+    <li onclick="this.classList.toggle('done')">Logo / brand name updated</li>
+    <li onclick="this.classList.toggle('done')">Hero image replaced</li>
+    <li onclick="this.classList.toggle('done')">Videos replaced (or removed)</li>
+    <li onclick="this.classList.toggle('done')">Offering names + descriptions</li>
+    <li onclick="this.classList.toggle('done')">Pricing updated</li>
+    <li onclick="this.classList.toggle('done')">Location + address</li>
+    <li onclick="this.classList.toggle('done')">Social media links</li>
+    <li onclick="this.classList.toggle('done')">Google Maps embed</li>
+    <li onclick="this.classList.toggle('done')">Testimonials</li>
+    <li onclick="this.classList.toggle('done')">About / founder bio</li>
+    <li onclick="this.classList.toggle('done')">Terms &amp; conditions</li>
+    <li onclick="this.classList.toggle('done')">og:image for social sharing</li>
+    <li onclick="this.classList.toggle('done')">Admin sidebar categories renamed</li>
+  </ul>
+
+  <h3>Testing</h3>
+  <ul class="checklist">
+    <li onclick="this.classList.toggle('done')">Website loads correctly</li>
+    <li onclick="this.classList.toggle('done')">Admin login works</li>
+    <li onclick="this.classList.toggle('done')">Create event → shows on website</li>
+    <li onclick="this.classList.toggle('done')">Countdown works correctly</li>
+    <li onclick="this.classList.toggle('done')">Booking form submits</li>
+    <li onclick="this.classList.toggle('done')">Booking appears in admin</li>
+    <li onclick="this.classList.toggle('done')">Membership wizard works</li>
+    <li onclick="this.classList.toggle('done')">Contact form works</li>
+    <li onclick="this.classList.toggle('done')">Mobile responsive (iPhone)</li>
+    <li onclick="this.classList.toggle('done')">Social sharing preview works</li>
+  </ul>
+
+  <h3>Optional</h3>
+  <ul class="checklist">
+    <li onclick="this.classList.toggle('done')">Stripe connected (test mode)</li>
+    <li onclick="this.classList.toggle('done')">Stripe webhook added</li>
+    <li onclick="this.classList.toggle('done')">Test payment works</li>
+    <li onclick="this.classList.toggle('done')">Stripe switched to live mode</li>
+    <li onclick="this.classList.toggle('done')">Resend connected</li>
+    <li onclick="this.classList.toggle('done')">Owner email set</li>
+    <li onclick="this.classList.toggle('done')">Confirmation emails sending</li>
+    <li onclick="this.classList.toggle('done')">Custom domain configured</li>
+    <li onclick="this.classList.toggle('done')">SSL working</li>
+  </ul>
+</section>
+
+</div>
+
+</body>
+</html>
