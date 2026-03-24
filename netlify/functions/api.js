@@ -427,13 +427,17 @@ async function handleContact(body) {
     message: message || null,
   });
   if (error) throw error;
-  // Alert Georgie
-  await sendOwnerAlert(
-    'New Contact Message — ' + name,
-    `<p><strong>From:</strong> ${name} (${email}${phone ? ', ' + phone : ''})</p><p><strong>Message:</strong> ${message || 'No message'}</p>`
-  );
-  // SMS alert
-  await sendOwnerSMS(`VFIT: Message from ${name}.`);
+  // Fire alerts in parallel, capped at 7s so function never times out
+  await Promise.race([
+    Promise.allSettled([
+      sendOwnerAlert(
+        'New Contact Message — ' + name,
+        `<p><strong>From:</strong> ${name} (${email}${phone ? ', ' + phone : ''})</p><p><strong>Message:</strong> ${message || 'No message'}</p>`
+      ),
+      sendOwnerSMS(`VFIT: Message from ${name}.`),
+    ]),
+    new Promise(r => setTimeout(r, 7000)),
+  ]);
   return respond(200, { success: true, message: 'Message sent!' });
 }
 
@@ -454,15 +458,18 @@ async function handleMembership(body) {
     notes: notes || null,
   });
   if (error) throw error;
-  // Send confirmation to the person
-  await sendMembershipConfirmation(email, name, plan);
-  // Alert Georgie
-  await sendOwnerAlert(
-    'New Membership Enquiry — ' + plan,
-    `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'})</p><p><strong>Plan:</strong> ${plan}</p><p><strong>Sessions/wk:</strong> ${sessions || '—'}</p><p><strong>Days:</strong> ${days || '—'}</p><p><strong>Times:</strong> ${times || '—'}</p><p><strong>Notes:</strong> ${notes || 'None'}</p>`
-  );
-  // SMS alert
-  await sendOwnerSMS(`VFIT: New enquiry — ${name} wants ${plan}.`);
+  // Fire all notifications in parallel, capped at 7s so function never times out
+  await Promise.race([
+    Promise.allSettled([
+      sendMembershipConfirmation(email, name, plan),
+      sendOwnerAlert(
+        'New Membership Enquiry — ' + plan,
+        `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'})</p><p><strong>Plan:</strong> ${plan}</p><p><strong>Sessions/wk:</strong> ${sessions || '—'}</p><p><strong>Days:</strong> ${days || '—'}</p><p><strong>Times:</strong> ${times || '—'}</p><p><strong>Notes:</strong> ${notes || 'None'}</p>`
+      ),
+      sendOwnerSMS(`VFIT: New enquiry — ${name} wants ${plan}.`),
+    ]),
+    new Promise(r => setTimeout(r, 7000)),
+  ]);
   return respond(200, { success: true, message: 'Enquiry sent! Check your email.' });
 }
 
