@@ -4,7 +4,6 @@
    ═══════════════════════════════════════════ */
 
 const API = '/.netlify/functions/api';
-const LOCAL_BYPASS = 'vfit2026';
 
 let currentPage = 'overview';
 let eventsCache = [];
@@ -129,13 +128,6 @@ async function handleLogin(e) {
   errEl.textContent = '';
 
   if (!pw) { errEl.textContent = 'Please enter a password'; return false; }
-
-  // Local bypass
-  if (pw === LOCAL_BYPASS) {
-    sessionStorage.setItem('vfit_admin_key', pw);
-    enterDashboard();
-    return false;
-  }
 
   btn.disabled = true;
   btn.textContent = 'Verifying...';
@@ -1629,6 +1621,7 @@ document.getElementById('confirm-dialog').addEventListener('mouseup', function(e
 // ─── NEW MODAL BACKDROP CLOSE ───
 ['accept-modal','assign-modal','addslot-modal','addmember-modal','cal-slot-modal'].forEach(function(id) {
   var el = document.getElementById(id);
+  if (!el) return;
   var downTarget = null;
   el.addEventListener('mousedown', function(e) { downTarget = e.target; });
   el.addEventListener('mouseup', function(e) {
