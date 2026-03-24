@@ -737,7 +737,8 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Members</li>
       <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
-      <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9993;</span> Notifications <span id="notif-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9825;</span> Notifications <span id="notif-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
       <li><button onclick="showPage('booking-links')" data-page="booking-links"><span class="nav-icon">&#9654;</span> Glofox Links</button></li>
@@ -942,6 +943,22 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
           <table class="data-table">
             <thead><tr><th>Order</th><th>Name</th><th>Price</th><th>Badge</th><th>Features</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="planconfig-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERAL MESSAGES -->
+    <div class="admin-page" id="page-general-messages">
+      <div class="page-header">
+        <h1 class="page-title"><em>General Messages</em></h1>
+      </div>
+      <div id="gmsg-loading" class="loading">Loading messages...</div>
+      <div id="gmsg-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody id="gmsg-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1394,6 +1411,12 @@ async function loadNavBadges() {
     var nbadge = document.getElementById('notif-badge');
     if (nbadge) { if (unnotified > 0) { nbadge.textContent = unnotified; nbadge.style.display = 'inline'; } else { nbadge.style.display = 'none'; } }
   } catch(e) {}
+  try {
+    var gresp = await apiGet({ action: 'contacts' });
+    var msgs = gresp.data || gresp.contacts || [];
+    var gbadge = document.getElementById('gmsg-badge');
+    if (gbadge) { if (msgs.length > 0) { gbadge.textContent = msgs.length; gbadge.style.display = 'inline'; } else { gbadge.style.display = 'none'; } }
+  } catch(e) {}
 }
 
 function logout() {
@@ -1436,6 +1459,7 @@ function showPage(page) {
     case 'membership-requests': loadMembershipRequests(); break;
     case 'member-list': loadMemberList(); break;
     case 'calendar': loadCalendar(); break;
+    case 'general-messages': loadGeneralMessages(); break;
     case 'notifications': loadNotifications(); break;
     case 'contacts': loadContacts(); break;
     case 'plan-config': loadPlanConfig(); break;
@@ -2744,6 +2768,44 @@ async function createSlot() {
     loadCalendar();
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── GENERAL MESSAGES ───
+
+async function loadGeneralMessages() {
+  var loading = document.getElementById('gmsg-loading');
+  var content = document.getElementById('gmsg-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'contacts' });
+    var messages = resp.data || resp.contacts || [];
+
+    // Update nav badge
+    var badge = document.getElementById('gmsg-badge');
+    if (badge) { if (messages.length > 0) { badge.textContent = messages.length; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
+
+    var tbody = document.getElementById('gmsg-tbody');
+    if (messages.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No messages yet</td></tr>';
+    } else {
+      tbody.innerHTML = messages.map(function(m) {
+        return '<tr>' +
+          '<td><strong>' + esc(m.name || '') + '</strong></td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '—') + '</td>' +
+          '<td style="max-width:300px;white-space:pre-wrap;">' + esc(m.message || '—') + '</td>' +
+          '<td style="white-space:nowrap;">' + formatDate(m.created_at) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load messages. ' + esc(err.message) + '</div>';
   }
 }
 
