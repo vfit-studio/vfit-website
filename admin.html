@@ -1376,6 +1376,24 @@ function enterDashboard() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard-shell').classList.add('active');
   showPage('overview');
+  loadNavBadges();
+}
+
+async function loadNavBadges() {
+  try {
+    var mresp = await apiGet({ action: 'memberships' });
+    var memberships = mresp.data || mresp.memberships || [];
+    var newCount = memberships.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
+    var badge = document.getElementById('mreq-badge');
+    if (badge) { if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
+  } catch(e) {}
+  try {
+    var nresp = await apiGet({ action: 'notifications' });
+    var notifs = nresp.notifications || [];
+    var unnotified = notifs.filter(function(n) { return !n.notified; }).length;
+    var nbadge = document.getElementById('notif-badge');
+    if (nbadge) { if (unnotified > 0) { nbadge.textContent = unnotified; nbadge.style.display = 'inline'; } else { nbadge.style.display = 'none'; } }
+  } catch(e) {}
 }
 
 function logout() {
@@ -1461,24 +1479,23 @@ async function loadOverview() {
 
     var stats = document.getElementById('overview-stats');
     var upcomingEvents = db.upcoming_events || [];
+    var nextEvent = upcomingEvents[0];
+    var nextEventHtml = nextEvent
+      ? esc(nextEvent.name) + '<div class="stat-sub">' + formatDate(nextEvent.session_date) + '</div>'
+      : '<span style="font-size:14px;color:var(--bark);">None scheduled</span>';
 
     stats.innerHTML =
       '<div class="stat-card">' +
-        '<div class="stat-label">Total Bookings</div>' +
-        '<div class="stat-value">' + (db.total_bookings || 0) + '</div>' +
+        '<div class="stat-label">Next Upcoming Event</div>' +
+        '<div class="stat-value" style="font-size:22px;">' + nextEventHtml + '</div>' +
       '</div>' +
       '<div class="stat-card">' +
-        '<div class="stat-label">Revenue</div>' +
-        '<div class="stat-value">' + formatCurrency(db.total_revenue_cents || 0) + '</div>' +
-      '</div>' +
-      '<div class="stat-card">' +
-        '<div class="stat-label">Upcoming Events</div>' +
-        '<div class="stat-value">' + upcomingEvents.length + '</div>' +
-        '<div class="stat-sub">' + (upcomingEvents.length > 0 ? upcomingEvents.map(function(e) { return esc(e.name); }).join(', ') : 'None scheduled') + '</div>' +
-      '</div>' +
-      '<div class="stat-card">' +
-        '<div class="stat-label">Membership Enquiries</div>' +
+        '<div class="stat-label">Enquiries</div>' +
         '<div class="stat-value">' + (db.total_memberships || 0) + '</div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+        '<div class="stat-label">Members</div>' +
+        '<div class="stat-value">' + (db.total_members || 0) + '</div>' +
       '</div>';
 
     // Upcoming events list
@@ -1973,7 +1990,6 @@ function openAcceptModal(membershipId, name, plan) {
   document.getElementById('accept-membership-id').value = membershipId;
   document.getElementById('accept-member-name').textContent = name;
   document.getElementById('accept-member-plan').textContent = plan;
-  document.getElementById('accept-sessions-per-week').value = 3;
   document.getElementById('accept-modal').classList.add('open');
 }
 
@@ -1983,13 +1999,11 @@ function closeAcceptModal() {
 
 async function acceptMembership() {
   var membershipId = document.getElementById('accept-membership-id').value;
-  var sessionsPerWeek = parseInt(document.getElementById('accept-sessions-per-week').value) || 3;
 
   try {
     await apiPost({
       action: 'accept_membership',
-      membership_id: membershipId,
-      sessions_per_week: sessionsPerWeek
+      membership_id: membershipId
     });
     showToast('Member created successfully', 'success');
     closeAcceptModal();

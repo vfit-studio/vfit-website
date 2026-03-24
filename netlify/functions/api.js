@@ -239,19 +239,18 @@ async function handleDashboard() {
     .from('memberships')
     .select('*', { count: 'exact', head: true });
 
-  // Contact messages
-  const { count: totalContacts } = await supabase
-    .from('contacts')
-    .select('*', { count: 'exact', head: true });
+  // Active members count
+  const { count: totalMembers } = await supabase
+    .from('members')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'active');
 
   return respond(200, {
     success: true,
     dashboard: {
-      total_bookings: totalBookings || 0,
-      total_revenue_cents: totalRevenue,
       upcoming_events: upcoming || [],
       total_memberships: totalMemberships || 0,
-      total_contacts: totalContacts || 0,
+      total_members: totalMembers || 0,
     },
   });
 }
