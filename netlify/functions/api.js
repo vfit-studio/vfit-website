@@ -1098,6 +1098,216 @@ async function handleSubmitReview(params) {
 }
 
 // ═══════════════════════════════════════════════
+// CMS handlers — Plans, Site Content, Testimonials, Media
+// ═══════════════════════════════════════════════
+
+async function handleGetPlans() {
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .eq('status', 'active')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return respond(200, { success: true, plans: data || [] });
+}
+
+async function handleGetAllPlans() {
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return respond(200, { success: true, plans: data || [] });
+}
+
+async function handleCreatePlan(body) {
+  requireAdmin(body.admin_key);
+  const { name, price_cents, period_label, badge_text, badge_style, description, features, display_order } = body;
+  if (!name || price_cents === undefined) {
+    return respond(400, { success: false, error: 'name and price_cents are required' });
+  }
+  const { data: plan, error } = await supabase
+    .from('membership_plans')
+    .insert({
+      name,
+      price_cents: parseInt(price_cents),
+      period_label: period_label || 'session',
+      badge_text: badge_text || null,
+      badge_style: badge_style || 'pop',
+      description: description || null,
+      features: features || [],
+      display_order: display_order || 0,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, plan });
+}
+
+async function handleUpdatePlan(body) {
+  requireAdmin(body.admin_key);
+  const { plan_id, ...fields } = body;
+  if (!plan_id) return respond(400, { success: false, error: 'plan_id is required' });
+  delete fields.admin_key;
+  delete fields.action;
+  delete fields.id;
+  delete fields.created_at;
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .update(fields)
+    .eq('id', plan_id)
+    .select()
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, plan: data });
+}
+
+async function handleDeletePlan(body) {
+  requireAdmin(body.admin_key);
+  const { plan_id } = body;
+  if (!plan_id) return respond(400, { success: false, error: 'plan_id is required' });
+  const { error } = await supabase
+    .from('membership_plans')
+    .delete()
+    .eq('id', plan_id);
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleGetSiteContent() {
+  const { data, error } = await supabase
+    .from('site_content')
+    .select('*')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return respond(200, { success: true, content: data || [] });
+}
+
+async function handleUpdateSiteContent(body) {
+  requireAdmin(body.admin_key);
+  const { items } = body;
+  if (!items || !Array.isArray(items)) {
+    return respond(400, { success: false, error: 'items array is required' });
+  }
+  for (const item of items) {
+    const { error } = await supabase
+      .from('site_content')
+      .update({ content_value: item.content_value })
+      .eq('section', item.section)
+      .eq('content_key', item.content_key);
+    if (error) throw error;
+  }
+  return respond(200, { success: true });
+}
+
+async function handleGetTestimonials() {
+  const { data, error } = await supabase
+    .from('testimonials')
+    .select('*')
+    .eq('status', 'active')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return respond(200, { success: true, testimonials: data || [] });
+}
+
+async function handleGetAllTestimonials() {
+  const { data, error } = await supabase
+    .from('testimonials')
+    .select('*')
+    .order('display_order', { ascending: true });
+  if (error) throw error;
+  return respond(200, { success: true, testimonials: data || [] });
+}
+
+async function handleCreateTestimonial(body) {
+  requireAdmin(body.admin_key);
+  const { quote, attribution, page, display_order } = body;
+  if (!quote) return respond(400, { success: false, error: 'quote is required' });
+  const { data, error } = await supabase
+    .from('testimonials')
+    .insert({
+      quote,
+      attribution: attribution || 'Client Testimonial · Toowoomba',
+      page: page || 'home',
+      display_order: display_order || 0,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, testimonial: data });
+}
+
+async function handleUpdateTestimonial(body) {
+  requireAdmin(body.admin_key);
+  const { testimonial_id, ...fields } = body;
+  if (!testimonial_id) return respond(400, { success: false, error: 'testimonial_id is required' });
+  delete fields.admin_key;
+  delete fields.action;
+  delete fields.id;
+  delete fields.created_at;
+  const { data, error } = await supabase
+    .from('testimonials')
+    .update(fields)
+    .eq('id', testimonial_id)
+    .select()
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, testimonial: data });
+}
+
+async function handleDeleteTestimonial(body) {
+  requireAdmin(body.admin_key);
+  const { testimonial_id } = body;
+  if (!testimonial_id) return respond(400, { success: false, error: 'testimonial_id is required' });
+  const { error } = await supabase
+    .from('testimonials')
+    .delete()
+    .eq('id', testimonial_id);
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleUploadMedia(body) {
+  requireAdmin(body.admin_key);
+  const { file_data, file_name, content_type } = body;
+  if (!file_data || !file_name) {
+    return respond(400, { success: false, error: 'file_data and file_name are required' });
+  }
+  const buffer = Buffer.from(file_data, 'base64');
+  const path = `${Date.now()}-${file_name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+  const { error } = await supabase.storage
+    .from('media')
+    .upload(path, buffer, {
+      contentType: content_type || 'application/octet-stream',
+      upsert: false,
+    });
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from('media').getPublicUrl(path);
+  return respond(200, { success: true, url: urlData.publicUrl, path });
+}
+
+async function handleListMedia() {
+  const { data, error } = await supabase.storage
+    .from('media')
+    .list('', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) throw error;
+  const files = (data || []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => {
+    const { data: urlData } = supabase.storage.from('media').getPublicUrl(f.name);
+    return { name: f.name, url: urlData.publicUrl, size: f.metadata?.size, created_at: f.created_at };
+  });
+  return respond(200, { success: true, files });
+}
+
+async function handleDeleteMedia(body) {
+  requireAdmin(body.admin_key);
+  const { path } = body;
+  if (!path) return respond(400, { success: false, error: 'path is required' });
+  const { error } = await supabase.storage.from('media').remove([path]);
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+// ═══════════════════════════════════════════════
 // Referral tracking
 // ═══════════════════════════════════════════════
 
@@ -1235,6 +1445,18 @@ exports.handler = async (event) => {
           return await handleReferrals();
         case 'calendar_feed':
           return await handleCalendarFeed();
+        case 'plans':
+          return await handleGetPlans();
+        case 'all_plans':
+          return await handleGetAllPlans();
+        case 'site_content':
+          return await handleGetSiteContent();
+        case 'testimonials':
+          return await handleGetTestimonials();
+        case 'all_testimonials':
+          return await handleGetAllTestimonials();
+        case 'media':
+          return await handleListMedia();
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -1313,6 +1535,24 @@ exports.handler = async (event) => {
           return await handleSendReviewRequests(body);
         case 'sync_calendar':
           return await handleCalendarFeed();
+        case 'create_plan':
+          return await handleCreatePlan(body);
+        case 'update_plan':
+          return await handleUpdatePlan(body);
+        case 'delete_plan':
+          return await handleDeletePlan(body);
+        case 'update_site_content':
+          return await handleUpdateSiteContent(body);
+        case 'create_testimonial':
+          return await handleCreateTestimonial(body);
+        case 'update_testimonial':
+          return await handleUpdateTestimonial(body);
+        case 'delete_testimonial':
+          return await handleDeleteTestimonial(body);
+        case 'upload_media':
+          return await handleUploadMedia(body);
+        case 'delete_media':
+          return await handleDeleteMedia(body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
