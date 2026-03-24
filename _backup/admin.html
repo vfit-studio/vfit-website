@@ -1,0 +1,3185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><!-- v=20260325c -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+<title>VFIT Admin</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sand: #f5f0e8; --cream: #faf7f2; --stone: #e8e0d4; --clay: #c9b99a;
+  --bark: #8c7660; --moss: #7a8c6e; --deep: #3d3530; --warm-white: #fefcf8;
+  --sage: #a8b89a; --red: #b85c5c;
+  --sidebar-w: 220px;
+  --topbar-h: 64px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--deep); font-weight: 300; overflow-x: hidden; min-height: 100vh; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible,
+[tabindex]:focus-visible { outline: 1px solid var(--clay); outline-offset: 3px; }
+
+/* ─── LOGIN ─── */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; background: var(--warm-white);
+  padding: 24px;
+}
+.login-card {
+  background: var(--warm-white); border: 1px solid var(--stone);
+  padding: 56px 48px; max-width: 400px; width: 100%; text-align: center;
+  box-shadow: 0 8px 40px rgba(61,53,48,0.06);
+}
+.login-logo {
+  font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300;
+  letter-spacing: 0.32em; color: var(--deep); margin-bottom: 6px;
+}
+.login-subtitle {
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--bark); margin-bottom: 40px;
+}
+.login-field {
+  width: 100%; padding: 14px 17px; border: 1px solid var(--stone);
+  background: var(--warm-white); font-family: 'Jost', sans-serif;
+  font-size: 16px; font-weight: 300; color: var(--deep); outline: none;
+  transition: border-color 0.3s; margin-bottom: 20px; text-align: center;
+  letter-spacing: 0.1em; border-radius: 0; -webkit-appearance: none;
+}
+.login-field:focus { border-color: var(--clay); }
+.login-field::placeholder { color: var(--clay); letter-spacing: 0.15em; font-size: 13px; }
+.login-error {
+  font-size: 12px; color: var(--red); margin-bottom: 16px; min-height: 18px;
+}
+
+/* ─── BUTTONS ─── */
+.btn-primary {
+  display: inline-block; padding: 15px 42px; background: var(--deep); color: var(--warm-white);
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.22em;
+  text-transform: uppercase; text-decoration: none; border: 1px solid transparent; cursor: pointer;
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, color 0.35s, background 0.35s;
+  min-height: 44px; border-radius: 0;
+}
+.btn-primary:hover { background: var(--bark); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(61,53,48,0.15); }
+.btn-primary:active { transform: translateY(0); box-shadow: none; background: #6b5e52; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-outline {
+  display: inline-block; padding: 10px 24px; background: transparent; color: var(--bark);
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400; letter-spacing: 0.18em;
+  text-transform: uppercase; text-decoration: none; border: 1px solid var(--clay); cursor: pointer;
+  transition: border-color 0.25s, background 0.3s, color 0.3s; min-height: 38px; border-radius: 0;
+}
+.btn-outline:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
+
+.btn-sm {
+  padding: 6px 16px; font-size: 10px; letter-spacing: 0.15em; min-height: 30px;
+}
+.btn-danger {
+  background: transparent; color: var(--red); border-color: var(--red);
+}
+.btn-danger:hover { background: var(--red); color: var(--warm-white); border-color: var(--red); }
+
+/* ─── DASHBOARD SHELL ─── */
+#dashboard-shell { display: none; min-height: 100vh; }
+#dashboard-shell.active { display: flex; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--topbar-h); background: var(--warm-white);
+  border-bottom: 1px solid var(--stone); display: flex;
+  align-items: center; justify-content: space-between; padding: 0 28px;
+}
+.topbar-logo {
+  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300;
+  letter-spacing: 0.32em; color: var(--deep); text-decoration: none;
+}
+.topbar-center {
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--bark); position: absolute; left: 50%; transform: translateX(-50%);
+}
+.topbar-logout {
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bark); background: none; border: 1px solid var(--stone);
+  padding: 8px 20px; cursor: pointer; font-family: 'Jost', sans-serif;
+  font-weight: 300; transition: all 0.3s; border-radius: 0;
+}
+.topbar-logout:hover { border-color: var(--bark); color: var(--deep); }
+.topbar-hamburger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: 8px; min-width: 44px; min-height: 44px; flex-direction: column;
+  gap: 5px; align-items: center; justify-content: center;
+}
+.topbar-hamburger span {
+  width: 22px; height: 1.5px; background: var(--deep); display: block;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0;
+  width: var(--sidebar-w); background: var(--warm-white);
+  border-right: 1px solid var(--stone); padding: 32px 0;
+  overflow-y: auto; z-index: 90;
+}
+.sidebar-nav { list-style: none; }
+.sidebar-nav li { border-bottom: 1px solid var(--stone); }
+.sidebar-nav button {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 16px 28px; background: none; border: none;
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 300;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--bark);
+  cursor: pointer; transition: all 0.25s; text-align: left;
+}
+.sidebar-nav button:hover { background: var(--sand); color: var(--deep); }
+.sidebar-nav button.active {
+  background: var(--sand); color: var(--deep); font-weight: 400;
+  border-left: 3px solid var(--bark); padding-left: 25px;
+}
+.sidebar-nav button .nav-icon { font-size: 16px; width: 22px; text-align: center; }
+
+/* ─── MAIN CONTENT ─── */
+.main-content {
+  margin-left: var(--sidebar-w); margin-top: var(--topbar-h);
+  padding: 36px 40px 60px; flex: 1; min-height: calc(100vh - var(--topbar-h));
+}
+
+/* ─── PAGE SECTIONS ─── */
+.admin-page { display: none; }
+.admin-page.active { display: block; }
+
+.page-header {
+  margin-bottom: 32px; display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 16px;
+}
+.page-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300;
+  color: var(--deep); line-height: 1.1;
+}
+.page-title em { font-style: italic; color: var(--bark); }
+
+/* ─── STAT CARDS ─── */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 36px;
+}
+.stat-card {
+  background: var(--warm-white); border: 1px solid var(--stone);
+  padding: 28px 24px; transition: box-shadow 0.3s;
+}
+.stat-card:hover { box-shadow: 0 4px 20px rgba(61,53,48,0.06); }
+.stat-label {
+  font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--bark); margin-bottom: 10px;
+}
+.stat-value {
+  font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300;
+  color: var(--deep); line-height: 1;
+}
+.stat-sub { font-size: 12px; color: var(--bark); margin-top: 6px; }
+
+/* ─── TABLES ─── */
+.table-wrap {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--stone); background: var(--warm-white);
+}
+.data-table {
+  width: 100%; border-collapse: collapse; min-width: 600px;
+}
+.data-table th {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--bark); padding: 14px 16px; text-align: left;
+  border-bottom: 1px solid var(--stone); background: var(--sand);
+  font-weight: 400; white-space: nowrap;
+}
+.data-table td {
+  padding: 13px 16px; border-bottom: 1px solid var(--stone);
+  font-size: 13px; color: var(--deep); vertical-align: middle;
+}
+.data-table tr:nth-child(even) td { background: var(--cream); }
+.data-table tr:nth-child(odd) td { background: var(--warm-white); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ─── STATUS BADGES ─── */
+.badge {
+  display: inline-block; font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 4px 12px; font-weight: 400;
+  white-space: nowrap;
+}
+.badge-confirmed { background: rgba(122,140,110,0.15); color: var(--moss); }
+.badge-held { background: rgba(201,185,154,0.3); color: var(--bark); }
+.badge-cancelled, .badge-expired { background: rgba(184,92,92,0.12); color: var(--red); }
+.badge-new { background: rgba(168,184,154,0.25); color: var(--moss); }
+.badge-contacted { background: rgba(201,185,154,0.3); color: var(--bark); }
+.badge-active { background: rgba(122,140,110,0.15); color: var(--moss); }
+.badge-inactive { background: rgba(184,92,92,0.12); color: var(--red); }
+.badge-open { background: rgba(122,140,110,0.15); color: var(--moss); }
+.badge-archived { background: rgba(201,185,154,0.3); color: var(--bark); }
+
+/* ─── NOTIFIED ICONS ─── */
+.notified-yes { color: var(--moss); font-size: 18px; }
+.notified-no { color: var(--clay); font-size: 18px; }
+
+/* ─── STATUS SELECT ─── */
+.status-select {
+  padding: 5px 10px; border: 1px solid var(--stone); background: var(--warm-white);
+  font-family: 'Jost', sans-serif; font-size: 12px; color: var(--deep);
+  cursor: pointer; border-radius: 0; -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238c7660'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  padding-right: 24px;
+}
+
+/* ─── FILTER BAR ─── */
+.filter-bar {
+  display: flex; gap: 16px; align-items: center; margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.filter-bar label {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--bark); white-space: nowrap;
+}
+.filter-bar select {
+  padding: 10px 32px 10px 14px; border: 1px solid var(--stone);
+  background: var(--warm-white); font-family: 'Jost', sans-serif;
+  font-size: 13px; color: var(--deep); border-radius: 0;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238c7660'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  min-width: 200px; cursor: pointer;
+}
+
+/* ─── SUMMARY BAR ─── */
+.summary-bar {
+  display: flex; gap: 24px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.summary-item {
+  font-size: 13px; color: var(--bark);
+}
+.summary-item strong {
+  font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400;
+  color: var(--deep); margin-right: 4px;
+}
+
+/* ─── MODAL ─── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(61,53,48,0.6); backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px); align-items: center;
+  justify-content: center; padding: 24px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--warm-white); width: 100%; max-width: 540px;
+  max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain; position: relative; padding: 48px 44px;
+  animation: modalIn 0.3s ease;
+}
+.modal-close {
+  position: absolute; top: 20px; right: 24px; background: none; border: none;
+  cursor: pointer; font-size: 24px; color: var(--bark); line-height: 1;
+  transition: color 0.3s; min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { color: var(--deep); }
+.modal-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 30px;
+  font-weight: 300; margin-bottom: 28px; color: var(--deep);
+}
+.modal-title em { font-style: italic; color: var(--bark); }
+
+/* ─── FORM ─── */
+.form-group { margin-bottom: 22px; }
+.form-label {
+  display: block; font-size: 10px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--bark); margin-bottom: 8px;
+}
+.form-input, .form-select {
+  width: 100%; padding: 12px 16px; border: 1px solid var(--stone);
+  background: var(--warm-white); font-family: 'Jost', sans-serif;
+  font-size: 14px; font-weight: 300; color: var(--deep); outline: none;
+  transition: border-color 0.3s; border-radius: 0; -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus { border-color: var(--clay); }
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238c7660'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 36px; cursor: pointer;
+}
+
+/* ─── LOADING / EMPTY ─── */
+.loading {
+  text-align: center; padding: 60px 20px; color: var(--bark);
+  font-size: 13px; letter-spacing: 0.15em;
+}
+.loading::before {
+  content: ''; display: block; width: 28px; height: 28px;
+  border: 2px solid var(--stone); border-top-color: var(--bark);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--bark);
+  font-size: 13px; letter-spacing: 0.1em;
+}
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 30px; right: 30px; z-index: 600;
+  padding: 16px 28px; font-size: 13px; color: var(--warm-white);
+  background: var(--deep); box-shadow: 0 4px 20px rgba(61,53,48,0.2);
+  transform: translateY(20px); opacity: 0; transition: all 0.3s;
+  pointer-events: none; max-width: 360px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { background: var(--red); }
+.toast.success { background: var(--moss); }
+
+/* ─── CONFIRM DIALOG ─── */
+.confirm-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 550;
+  background: rgba(61,53,48,0.5); backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px); align-items: center;
+  justify-content: center; padding: 24px;
+}
+.confirm-backdrop.open { display: flex; }
+.confirm-box {
+  background: var(--warm-white); padding: 40px 36px; max-width: 400px;
+  width: 100%; text-align: center; animation: modalIn 0.3s ease;
+}
+.confirm-msg {
+  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300;
+  color: var(--deep); margin-bottom: 28px; line-height: 1.4;
+}
+.confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* ─── BODY SCROLL LOCK ─── */
+body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
+
+/* ─── MOBILE SIDEBAR OVERLAY ─── */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; z-index: 94;
+  background: rgba(61,53,48,0.4); backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  /* Topbar */
+  .topbar { padding: 0 16px; }
+  .topbar-logo { font-size: 20px; }
+  .topbar-hamburger { display: flex; }
+  .topbar-center { display: none; }
+  .topbar-logout { padding: 6px 14px; font-size: 10px; min-height: 44px; display: flex; align-items: center; }
+
+  /* Sidebar as full-screen overlay */
+  .sidebar {
+    position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
+    z-index: 500; background: var(--warm-white);
+    transition: left 0.3s ease;
+    padding-top: calc(var(--topbar-h) + 16px);
+    border-right: none; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar.mobile-open { left: 0; display: block; }
+  .sidebar-nav button {
+    min-height: 48px; font-size: 14px; padding: 16px 28px;
+  }
+  .sidebar-nav button.active { padding-left: 25px; }
+
+  /* Main content full width */
+  .main-content {
+    margin-left: 0; padding: 20px 16px 60px;
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+
+  /* Page headers */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header .btn-primary { width: 100%; text-align: center; }
+  .page-title { font-size: 28px; }
+
+  /* Stat cards */
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .stat-card { padding: 20px 16px; }
+  .stat-value { font-size: 28px; }
+
+  /* Tables */
+  .table-wrap { -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+  .data-table { font-size: 12px; min-width: 500px; }
+  .data-table th { padding: 10px 10px; font-size: 9px; }
+  .data-table td { padding: 10px 10px; font-size: 12px; }
+
+  /* Filter bar */
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar select { min-width: 100%; font-size: 16px; min-height: 44px; }
+
+  /* Modals full screen */
+  .modal-backdrop { padding: 0; align-items: stretch; }
+  .modal-backdrop .modal {
+    width: 100% !important; max-width: 100% !important; max-height: 100%;
+    border-radius: 0; margin: 0;
+    min-height: 100vh; min-height: 100dvh;
+    padding: 32px 20px;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  }
+  .modal-title { font-size: 24px; margin-bottom: 20px; }
+
+  /* Forms — prevent iOS zoom */
+  .form-input, .form-select, .form-textarea, select, input, textarea {
+    font-size: 16px !important; min-height: 44px;
+  }
+  .login-field { font-size: 16px; min-height: 44px; }
+
+  /* Buttons — tap-friendly */
+  .btn-primary, .btn-outline { min-height: 44px; }
+  .btn-outline.btn-sm { min-height: 44px; padding: 10px 16px; font-size: 11px; }
+  .confirm-actions { flex-direction: column; gap: 10px; }
+  .confirm-actions .btn-outline { width: 100%; min-height: 44px; }
+
+  /* Toast */
+  .toast { left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: none; }
+
+  /* Login card */
+  .login-card { padding: 40px 24px; }
+
+  /* Assign grid */
+  .assign-day-grid { grid-template-columns: 1fr; }
+  .assign-slot-item { padding: 12px 10px; min-height: 44px; }
+
+  /* Summary bar */
+  .summary-bar { gap: 16px; }
+
+  /* Notification buttons */
+  #page-notifications .btn-outline.btn-sm { width: 100%; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .topbar-logo { font-size: 18px; letter-spacing: 0.2em; }
+  .page-title { font-size: 24px; }
+  .stat-value { font-size: 24px; }
+  .modal-backdrop .modal { padding: 24px 16px; }
+}
+
+/* ─── CALENDAR ─── */
+.cal-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+}
+.cal-toolbar-left { display: flex; align-items: center; gap: 10px; }
+.cal-toolbar-right { display: flex; align-items: center; gap: 10px; }
+.cal-view-toggle {
+  display: inline-flex; border: 1px solid var(--stone); overflow: hidden;
+}
+.cal-view-btn {
+  padding: 8px 18px; font-family: 'Jost', sans-serif; font-size: 10px;
+  letter-spacing: 0.15em; text-transform: uppercase; background: var(--warm-white);
+  color: var(--bark); border: none; cursor: pointer; transition: all 0.2s;
+  border-right: 1px solid var(--stone);
+}
+.cal-view-btn:last-child { border-right: none; }
+.cal-view-btn.active { background: var(--deep); color: var(--warm-white); }
+.cal-view-btn:hover:not(.active) { background: var(--sand); }
+
+.cal-nav-btn {
+  width: 34px; height: 34px; border: 1px solid var(--stone); background: var(--warm-white);
+  color: var(--bark); cursor: pointer; font-size: 16px; display: flex;
+  align-items: center; justify-content: center; transition: all 0.2s;
+}
+.cal-nav-btn:hover { background: var(--sand); color: var(--deep); }
+.cal-period-label {
+  font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300;
+  color: var(--deep); min-width: 180px; text-align: center;
+}
+.cal-today-btn {
+  padding: 6px 14px; font-family: 'Jost', sans-serif; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; background: transparent;
+  border: 1px solid var(--clay); color: var(--bark); cursor: pointer; transition: all 0.2s;
+}
+.cal-today-btn:hover { background: var(--bark); color: var(--warm-white); border-color: var(--bark); }
+
+.cal-demo-toggle {
+  display: flex; align-items: center; gap: 6px; font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--bark); cursor: pointer;
+  user-select: none;
+}
+.cal-demo-toggle input { accent-color: var(--bark); cursor: pointer; }
+
+/* Week view */
+.cal-week-grid {
+  display: grid; grid-template-columns: 80px repeat(6, 1fr);
+  border: 1px solid var(--stone); background: var(--stone); gap: 1px;
+}
+.cal-week-header {
+  background: var(--deep); color: var(--warm-white); padding: 10px 8px;
+  text-align: center; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.cal-week-header-date {
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300;
+  margin-top: 2px; letter-spacing: 0;
+}
+.cal-week-header.today-col { background: #4a3f39; }
+.cal-time-label {
+  background: var(--sand); padding: 10px 8px; font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 300; color: var(--deep); display: flex;
+  align-items: flex-start; justify-content: center; min-height: 90px;
+}
+.cal-week-cell {
+  background: var(--warm-white); padding: 8px; min-height: 90px; position: relative;
+  transition: background 0.2s;
+}
+.cal-week-cell.cell-full { background: rgba(184,92,92,0.06); }
+.cal-week-cell.cell-empty { border: 1px dashed var(--stone); background: transparent; }
+.cal-week-cell.cell-has-spots { border-left: 3px solid var(--sage); }
+.cal-cell-members { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.cal-cell-member {
+  font-size: 11px; color: var(--deep); display: flex; align-items: center; gap: 4px;
+  cursor: pointer; transition: color 0.2s;
+}
+.cal-cell-member:hover { color: var(--bark); text-decoration: underline; }
+.cal-cell-spots {
+  display: flex; align-items: center; gap: 6px; font-size: 10px;
+  letter-spacing: 0.1em; color: var(--bark);
+}
+.cal-spots-bar {
+  flex: 1; height: 3px; background: var(--stone); border-radius: 2px; overflow: hidden;
+}
+.cal-spots-fill {
+  height: 100%; border-radius: 2px; transition: width 0.3s;
+}
+.cal-spots-fill.fill-low { background: var(--sage); }
+.cal-spots-fill.fill-med { background: var(--clay); }
+.cal-spots-fill.fill-full { background: var(--red); }
+
+/* Day view */
+.cal-day-timeline { display: flex; flex-direction: column; gap: 16px; }
+.cal-day-card {
+  background: var(--warm-white); border: 1px solid var(--stone); padding: 20px 24px;
+  transition: box-shadow 0.2s;
+}
+.cal-day-card:hover { box-shadow: 0 4px 16px rgba(61,53,48,0.06); }
+.cal-day-card.card-full { border-left: 4px solid var(--red); }
+.cal-day-card.card-has-spots { border-left: 4px solid var(--sage); }
+.cal-day-card-time {
+  font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300;
+  color: var(--deep); margin-bottom: 8px;
+}
+.cal-day-card-capacity {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.cal-day-card-capacity span {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bark);
+}
+.cal-day-cap-bar { width: 120px; height: 5px; background: var(--stone); border-radius: 3px; overflow: hidden; }
+.cal-day-cap-fill { height: 100%; border-radius: 3px; }
+.cal-day-members-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.cal-day-member-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  border-bottom: 1px solid var(--stone); font-size: 13px;
+}
+.cal-day-member-row:last-child { border-bottom: none; }
+.cal-day-member-name { font-weight: 400; color: var(--deep); cursor: pointer; }
+.cal-day-member-name:hover { text-decoration: underline; }
+.cal-day-member-detail { font-size: 11px; color: var(--bark); }
+.cal-day-add-btn {
+  padding: 6px 14px; font-family: 'Jost', sans-serif; font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; background: transparent;
+  border: 1px solid var(--stone); color: var(--bark); cursor: pointer; transition: all 0.2s;
+}
+.cal-day-add-btn:hover { background: var(--sand); border-color: var(--bark); }
+
+/* Month view */
+.cal-month-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--stone); background: var(--stone); gap: 1px;
+}
+.cal-month-header {
+  background: var(--deep); color: var(--warm-white); padding: 8px;
+  text-align: center; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.cal-month-cell {
+  background: var(--warm-white); min-height: 80px; padding: 8px; cursor: pointer;
+  transition: background 0.2s; position: relative;
+}
+.cal-month-cell:hover { background: var(--sand); }
+.cal-month-cell.other-month { opacity: 0.35; }
+.cal-month-cell.has-sessions { background: rgba(168,184,154,0.12); }
+.cal-month-cell.today-cell { box-shadow: inset 0 0 0 2px var(--bark); }
+.cal-month-day-num {
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300;
+  color: var(--deep); margin-bottom: 4px;
+}
+.cal-month-info {
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bark);
+  line-height: 1.5;
+}
+
+/* Plan badges */
+.plan-badge { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; padding: 2px 6px; display: inline-block; }
+.plan-vip { background: var(--deep); color: var(--clay); }
+.plan-signature { background: var(--sage); color: var(--warm-white); }
+.plan-flexible { border: 1px solid var(--clay); color: var(--bark); }
+
+/* ─── ASSIGN GRID ─── */
+.assign-day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.assign-day-col h4 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 300;
+  color: var(--deep); margin-bottom: 8px;
+  border-bottom: 1px solid var(--stone);
+  padding-bottom: 6px;
+}
+.assign-slot-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border: 1px solid var(--stone); margin-bottom: 6px;
+  background: var(--warm-white); font-size: 13px;
+}
+.assign-slot-item.assigned { background: rgba(122,140,110,0.1); border-color: var(--moss); }
+.assign-slot-item.slot-full { opacity: 0.45; }
+
+/* ─── BADGE PAUSED/CANCELLED ─── */
+.badge-paused { background: rgba(201,185,154,0.3); color: var(--bark); }
+.badge-cancelled { background: rgba(184,92,92,0.12); color: var(--red); }
+
+@media (max-width: 1024px) {
+  .cal-week-grid { grid-template-columns: 60px repeat(6, 1fr); }
+  .cal-week-cell { padding: 6px; min-height: 70px; }
+  .cal-cell-member { font-size: 10px; }
+}
+@media (max-width: 768px) {
+  /* Calendar toolbar */
+  .cal-toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .cal-toolbar-left { flex-wrap: wrap; gap: 8px; }
+  .cal-toolbar-right { justify-content: flex-start; }
+  .cal-period-label { font-size: 16px; min-width: 140px; }
+  .cal-view-btn { padding: 10px 14px; min-height: 44px; font-size: 11px; }
+  .cal-nav-btn { width: 44px; height: 44px; font-size: 20px; }
+  .cal-today-btn { min-height: 44px; padding: 10px 18px; }
+
+  /* Week view: show 3 days with horizontal scroll */
+  .cal-week-grid {
+    grid-template-columns: 50px repeat(6, minmax(120px, 1fr));
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .cal-week-header { font-size: 8px; padding: 8px 4px; }
+  .cal-week-header-date { font-size: 15px; }
+  .cal-time-label { font-size: 13px; padding: 8px 4px; min-height: 70px; }
+  .cal-week-cell { padding: 6px; min-height: 70px; }
+  .cal-cell-member { font-size: 10px; }
+
+  /* Month view */
+  .cal-month-header { font-size: 8px; letter-spacing: 0.08em; padding: 6px 2px; }
+  .cal-month-cell { min-height: 60px; padding: 4px; }
+  .cal-month-day-num { font-size: 15px; }
+  .cal-month-info { font-size: 8px; }
+
+  /* Day view */
+  .cal-day-card { padding: 16px; }
+  .cal-day-card-time { font-size: 22px; }
+  .cal-day-add-btn { min-height: 44px; padding: 10px 18px; }
+}
+@media (max-width: 480px) {
+  .cal-week-grid { grid-template-columns: 40px repeat(6, minmax(100px, 1fr)); }
+  .cal-month-cell { min-height: 48px; }
+  .cal-month-day-num { font-size: 13px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN SCREEN ─── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">VFIT</div>
+    <div class="login-subtitle">Admin Panel</div>
+    <form id="login-form" onsubmit="return handleLogin(event)">
+      <input type="password" id="login-password" class="login-field" placeholder="Enter password" autocomplete="current-password" required>
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" class="btn-primary" style="width:100%;" id="login-btn">Enter</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── DASHBOARD SHELL ─── -->
+<div id="dashboard-shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="topbar-hamburger" onclick="toggleMobileSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="topbar-logo" href="/">VFIT</a>
+    <span class="topbar-center">Admin</span>
+    <button class="topbar-logout" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <ul class="sidebar-nav">
+      <li><button class="active" onclick="showPage('overview')" data-page="overview"><span class="nav-icon">&#9632;</span> Dashboard</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Sessions</li>
+      <li><button onclick="showPage('runclub')" data-page="runclub"><span class="nav-icon">&#9654;</span> Run Club</button></li>
+      <li><button onclick="showPage('pilattes')" data-page="pilattes"><span class="nav-icon">&#9654;</span> Pi'lattes</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Members</li>
+      <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
+      <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
+      <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
+      <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
+      <li><button onclick="showPage('media-library')" data-page="media-library"><span class="nav-icon">&#9634;</span> Media</button></li>
+    </ul>
+  </div>
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- OVERVIEW -->
+    <div class="admin-page active" id="page-overview">
+      <div class="page-header">
+        <h1 class="page-title"><em>Dashboard</em></h1>
+      </div>
+      <div id="overview-loading" class="loading">Loading dashboard...</div>
+      <div id="overview-content" style="display:none;">
+        <div class="stat-grid" id="overview-stats"></div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin-bottom:16px;">Upcoming Events</h3>
+        <div id="overview-upcoming"></div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="admin-page" id="page-events">
+      <div class="page-header">
+        <h1 class="page-title"><em>Events</em></h1>
+        <button class="btn-primary" onclick="openEventModal()">+ Create Event</button>
+      </div>
+      <div id="events-loading" class="loading">Loading events...</div>
+      <div id="events-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Session Date</th><th>Tickets Open</th><th>Spots</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="events-empty" class="empty-state" style="display:none;">No events yet. Create your first event to get started.</div>
+    </div>
+
+    <!-- RUN CLUB -->
+    <div class="admin-page" id="page-runclub">
+      <div class="page-header">
+        <h1 class="page-title"><em>Run Club</em></h1>
+        <button class="btn-primary" onclick="openEventModal(null,'runclub')">+ New Session</button>
+      </div>
+      <div id="rc-loading" class="loading">Loading...</div>
+      <div id="rc-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Glofox URL</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="rc-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="rc-empty" class="empty-state" style="display:none;">No Run Club sessions yet. Create one to get started.</div>
+    </div>
+
+    <!-- PI'LATTES -->
+    <div class="admin-page" id="page-pilattes">
+      <div class="page-header">
+        <h1 class="page-title"><em>Pi'lattes</em></h1>
+        <button class="btn-primary" onclick="openEventModal(null,'pilattes')">+ New Session</button>
+      </div>
+      <div id="pl-loading" class="loading">Loading...</div>
+      <div id="pl-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Glofox URL</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="pl-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="pl-empty" class="empty-state" style="display:none;">No Pi'lattes sessions yet. Create one to get started.</div>
+    </div>
+
+    <!-- BOOKINGS (keep for backward compat but hidden from nav) -->
+    <div class="admin-page" id="page-bookings">
+      <div class="page-header">
+        <h1 class="page-title"><em>Bookings</em></h1>
+      </div>
+      <div class="filter-bar">
+        <label>Filter by Event</label>
+        <select id="bookings-event-filter" onchange="loadBookings()">
+          <option value="">All Events</option>
+        </select>
+      </div>
+      <div class="summary-bar" id="bookings-summary" style="display:none;"></div>
+      <div id="bookings-loading" class="loading">Loading bookings...</div>
+      <div id="bookings-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Amount</th><th>Booked At</th><th>Actions</th></tr></thead>
+            <tbody id="bookings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERSHIPS -->
+    <div class="admin-page" id="page-memberships">
+      <div class="page-header">
+        <h1 class="page-title"><em>Memberships</em></h1>
+      </div>
+      <div id="memberships-loading" class="loading">Loading memberships...</div>
+      <div id="memberships-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="memberships-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERSHIP REQUESTS -->
+    <div class="admin-page" id="page-membership-requests">
+      <div class="page-header">
+        <h1 class="page-title"><em>Membership Requests</em></h1>
+      </div>
+      <div id="mreq-loading" class="loading">Loading requests...</div>
+      <div id="mreq-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="mreq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBER LIST -->
+    <div class="admin-page" id="page-member-list">
+      <div class="page-header">
+        <h1 class="page-title"><em>Member List</em></h1>
+        <button class="btn-primary" onclick="openAddMemberModal()">+ Add Member</button>
+      </div>
+      <div id="mlist-loading" class="loading">Loading members...</div>
+      <div id="mlist-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions/wk</th><th>Assigned Slots</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="mlist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CONTACTS -->
+    <div class="admin-page" id="page-contacts">
+      <div class="page-header">
+        <h1 class="page-title"><em>Messages</em></h1>
+      </div>
+      <div id="contacts-loading" class="loading">Loading messages...</div>
+      <div id="contacts-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody id="contacts-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAN CONFIG -->
+    <div class="admin-page" id="page-plan-config">
+      <div class="page-header">
+        <h1 class="page-title"><em>Membership Plans</em></h1>
+        <button class="btn-primary" onclick="openPlanModal()">+ New Plan</button>
+      </div>
+      <div id="planconfig-loading" class="loading">Loading plans...</div>
+      <div id="planconfig-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Order</th><th>Name</th><th>Price</th><th>Badge</th><th>Features</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="planconfig-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERAL MESSAGES -->
+    <div class="admin-page" id="page-general-messages">
+      <div class="page-header">
+        <h1 class="page-title"><em>General Messages</em></h1>
+      </div>
+      <div id="gmsg-loading" class="loading">Loading messages...</div>
+      <div id="gmsg-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody id="gmsg-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKING LINKS -->
+    <!-- TESTIMONIALS -->
+    <div class="admin-page" id="page-testimonials">
+      <div class="page-header">
+        <h1 class="page-title"><em>Testimonials</em></h1>
+        <button class="btn-primary" onclick="openTestimonialModal()">+ New Testimonial</button>
+      </div>
+      <div id="testimonials-loading" class="loading">Loading testimonials...</div>
+      <div id="testimonials-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Quote</th><th>Attribution</th><th>Page</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="testimonials-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDIA LIBRARY -->
+    <div class="admin-page" id="page-media-library">
+      <div class="page-header">
+        <h1 class="page-title"><em>Media Library</em></h1>
+        <button class="btn-primary" onclick="triggerMediaUpload()">+ Upload</button>
+        <input type="file" id="media-upload-input" accept="image/*,video/*" style="display:none;" onchange="handleMediaUpload(this)">
+      </div>
+      <div id="media-loading" class="loading">Loading media...</div>
+      <div id="media-content" style="display:none;">
+        <div id="media-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /dashboard-shell -->
+
+<!-- ─── PLAN MODAL ─── -->
+<div class="modal-backdrop" id="plan-modal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closePlanModal()">&times;</button>
+    <h2 class="modal-title" id="plan-modal-title">Add <em>Plan</em></h2>
+    <input type="hidden" id="plan-edit-id" value="">
+    <div class="form-group">
+      <label class="form-label">Plan Name</label>
+      <input type="text" class="form-input" id="plan-name" placeholder="e.g. Signature">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Price (dollars)</label>
+      <input type="number" class="form-input" id="plan-price" min="0" step="1" placeholder="60">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Period Label</label>
+      <input type="text" class="form-input" id="plan-period" placeholder="session" value="session">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Badge Text</label>
+      <input type="text" class="form-input" id="plan-badge-text" placeholder="e.g. Most Popular">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Badge Style</label>
+      <select class="form-input form-select" id="plan-badge-style">
+        <option value="pop">Popular (dark)</option>
+        <option value="flex">Flex (outline)</option>
+        <option value="vip">VIP (deep)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description <span style="opacity:.5">(optional tagline)</span></label>
+      <input type="text" class="form-input" id="plan-description" placeholder="Short tagline...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Features <span style="opacity:.5">(one per line)</span></label>
+      <textarea class="form-input" id="plan-features" rows="5" placeholder="Weekly recurring group session/s (max 4 ppl)&#10;3-month minimum commitment"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Display Order</label>
+      <input type="number" class="form-input" id="plan-order" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input form-select" id="plan-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" id="plan-save-btn" onclick="savePlan()">Create Plan</button>
+  </div>
+</div>
+
+<!-- ─── TESTIMONIAL MODAL ─── -->
+<div class="modal-backdrop" id="testimonial-modal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeTestimonialModal()">&times;</button>
+    <h2 class="modal-title" id="testimonial-modal-title">Add <em>Testimonial</em></h2>
+    <input type="hidden" id="testimonial-edit-id" value="">
+    <div class="form-group">
+      <label class="form-label">Quote</label>
+      <textarea class="form-input" id="testimonial-quote" rows="4" placeholder="Client quote..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Attribution</label>
+      <input type="text" class="form-input" id="testimonial-attribution" placeholder="Client Testimonial · Toowoomba">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Page</label>
+      <select class="form-input form-select" id="testimonial-page">
+        <option value="home">Home</option>
+        <option value="studio">Studio Sessions</option>
+        <option value="about">About</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Display Order</label>
+      <input type="number" class="form-input" id="testimonial-order" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input form-select" id="testimonial-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" id="testimonial-save-btn" onclick="saveTestimonial()">Create Testimonial</button>
+  </div>
+</div>
+
+<!-- ─── ACCEPT MEMBERSHIP MODAL ─── -->
+<div class="modal-backdrop" id="accept-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAcceptModal()">&times;</button>
+    <h2 class="modal-title">Accept <em id="accept-member-name"></em></h2>
+    <p style="font-size:13px;color:var(--bark);margin-bottom:24px;">Plan: <strong id="accept-member-plan"></strong></p>
+    <input type="hidden" id="accept-membership-id">
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="acceptMembership()">Accept &amp; Create Member</button>
+  </div>
+</div>
+
+
+<!-- ─── ADD SLOT MODAL ─── -->
+<div class="modal-backdrop" id="addslot-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddSlotModal()">&times;</button>
+    <h2 class="modal-title">Add <em>Time Slot</em></h2>
+    <div class="form-group">
+      <label class="form-label">Day of Week</label>
+      <select class="form-input form-select" id="addslot-day" required>
+        <option value="0">Monday</option>
+        <option value="1">Tuesday</option>
+        <option value="2">Wednesday</option>
+        <option value="3">Thursday</option>
+        <option value="4">Friday</option>
+        <option value="5">Saturday</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Time (e.g. 5:15 AM)</label>
+      <input type="text" class="form-input" id="addslot-time" placeholder="5:15 AM" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Max Capacity</label>
+      <input type="number" class="form-input" id="addslot-capacity" min="1" value="4" required>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createSlot()">Create Slot</button>
+  </div>
+</div>
+
+
+<!-- ─── ADD MEMBER MODAL ─── -->
+<div class="modal-backdrop" id="addmember-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddMemberModal()">&times;</button>
+    <h2 class="modal-title">Add <em>Member</em></h2>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="addmember-name" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="addmember-email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-input" id="addmember-phone">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <input type="text" class="form-input" id="addmember-plan" placeholder="e.g. 3x per week">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sessions Per Week</label>
+      <input type="number" class="form-input" id="addmember-sessions" min="1" max="7" value="3">
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createMemberManual()">Create Member</button>
+  </div>
+</div>
+
+<!-- ─── EVENT MODAL ─── -->
+<div class="modal-backdrop" id="event-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEventModal()">&times;</button>
+    <h2 class="modal-title" id="event-modal-title">Create <em>Event</em></h2>
+    <form id="event-form" onsubmit="return handleEventSubmit(event)">
+      <input type="hidden" id="event-edit-id">
+      <div class="form-group">
+        <label class="form-label">Event Name</label>
+        <input type="text" class="form-input" id="event-name" required>
+      </div>
+      <input type="hidden" id="event-type">
+      <div class="form-group">
+        <label class="form-label">Session Date</label>
+        <input type="datetime-local" class="form-input" id="event-session-date" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tickets Open Date</label>
+        <input type="datetime-local" class="form-input" id="event-tickets-open">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Glofox Booking URL</label>
+        <input type="text" class="form-input" id="event-glofox-url" placeholder="https://app.glofox.com/..." required>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:8px;" id="event-submit-btn">Create Event</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── CONFIRM DIALOG ─── -->
+<div class="confirm-backdrop" id="confirm-dialog">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button class="btn-outline btn-sm" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-outline btn-sm btn-danger" id="confirm-yes" onclick="confirmAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST ─── -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   VFIT ADMIN DASHBOARD
+   Matches actual API response structures
+   ═══════════════════════════════════════════ */
+
+const API = '/.netlify/functions/api';
+const LOCAL_BYPASS = 'vfit2026';
+
+let currentPage = 'overview';
+let eventsCache = [];
+let bookingsRefreshInterval = null;
+let pendingConfirmCallback = null;
+
+// ─── HELPERS ───
+
+function getKey() {
+  return sessionStorage.getItem('vfit_admin_key') || '';
+}
+
+function apiURL(params) {
+  const qs = new URLSearchParams(params);
+  return API + '?' + qs.toString();
+}
+
+async function apiGet(params) {
+  try {
+    const res = await fetch(apiURL(params));
+    if (!res.ok) throw new Error('Request failed: ' + res.status);
+    const data = await res.json();
+    if (data.success === false) throw new Error(data.error || 'Unknown error');
+    return data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function apiPost(body) {
+  body.admin_key = getKey();
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok || data.success === false) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type || '') + ' show';
+  setTimeout(function() { t.classList.remove('show'); }, 3500);
+}
+
+function formatDate(d) {
+  if (!d) return '--';
+  var dt = new Date(d);
+  if (isNaN(dt.getTime())) return d;
+  var day = dt.getDate();
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var month = months[dt.getMonth()];
+  var year = dt.getFullYear();
+  var hours = dt.getHours();
+  var mins = dt.getMinutes();
+  var ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  var minsStr = mins < 10 ? '0' + mins : '' + mins;
+  return day + ' ' + month + ' ' + year + ', ' + hours + ':' + minsStr + ' ' + ampm;
+}
+
+function formatCurrency(cents) {
+  if (cents == null || cents === 0) return 'Free';
+  return '$' + (cents / 100).toFixed(2);
+}
+
+function statusBadge(status) {
+  var s = (status || '').toLowerCase();
+  var cls = s === 'confirmed' ? 'badge-confirmed'
+    : s === 'held' ? 'badge-held'
+    : s === 'cancelled' || s === 'expired' ? 'badge-cancelled'
+    : s === 'new' ? 'badge-new'
+    : s === 'contacted' ? 'badge-contacted'
+    : s === 'active' ? 'badge-active'
+    : s === 'inactive' ? 'badge-inactive'
+    : s === 'open' ? 'badge-open'
+    : s === 'archived' ? 'badge-archived'
+    : 'badge-held';
+  return '<span class="badge ' + cls + '">' + esc(status || 'Unknown') + '</span>';
+}
+
+function esc(str) {
+  var d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+function truncate(str, len) {
+  if (!str) return '';
+  return str.length > len ? str.slice(0, len) + '...' : str;
+}
+
+// ─── CONFIRM DIALOG ───
+
+function showConfirm(msg, callback) {
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-dialog').classList.add('open');
+  pendingConfirmCallback = callback;
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-dialog').classList.remove('open');
+  pendingConfirmCallback = null;
+}
+
+function confirmAction() {
+  if (pendingConfirmCallback) pendingConfirmCallback();
+  closeConfirm();
+}
+
+// ─── AUTH ───
+
+async function handleLogin(e) {
+  e.preventDefault();
+  var pw = document.getElementById('login-password').value.trim();
+  var errEl = document.getElementById('login-error');
+  var btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+
+  if (!pw) { errEl.textContent = 'Please enter a password'; return false; }
+
+  // Local bypass
+  if (pw === LOCAL_BYPASS) {
+    sessionStorage.setItem('vfit_admin_key', pw);
+    enterDashboard();
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    var res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify_admin', admin_key: pw })
+    });
+    var data = await res.json();
+    if (res.ok && data.success) {
+      sessionStorage.setItem('vfit_admin_key', pw);
+      enterDashboard();
+    } else {
+      errEl.textContent = data.error || 'Invalid password';
+    }
+  } catch (err) {
+    errEl.textContent = 'Could not connect to server. Try again.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Enter';
+  return false;
+}
+
+function enterDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard-shell').classList.add('active');
+  showPage('overview');
+  loadNavBadges();
+}
+
+async function loadNavBadges() {
+  try {
+    var mresp = await apiGet({ action: 'memberships' });
+    var memberships = mresp.data || mresp.memberships || [];
+    var newCount = memberships.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
+    var badge = document.getElementById('mreq-badge');
+    if (badge) { if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
+  } catch(e) {}
+  try {
+    var gresp = await apiGet({ action: 'contacts' });
+    var msgs = gresp.data || gresp.contacts || [];
+    var gbadge = document.getElementById('gmsg-badge');
+    if (gbadge) { if (msgs.length > 0) { gbadge.textContent = msgs.length; gbadge.style.display = 'inline'; } else { gbadge.style.display = 'none'; } }
+  } catch(e) {}
+}
+
+function logout() {
+  sessionStorage.clear();
+  clearInterval(bookingsRefreshInterval);
+  document.getElementById('dashboard-shell').classList.remove('active');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+// Check session on load
+if (sessionStorage.getItem('vfit_admin_key')) {
+  enterDashboard();
+}
+
+// ─── NAVIGATION ───
+
+function showPage(page) {
+  currentPage = page;
+  clearInterval(bookingsRefreshInterval);
+
+  document.querySelectorAll('.admin-page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-' + page).classList.add('active');
+
+  document.querySelectorAll('.sidebar-nav button').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+
+  // Close mobile sidebar
+  closeMobileSidebar();
+
+  switch (page) {
+    case 'overview': loadOverview(); break;
+    case 'events': loadEvents(); break;
+    case 'runclub': loadTypePage('rc', 'runclub'); break;
+    case 'pilattes': loadTypePage('pl', 'pilattes'); break;
+    case 'bookings': loadBookingsPage(); break;
+    case 'memberships': loadMemberships(); break;
+    case 'membership-requests': loadMembershipRequests(); break;
+    case 'member-list': loadMemberList(); break;
+    case 'calendar': loadCalendar(); break;
+    case 'general-messages': loadGeneralMessages(); break;
+    case 'contacts': loadContacts(); break;
+    case 'plan-config': loadPlanConfig(); break;
+    case 'testimonials': loadTestimonials(); break;
+    case 'media-library': loadMediaLibrary(); break;
+  }
+}
+
+function toggleMobileSidebar() {
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var isOpen = sidebar.classList.toggle('mobile-open');
+  if (isOpen) {
+    overlay.classList.add('active');
+    document.body.classList.add('body-no-scroll');
+  } else {
+    overlay.classList.remove('active');
+    document.body.classList.remove('body-no-scroll');
+  }
+}
+
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+  document.body.classList.remove('body-no-scroll');
+}
+
+// ─── OVERVIEW ───
+// API: { success: true, dashboard: { total_bookings, total_revenue_cents, upcoming_events, total_memberships, total_contacts } }
+
+async function loadOverview() {
+  var loading = document.getElementById('overview-loading');
+  var content = document.getElementById('overview-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var data = await apiGet({ action: 'dashboard' });
+    var db = data.dashboard || {};
+
+    var stats = document.getElementById('overview-stats');
+    var upcomingEvents = db.upcoming_events || [];
+    var nextEvent = upcomingEvents[0];
+    var nextEventHtml = nextEvent
+      ? esc(nextEvent.name) + '<div class="stat-sub">' + formatDate(nextEvent.session_date) + '</div>'
+      : '<span style="font-size:14px;color:var(--bark);">None scheduled</span>';
+
+    stats.innerHTML =
+      '<div class="stat-card">' +
+        '<div class="stat-label">Next Upcoming Event</div>' +
+        '<div class="stat-value" style="font-size:22px;">' + nextEventHtml + '</div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+        '<div class="stat-label">Enquiries</div>' +
+        '<div class="stat-value">' + (db.total_memberships || 0) + '</div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+        '<div class="stat-label">Members</div>' +
+        '<div class="stat-value">' + (db.total_members || 0) + '</div>' +
+      '</div>';
+
+    // Upcoming events list
+    var upcomingEl = document.getElementById('overview-upcoming');
+    if (upcomingEvents.length === 0) {
+      upcomingEl.innerHTML = '<div class="empty-state">No upcoming events</div>';
+    } else {
+      var rows = upcomingEvents.map(function(ev) {
+        return '<tr>' +
+          '<td><strong>' + esc(ev.name) + '</strong></td>' +
+          '<td>' + esc(ev.type || '') + '</td>' +
+          '<td>' + formatDate(ev.session_date) + '</td>' +
+          '<td>' + statusBadge(ev.status || 'open') + '</td>' +
+        '</tr>';
+      }).join('');
+      upcomingEl.innerHTML =
+        '<div class="table-wrap"><table class="data-table">' +
+        '<thead><tr><th>Name</th><th>Type</th><th>Session Date</th><th>Status</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table></div>';
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load dashboard. ' + esc(err.message) + '</div>';
+  }
+}
+
+// ─── EVENTS ───
+// API: { success: true, events: [...] }
+// Each event: id, name, type, tickets_open, session_date, spots_total, price_cents, status, created_at
+
+async function loadEvents() {
+  var loading = document.getElementById('events-loading');
+  var content = document.getElementById('events-content');
+  var empty = document.getElementById('events-empty');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    var data = await apiGet({ action: 'events' });
+    eventsCache = data.events || [];
+
+    if (eventsCache.length === 0) {
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    var tbody = document.getElementById('events-tbody');
+    tbody.innerHTML = eventsCache.map(function(ev) {
+      var spotsTotal = ev.spots_total || 0;
+      return '<tr>' +
+        '<td><strong>' + esc(ev.name) + '</strong></td>' +
+        '<td>' + esc(ev.type || '') + '</td>' +
+        '<td>' + formatDate(ev.session_date) + '</td>' +
+        '<td>' + formatDate(ev.tickets_open) + '</td>' +
+        '<td>' + spotsTotal + '</td>' +
+        '<td>' + formatCurrency(ev.price_cents) + '</td>' +
+        '<td>' + statusBadge(ev.status || 'open') + '</td>' +
+        '<td>' +
+          '<button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load events. ' + esc(err.message) + '</div>';
+  }
+}
+
+function openEventModal(eventData, presetType) {
+  var modal = document.getElementById('event-modal');
+  var title = document.getElementById('event-modal-title');
+  var btn = document.getElementById('event-submit-btn');
+
+  document.getElementById('event-form').reset();
+  document.getElementById('event-edit-id').value = '';
+
+  // Pre-set type if coming from Run Club or Pi'lattes page
+  if (presetType) {
+    document.getElementById('event-type').value = presetType;
+  }
+
+  if (eventData) {
+    title.innerHTML = 'Edit <em>Event</em>';
+    btn.textContent = 'Update Event';
+    document.getElementById('event-edit-id').value = eventData.id || '';
+    document.getElementById('event-name').value = eventData.name || '';
+    document.getElementById('event-type').value = eventData.type || '';
+    if (eventData.session_date) {
+      document.getElementById('event-session-date').value = toLocalDatetime(eventData.session_date);
+    }
+    if (eventData.tickets_open) {
+      document.getElementById('event-tickets-open').value = toLocalDatetime(eventData.tickets_open);
+    }
+    document.getElementById('event-glofox-url').value = eventData.glofox_url || '';
+  } else {
+    document.getElementById('event-glofox-url').value = '';
+    title.innerHTML = 'Create <em>Event</em>';
+    btn.textContent = 'Create Event';
+    // Set default times: 5:15 AM for run club / studio sessions, 7:00 AM for pi'lattes
+    var now = new Date();
+    now.setDate(now.getDate() + 1);
+    now.setSeconds(0); now.setMilliseconds(0);
+    if (presetType === 'pilattes') {
+      now.setHours(7, 0);
+    } else {
+      now.setHours(5, 15);
+    }
+    document.getElementById('event-session-date').value = toLocalDatetime(now.toISOString());
+  }
+
+  modal.classList.add('open');
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal').classList.remove('open');
+}
+
+function toLocalDatetime(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+async function handleEventSubmit(e) {
+  e.preventDefault();
+  var editId = document.getElementById('event-edit-id').value;
+
+  var payload = {
+    action: editId ? 'update_event' : 'create_event',
+    name: document.getElementById('event-name').value.trim(),
+    type: document.getElementById('event-type').value,
+    session_date: document.getElementById('event-session-date').value,
+    tickets_open: document.getElementById('event-tickets-open').value || null,
+    spots_total: 0,
+    price_cents: 0,
+    glofox_url: document.getElementById('event-glofox-url').value.trim() || null
+  };
+  if (editId) payload.event_id = editId;
+
+  var btn = document.getElementById('event-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    await apiPost(payload);
+    showToast(editId ? 'Event updated' : 'Event created', 'success');
+    closeEventModal();
+    // Refresh the current page
+    if (currentPage === 'events') loadEvents();
+    else if (currentPage === 'runclub') loadTypePage('rc', 'runclub');
+    else if (currentPage === 'pilattes') loadTypePage('pl', 'pilattes');
+    else loadEvents();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = editId ? 'Update Event' : 'Create Event';
+  return false;
+}
+
+function editEvent(id) {
+  var ev = eventsCache.find(function(e) { return e.id === id; });
+  if (ev) openEventModal(ev);
+}
+
+function deleteEvent(id) {
+  showConfirm('Delete this event? This cannot be undone.', async function() {
+    try {
+      await apiPost({ action: 'delete_event', event_id: id });
+      showToast('Event deleted', 'success');
+      // Refresh whichever page we're on
+      if (currentPage === 'events') loadEvents();
+      else if (currentPage === 'runclub') loadTypePage('rc', 'runclub');
+      else if (currentPage === 'pilattes') loadTypePage('pl', 'pilattes');
+      else loadOverview();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
+}
+
+// ─── RUN CLUB / PI'LATTES PAGES ───
+
+async function loadTypePage(pre, type) {
+  var loading = document.getElementById(pre + '-loading');
+  var content = document.getElementById(pre + '-content');
+  var empty = document.getElementById(pre + '-empty');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  if (empty) empty.style.display = 'none';
+
+  try {
+    var data = await apiGet({ action: 'events' });
+    var allEvents = data.events || [];
+    var typeEvents = allEvents.filter(function(e) { var t = (e.type || '').replace(/[_' ]/g, '').toLowerCase(); var target = type.replace(/[_' ]/g, '').toLowerCase(); return t === target; });
+    eventsCache = allEvents;
+
+    if (typeEvents.length === 0) {
+      loading.style.display = 'none';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    // Render events table
+    var tbody = document.getElementById(pre + '-events-tbody');
+    tbody.innerHTML = typeEvents.map(function(ev) {
+      return '<tr>' +
+        '<td><strong>' + esc(ev.name) + '</strong></td>' +
+        '<td>' + formatDate(ev.session_date) + '</td>' +
+        '<td>' + formatDate(ev.tickets_open) + '</td>' +
+        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Link ↗</a>' : '—') + '</td>' +
+        '<td>' + statusBadge(ev.status || 'active') + '</td>' +
+        '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button></td>' +
+      '</tr>';
+    }).join('');
+
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function loadTypeBookings(pre) {
+  var eventId = document.getElementById(pre + '-event-select').value;
+  var tbody = document.getElementById(pre + '-bookings-tbody');
+  if (!eventId) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">Select a session above</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">Loading...</td></tr>';
+  try {
+    var data = await apiGet({ action: 'bookings', event_id: eventId });
+    var bookings = data.bookings || [];
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">No bookings yet</td></tr>';
+    } else {
+      tbody.innerHTML = bookings.map(function(b) {
+        var canCancel = b.status !== 'cancelled' && b.status !== 'expired';
+        return '<tr>' +
+          '<td>' + esc(b.name || '') + '</td>' +
+          '<td>' + esc(b.email || '') + '</td>' +
+          '<td>' + esc(b.phone || '--') + '</td>' +
+          '<td>' + statusBadge(b.status) + '</td>' +
+          '<td>' + formatCurrency(b.amount_cents) + '</td>' +
+          '<td>' + formatDate(b.created_at) + '</td>' +
+          '<td>' + (canCancel ? '<button class="btn-outline btn-sm btn-danger" onclick="cancelBooking(\'' + esc(b.id) + '\')">Cancel</button>' : '') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px;">Error: ' + esc(err.message) + '</td></tr>';
+  }
+}
+
+// ─── BOOKINGS ───
+// API: { success: true, bookings: [...] }
+// Each booking: id, event_id, name, email, phone, status, stripe_session_id, stripe_payment_id, amount_cents, held_at, confirmed_at, created_at
+
+async function loadBookingsPage() {
+  // Populate event filter dropdown
+  try {
+    if (eventsCache.length === 0) {
+      var data = await apiGet({ action: 'events' });
+      eventsCache = data.events || [];
+    }
+    var sel = document.getElementById('bookings-event-filter');
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Select an event...</option>';
+    eventsCache.forEach(function(ev) {
+      sel.innerHTML += '<option value="' + esc(ev.id) + '">' + esc(ev.name) + '</option>';
+    });
+    if (current) sel.value = current;
+  } catch (err) {
+    // silently fail, filter just won't have events
+  }
+
+  loadBookings();
+
+  // Auto-refresh every 30s
+  bookingsRefreshInterval = setInterval(function() {
+    if (currentPage === 'bookings') loadBookings();
+  }, 30000);
+}
+
+async function loadBookings() {
+  var loading = document.getElementById('bookings-loading');
+  var content = document.getElementById('bookings-content');
+  var summary = document.getElementById('bookings-summary');
+
+  var eventId = document.getElementById('bookings-event-filter').value;
+
+  if (!eventId) {
+    loading.style.display = 'none';
+    content.style.display = 'none';
+    summary.style.display = 'none';
+    // Show a message to select an event
+    var tbody = document.getElementById('bookings-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Select an event to view bookings</td></tr>';
+    content.style.display = 'block';
+    return;
+  }
+
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  summary.style.display = 'none';
+
+  var params = { action: 'bookings', event_id: eventId };
+
+  try {
+    var data = await apiGet(params);
+    var bookings = data.bookings || [];
+
+    // Summary
+    var totalCount = bookings.length;
+    var totalRevenue = bookings.reduce(function(sum, b) { return sum + (b.amount_cents || 0); }, 0);
+    summary.innerHTML =
+      '<div class="summary-item"><strong>' + totalCount + '</strong> bookings</div>' +
+      '<div class="summary-item"><strong>' + formatCurrency(totalRevenue) + '</strong> revenue</div>';
+    summary.style.display = 'flex';
+
+    var tbody = document.getElementById('bookings-tbody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No bookings yet</td></tr>';
+    } else {
+      tbody.innerHTML = bookings.map(function(b) {
+        var canCancel = b.status !== 'cancelled' && b.status !== 'expired';
+        return '<tr>' +
+          '<td>' + esc(b.name || '') + '</td>' +
+          '<td>' + esc(b.email || '') + '</td>' +
+          '<td>' + esc(b.phone || '--') + '</td>' +
+          '<td>' + statusBadge(b.status) + '</td>' +
+          '<td>' + formatCurrency(b.amount_cents) + '</td>' +
+          '<td>' + formatDate(b.created_at) + '</td>' +
+          '<td>' + (canCancel ? '<button class="btn-outline btn-sm btn-danger" onclick="cancelBooking(\'' + esc(b.id) + '\')">Cancel</button>' : '') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load bookings. ' + esc(err.message) + '</div>';
+  }
+}
+
+function cancelBooking(id) {
+  showConfirm('Cancel this booking? This cannot be undone.', async function() {
+    try {
+      await apiPost({ action: 'cancel_booking', booking_id: id });
+      showToast('Booking cancelled', 'success');
+      loadBookings();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
+}
+
+// ─── MEMBERSHIPS ───
+// API: { success: true, data: [...] }
+// Each: id, name, email, phone, plan, sessions, days, times, notes, status, created_at
+
+async function loadMemberships() {
+  var loading = document.getElementById('memberships-loading');
+  var content = document.getElementById('memberships-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'memberships' });
+    var members = resp.data || [];
+
+    var tbody = document.getElementById('memberships-tbody');
+    if (members.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No enquiries yet</td></tr>';
+    } else {
+      tbody.innerHTML = members.map(function(m) {
+        var id = m.id;
+        var status = (m.status || 'new').toLowerCase();
+        return '<tr>' +
+          '<td>' + esc(m.name || '') + '</td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '--') + '</td>' +
+          '<td>' + esc(m.plan || '') + '</td>' +
+          '<td>' + esc(m.sessions || '') + '</td>' +
+          '<td>' + esc(m.days || '') + '</td>' +
+          '<td>' + esc(m.times || '') + '</td>' +
+          '<td title="' + esc(m.notes || '') + '">' + esc(truncate(m.notes || '', 40)) + '</td>' +
+          '<td>' +
+            '<select class="status-select" onchange="updateMembershipStatus(\'' + esc(id) + '\', this.value)">' +
+              '<option value="new"' + (status === 'new' ? ' selected' : '') + '>New</option>' +
+              '<option value="contacted"' + (status === 'contacted' ? ' selected' : '') + '>Contacted</option>' +
+              '<option value="active"' + (status === 'active' ? ' selected' : '') + '>Active</option>' +
+              '<option value="inactive"' + (status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
+            '</select>' +
+          '</td>' +
+          '<td>' + formatDate(m.created_at) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load memberships. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function updateMembershipStatus(id, status) {
+  try {
+    await apiPost({ action: 'update_membership', id: id, status: status });
+    showToast('Status updated', 'success');
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+    loadMemberships(); // revert UI on error
+  }
+}
+
+// ─── MEMBERSHIP REQUESTS ───
+
+async function loadMembershipRequests() {
+  var loading = document.getElementById('mreq-loading');
+  var content = document.getElementById('mreq-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'memberships' });
+    var members = resp.data || [];
+
+    var tbody = document.getElementById('mreq-tbody');
+    if (members.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No enquiries yet</td></tr>';
+    } else {
+      tbody.innerHTML = members.map(function(m) {
+        var id = m.id;
+        var status = (m.status || 'new').toLowerCase();
+        var showAccept = (status === 'new' || status === 'contacted');
+        return '<tr>' +
+          '<td>' + esc(m.name || '') + '</td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '--') + '</td>' +
+          '<td>' + esc(m.plan || '') + '</td>' +
+          '<td>' + esc(m.days || '') + '</td>' +
+          '<td>' + esc(m.times || '') + '</td>' +
+          '<td title="' + esc(m.notes || '') + '">' + esc(truncate(m.notes || '', 40)) + '</td>' +
+          '<td>' + statusBadge(m.status || 'new') + '</td>' +
+          '<td>' + formatDate(m.created_at) + '</td>' +
+          '<td style="white-space:nowrap;">' +
+            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\',\'' + esc((m.name || '').replace(/'/g, '')) + '\',\'' + esc((m.plan || '').replace(/'/g, '')) + '\')">Accept &amp; Create Member</button>' : '') +
+            '<button class="btn-outline btn-sm btn-danger" onclick="deleteMembershipRequest(\'' + esc(id) + '\')">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    // Update nav badge with unread (new) count
+    var newCount = members.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
+    var badge = document.getElementById('mreq-badge');
+    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load requests. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function deleteMembershipRequest(id) {
+  if (!confirm('Delete this request?')) return;
+  try {
+    await apiPost({ action: 'delete_membership_request', membership_id: id });
+    showToast('Request deleted', 'success');
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function openAcceptModal(membershipId, name, plan) {
+  document.getElementById('accept-membership-id').value = membershipId;
+  document.getElementById('accept-member-name').textContent = name;
+  document.getElementById('accept-member-plan').textContent = plan;
+  document.getElementById('accept-modal').classList.add('open');
+}
+
+function closeAcceptModal() {
+  document.getElementById('accept-modal').classList.remove('open');
+}
+
+async function acceptMembership() {
+  var membershipId = document.getElementById('accept-membership-id').value;
+
+  try {
+    await apiPost({
+      action: 'accept_membership',
+      membership_id: membershipId
+    });
+    showToast('Member created successfully', 'success');
+    closeAcceptModal();
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── MEMBER LIST ───
+
+async function loadMemberList() {
+  var loading = document.getElementById('mlist-loading');
+  var content = document.getElementById('mlist-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'members' });
+    var members = resp.data || resp.members || [];
+
+    var tbody = document.getElementById('mlist-tbody');
+    if (members.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No members yet</td></tr>';
+    } else {
+      tbody.innerHTML = members.map(function(m) {
+        var id = m.id;
+        var status = (m.status || 'active').toLowerCase();
+        var slots = (m.slots || []).map(function(s) {
+          var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+          return (dayNames[s.day_of_week] || '?') + ' ' + esc(s.time || '');
+        }).join(', ') || '--';
+        var statusCls = status === 'active' ? 'badge-active'
+          : status === 'paused' ? 'badge-paused'
+          : status === 'cancelled' ? 'badge-cancelled'
+          : 'badge-held';
+        return '<tr>' +
+          '<td><strong>' + esc(m.name || '') + '</strong></td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '--') + '</td>' +
+          '<td>' + esc(m.plan || '') + '</td>' +
+          '<td>' + (m.sessions_per_week || '--') + '</td>' +
+          '<td style="font-size:12px;max-width:200px;">' + slots + '</td>' +
+          '<td><span class="badge ' + statusCls + '">' + esc(status) + '</span></td>' +
+          '<td><button class="btn-outline btn-sm btn-danger" onclick="deleteMember(\'' + esc(id) + '\')">Delete</button></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load members. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function deleteMember(id) {
+  if (!confirm('Delete this member?')) return;
+  try {
+    await apiPost({ action: 'delete_member', member_id: id });
+    showToast('Member deleted', 'success');
+    loadMemberList();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function openAddMemberModal() {
+  document.getElementById('addmember-name').value = '';
+  document.getElementById('addmember-email').value = '';
+  document.getElementById('addmember-phone').value = '';
+  document.getElementById('addmember-plan').value = '';
+  document.getElementById('addmember-sessions').value = 3;
+  document.getElementById('addmember-modal').classList.add('open');
+}
+
+function closeAddMemberModal() {
+  document.getElementById('addmember-modal').classList.remove('open');
+}
+
+async function createMemberManual() {
+  var name = document.getElementById('addmember-name').value.trim();
+  var email = document.getElementById('addmember-email').value.trim();
+  if (!name || !email) { showToast('Name and email are required', 'error'); return; }
+
+  try {
+    await apiPost({
+      action: 'create_member',
+      name: name,
+      email: email,
+      phone: document.getElementById('addmember-phone').value.trim(),
+      plan: document.getElementById('addmember-plan').value.trim(),
+      sessions_per_week: parseInt(document.getElementById('addmember-sessions').value) || 3
+    });
+    showToast('Member created', 'success');
+    closeAddMemberModal();
+    loadMemberList();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── ASSIGN SLOT MODAL ───
+
+function openAssignModal(memberId, memberName) {
+  document.getElementById('assign-member-id').value = memberId;
+  document.getElementById('assign-member-name').textContent = memberName;
+  document.getElementById('assign-slots-loading').style.display = 'block';
+  document.getElementById('assign-slots-content').style.display = 'none';
+  document.getElementById('assign-modal').classList.add('open');
+  loadSlotsForAssign(memberId);
+}
+
+function closeAssignModal() {
+  document.getElementById('assign-modal').classList.remove('open');
+}
+
+async function loadSlotsForAssign(memberId) {
+  var loading = document.getElementById('assign-slots-loading');
+  var content = document.getElementById('assign-slots-content');
+
+  try {
+    var resp = await apiGet({ action: 'schedule' });
+    var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    // API returns { schedule: { "0": [...], "1": [...] } } keyed by day_of_week
+    var byDay = {};
+    for (var d = 0; d < 6; d++) byDay[d] = [];
+    if (resp.schedule && typeof resp.schedule === 'object' && !Array.isArray(resp.schedule)) {
+      for (var key in resp.schedule) {
+        var dayIdx = parseInt(key, 10);
+        if (dayIdx >= 0 && dayIdx <= 5) byDay[dayIdx] = resp.schedule[key] || [];
+      }
+    } else {
+      var slots = resp.data || resp.slots || [];
+      slots.forEach(function(s) {
+        var day = s.day_of_week;
+        if (day >= 0 && day <= 5) byDay[day].push(s);
+      });
+    }
+
+    var html = '<div class="assign-day-grid">';
+    dayNames.forEach(function(dayName, idx) {
+      var daySlots = byDay[idx] || [];
+      if (daySlots.length === 0) return;
+      html += '<div class="assign-day-col"><h4>' + dayName + '</h4>';
+      daySlots.forEach(function(s) {
+        var memberIds = (s.members || []).map(function(m) { return m.id || m.member_id; });
+        var isAssigned = memberIds.indexOf(memberId) !== -1;
+        var count = (s.members || []).length;
+        var max = s.max_capacity || 4;
+        var isFull = count >= max && !isAssigned;
+        var cls = 'assign-slot-item' + (isAssigned ? ' assigned' : '') + (isFull ? ' slot-full' : '');
+        html += '<div class="' + cls + '">' +
+          '<span>' + esc(s.time || '') + ' <span style="font-size:11px;color:var(--bark);">(' + count + '/' + max + ')</span></span>';
+        if (isAssigned) {
+          html += '<button class="btn-outline btn-sm btn-danger" onclick="unassignSlot(\'' + esc(memberId) + '\',\'' + esc(s.id) + '\')">Remove</button>';
+        } else if (!isFull) {
+          html += '<button class="btn-outline btn-sm" onclick="assignSlot(\'' + esc(memberId) + '\',\'' + esc(s.id) + '\')">Assign</button>';
+        } else {
+          html += '<span style="font-size:10px;color:var(--bark);text-transform:uppercase;letter-spacing:0.1em;">Full</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+
+    content.innerHTML = html;
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load slots. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function assignSlot(memberId, slotId) {
+  try {
+    await apiPost({ action: 'assign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Slot assigned', 'success');
+    loadSlotsForAssign(memberId);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+async function unassignSlot(memberId, slotId) {
+  try {
+    await apiPost({ action: 'unassign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Slot removed', 'success');
+    loadSlotsForAssign(memberId);
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── CALENDAR ───
+
+var calView = 'week';
+var calCurrentDate = new Date();
+var calScheduleData = {};
+var calUseDemo = false;
+
+var CAL_DEMO_DATA = {
+  '0': [
+    { id:'d1', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm1', name:'Sarah Chen', email:'sarah@example.com', phone:'0412 345 678', plan:'VIP' },
+      { id:'dm2', name:'Marcus Webb', email:'marcus@example.com', phone:'0423 456 789', plan:'Signature' }
+    ]},
+    { id:'d2', time:'6:15 AM', max_capacity:4, members:[
+      { id:'dm3', name:'Olivia Hart', email:'olivia@example.com', phone:'0434 567 890', plan:'Signature' },
+      { id:'dm4', name:'Tom Richards', email:'tom@example.com', phone:'0445 678 901', plan:'Flexible' },
+      { id:'dm5', name:'Emma Blake', email:'emma@example.com', phone:'0456 789 012', plan:'Signature' }
+    ]},
+    { id:'d3', time:'7:15 AM', max_capacity:4, members:[] }
+  ],
+  '1': [
+    { id:'d4', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm6', name:'James Patel', email:'james@example.com', phone:'0467 890 123', plan:'VIP' }
+    ]},
+    { id:'d5', time:'6:15 AM', max_capacity:4, members:[] }
+  ],
+  '2': [
+    { id:'d6', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm1', name:'Sarah Chen', email:'sarah@example.com', phone:'0412 345 678', plan:'VIP' },
+      { id:'dm3', name:'Olivia Hart', email:'olivia@example.com', phone:'0434 567 890', plan:'Signature' },
+      { id:'dm7', name:'Lisa Murray', email:'lisa@example.com', phone:'0478 901 234', plan:'Signature' },
+      { id:'dm8', name:'Kate Wong', email:'kate@example.com', phone:'0489 012 345', plan:'Flexible' }
+    ]}
+  ],
+  '3': [
+    { id:'d7', time:'6:15 AM', max_capacity:4, members:[
+      { id:'dm2', name:'Marcus Webb', email:'marcus@example.com', phone:'0423 456 789', plan:'Signature' },
+      { id:'dm4', name:'Tom Richards', email:'tom@example.com', phone:'0445 678 901', plan:'Flexible' }
+    ]}
+  ],
+  '4': [
+    { id:'d8', time:'5:15 AM', max_capacity:4, members:[
+      { id:'dm5', name:'Emma Blake', email:'emma@example.com', phone:'0456 789 012', plan:'Signature' },
+      { id:'dm6', name:'James Patel', email:'james@example.com', phone:'0467 890 123', plan:'VIP' }
+    ]}
+  ],
+  '5': []
+};
+
+function calGetDayNames() { return ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; }
+function calGetDayNamesShort() { return ['Mon','Tue','Wed','Thu','Fri','Sat']; }
+var CAL_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function calGetMonday(d) {
+  var dt = new Date(d);
+  var day = dt.getDay();
+  var diff = day === 0 ? -6 : 1 - day;
+  dt.setDate(dt.getDate() + diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function calFormatShortDate(d) {
+  return d.getDate() + ' ' + CAL_MONTH_NAMES[d.getMonth()].slice(0,3);
+}
+
+function calPlanBadge(plan) {
+  if (!plan) return '';
+  var p = plan.toLowerCase();
+  var cls = p === 'vip' ? 'plan-vip' : p === 'signature' ? 'plan-signature' : p === 'flexible' ? 'plan-flexible' : '';
+  return '<span class="plan-badge ' + cls + '">' + esc(plan) + '</span>';
+}
+
+function calSpotsFill(count, max) {
+  var pct = max > 0 ? Math.round((count / max) * 100) : 0;
+  var cls = pct >= 100 ? 'fill-full' : pct >= 50 ? 'fill-med' : 'fill-low';
+  return '<div class="cal-spots-bar"><div class="cal-spots-fill ' + cls + '" style="width:' + pct + '%"></div></div>';
+}
+
+function calGetEffectiveData() {
+  var data = calScheduleData;
+  var hasData = false;
+  for (var k in data) {
+    if (data[k] && data[k].length > 0) { hasData = true; break; }
+  }
+  if (!hasData && calUseDemo) return CAL_DEMO_DATA;
+  if (calUseDemo) {
+    // Merge demo into real - only for days with no real data
+    var merged = {};
+    for (var d = 0; d < 6; d++) {
+      merged[d] = (data[d] && data[d].length > 0) ? data[d] : (CAL_DEMO_DATA[d] || []);
+    }
+    return merged;
+  }
+  return data;
+}
+
+function calSetView(view) {
+  calView = view;
+  document.querySelectorAll('.cal-view-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  calRender();
+}
+
+function calNav(dir) {
+  if (calView === 'day') {
+    calCurrentDate.setDate(calCurrentDate.getDate() + dir);
+  } else if (calView === 'week') {
+    calCurrentDate.setDate(calCurrentDate.getDate() + (dir * 7));
+  } else {
+    calCurrentDate.setMonth(calCurrentDate.getMonth() + dir);
+  }
+  calRender();
+}
+
+function calGoToday() {
+  calCurrentDate = new Date();
+  calRender();
+}
+
+function calToggleDemo() {
+  calUseDemo = document.getElementById('cal-demo-check').checked;
+  calRender();
+}
+
+// Click empty cell — create a slot there
+function calClickEmpty(dayIndex, time) {
+  // Pre-fill the add slot modal with this day and time
+  document.getElementById('slot-day').value = dayIndex;
+  document.getElementById('slot-time').value = time;
+  document.getElementById('slot-capacity').value = 4;
+  openAddSlotModal();
+}
+
+// Click an existing slot — open a manage modal showing members + assign option
+function calClickSlot(slotId, dayIndex, time, maxCap) {
+  if (!slotId || calUseDemo) return;
+  openCalSlotModal(slotId, dayIndex, time, maxCap);
+}
+
+var calCurrentSlotId = null;
+function openCalSlotModal(slotId, dayIndex, time, maxCap) {
+  calCurrentSlotId = slotId;
+  var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var modal = document.getElementById('cal-slot-modal');
+  document.getElementById('cal-slot-title').innerHTML = dayNames[dayIndex] + ' <em>' + esc(time) + '</em>';
+  modal.classList.add('open');
+  loadCalSlotMembers(slotId, maxCap);
+}
+function closeCalSlotModal() {
+  document.getElementById('cal-slot-modal').classList.remove('open');
+  calCurrentSlotId = null;
+}
+
+async function loadCalSlotMembers(slotId, maxCap) {
+  var content = document.getElementById('cal-slot-content');
+  content.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    // Get all members to show who's assignable
+    var membersData = await apiGet({ action: 'members' });
+    var allMembers = membersData.members || [];
+
+    // Get current schedule to find who's in this slot
+    var schedData = await apiGet({ action: 'schedule' });
+    var schedule = schedData.schedule || {};
+    var slotMembers = [];
+    for (var d in schedule) {
+      (schedule[d] || []).forEach(function(s) {
+        if (s.id === slotId) slotMembers = s.members || [];
+      });
+    }
+
+    var assignedIds = slotMembers.map(function(m) { return m.id; });
+    var count = slotMembers.length;
+    maxCap = maxCap || 4;
+
+    var html = '<div style="margin-bottom:20px;"><strong>' + count + '/' + maxCap + '</strong> booked</div>';
+
+    // Current members
+    if (slotMembers.length > 0) {
+      html += '<h4 style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin-bottom:10px;">Currently Assigned</h4>';
+      slotMembers.forEach(function(m) {
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--stone);">';
+        html += '<span>' + esc(m.name) + ' ' + calPlanBadge(m.plan) + '</span>';
+        html += '<button class="btn-outline btn-sm btn-danger" onclick="calUnassign(\'' + esc(m.id) + '\',\'' + esc(slotId) + '\')">Remove</button>';
+        html += '</div>';
+      });
+    }
+
+    // Available members to add
+    var available = allMembers.filter(function(m) { return assignedIds.indexOf(m.id) === -1 && m.status === 'active'; });
+    if (available.length > 0 && count < maxCap) {
+      html += '<h4 style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin:20px 0 10px;">Add Member</h4>';
+      available.forEach(function(m) {
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--stone);">';
+        html += '<span>' + esc(m.name) + ' ' + calPlanBadge(m.plan) + ' <span style="color:var(--clay);font-size:11px;">' + (m.sessions_per_week || 1) + 'x/wk</span></span>';
+        html += '<button class="btn-outline btn-sm" onclick="calAssign(\'' + esc(m.id) + '\',\'' + esc(slotId) + '\')">Assign</button>';
+        html += '</div>';
+      });
+    } else if (count >= maxCap) {
+      html += '<p style="color:var(--red);font-size:12px;margin-top:16px;">This slot is full.</p>';
+    }
+
+    content.innerHTML = html;
+  } catch (err) {
+    content.innerHTML = '<div class="empty-state">Error: ' + esc(err.message) + '</div>';
+  }
+}
+
+async function calAssign(memberId, slotId) {
+  try {
+    await apiPost({ action: 'assign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Member assigned', 'success');
+    loadCalSlotMembers(slotId);
+    loadCalendar(); // refresh calendar in background
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+async function calUnassign(memberId, slotId) {
+  try {
+    await apiPost({ action: 'unassign_slot', member_id: memberId, slot_id: slotId });
+    showToast('Member removed', 'success');
+    loadCalSlotMembers(slotId);
+    loadCalendar();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function calSwitchToDay(dateStr) {
+  calCurrentDate = new Date(dateStr);
+  calSetView('day');
+}
+
+async function loadCalendar() {
+  var loading = document.getElementById('cal-loading');
+  var content = document.getElementById('cal-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'schedule' });
+    // Support both { schedule: { "0": [...] } } and { data/slots: [...] }
+    if (resp.schedule && typeof resp.schedule === 'object' && !Array.isArray(resp.schedule)) {
+      calScheduleData = resp.schedule;
+    } else {
+      var slots = resp.data || resp.slots || [];
+      var byDay = {};
+      for (var d = 0; d < 6; d++) byDay[d] = [];
+      slots.forEach(function(s) {
+        var day = s.day_of_week;
+        if (day >= 0 && day <= 5) byDay[day].push(s);
+      });
+      calScheduleData = byDay;
+    }
+    // Ensure all days exist
+    for (var d = 0; d < 6; d++) {
+      if (!calScheduleData[d]) calScheduleData[d] = [];
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+    calRender();
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load schedule. ' + esc(err.message) + '</div>';
+  }
+}
+
+function calRender() {
+  var container = document.getElementById('cal-render');
+  var label = document.getElementById('cal-period-label');
+
+  if (calView === 'week') {
+    calRenderWeek(container, label);
+  } else if (calView === 'day') {
+    calRenderDay(container, label);
+  } else {
+    calRenderMonth(container, label);
+  }
+}
+
+function calRenderWeek(container, label) {
+  var monday = calGetMonday(calCurrentDate);
+  var saturday = new Date(monday);
+  saturday.setDate(saturday.getDate() + 5);
+  label.textContent = calFormatShortDate(monday) + ' — ' + calFormatShortDate(saturday);
+
+  var data = calGetEffectiveData();
+  var dayNamesShort = calGetDayNamesShort();
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Collect all unique times across all days, sorted
+  var allTimes = {};
+  for (var d = 0; d < 6; d++) {
+    (data[d] || []).forEach(function(slot) {
+      allTimes[slot.time] = calTimeToMinutes(slot.time);
+    });
+  }
+  var sortedTimes = Object.keys(allTimes).sort(function(a, b) {
+    return allTimes[a] - allTimes[b];
+  });
+
+  if (sortedTimes.length === 0) {
+    container.innerHTML = '<div class="empty-state">No time slots this week. Add your first slot to get started.</div>';
+    return;
+  }
+
+  var html = '<div class="cal-week-grid">';
+
+  // Header row: empty corner + 6 day headers
+  html += '<div class="cal-week-header" style="background:var(--sand);"></div>';
+  for (var d = 0; d < 6; d++) {
+    var dayDate = new Date(monday);
+    dayDate.setDate(dayDate.getDate() + d);
+    var isToday = dayDate.getTime() === today.getTime();
+    html += '<div class="cal-week-header' + (isToday ? ' today-col' : '') + '">';
+    html += dayNamesShort[d];
+    html += '<div class="cal-week-header-date">' + dayDate.getDate() + '</div>';
+    html += '</div>';
+  }
+
+  // Time rows
+  sortedTimes.forEach(function(time) {
+    html += '<div class="cal-time-label">' + esc(time) + '</div>';
+    for (var d = 0; d < 6; d++) {
+      var slot = calFindSlot(data[d] || [], time);
+      if (!slot) {
+        html += '<div class="cal-week-cell cell-empty" onclick="calClickEmpty(' + d + ',\'' + esc(time) + '\')" style="cursor:pointer;" title="Add time slot"></div>';
+      } else {
+        var members = slot.members || [];
+        var count = members.length;
+        var max = slot.max_capacity || 4;
+        var isFull = count >= max;
+        var cls = 'cal-week-cell';
+        if (isFull) cls += ' cell-full';
+        else if (count > 0) cls += ' cell-has-spots';
+        else cls += ' cell-empty';
+
+        var slotId = slot.id || '';
+        html += '<div class="' + cls + '" onclick="calClickSlot(\'' + esc(slotId) + '\',' + d + ',\'' + esc(time) + '\',' + max + ')" style="cursor:pointer;">';
+        if (members.length > 0) {
+          html += '<div class="cal-cell-members">';
+          members.forEach(function(m) {
+            html += '<div class="cal-cell-member" onclick="event.stopPropagation()" title="' + esc(m.email || '') + '">';
+            html += esc(m.name || 'Unknown') + ' ' + calPlanBadge(m.plan);
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+        html += '<div class="cal-cell-spots">' + count + '/' + max + ' ' + calSpotsFill(count, max) + '</div>';
+        html += '</div>';
+      }
+    }
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calRenderDay(container, label) {
+  var dayOfWeek = calCurrentDate.getDay();
+  // Convert JS day (0=Sun) to our index (0=Mon)
+  var calDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  var dayNames = calGetDayNames();
+
+  label.textContent = dayNames[calDayIndex < 6 ? calDayIndex : 0] + ', ' + calCurrentDate.getDate() + ' ' + CAL_MONTH_NAMES[calCurrentDate.getMonth()] + ' ' + calCurrentDate.getFullYear();
+
+  if (calDayIndex >= 6) {
+    container.innerHTML = '<div class="empty-state">Sunday — no sessions scheduled.</div>';
+    return;
+  }
+
+  var data = calGetEffectiveData();
+  var daySlots = data[calDayIndex] || [];
+
+  if (daySlots.length === 0) {
+    container.innerHTML = '<div class="empty-state">No time slots for this day.</div>';
+    return;
+  }
+
+  // Sort by time
+  daySlots.sort(function(a, b) {
+    return calTimeToMinutes(a.time) - calTimeToMinutes(b.time);
+  });
+
+  var html = '<div class="cal-day-timeline">';
+  daySlots.forEach(function(slot) {
+    var members = slot.members || [];
+    var count = members.length;
+    var max = slot.max_capacity || 4;
+    var isFull = count >= max;
+    var pct = max > 0 ? Math.round((count / max) * 100) : 0;
+    var fillCls = pct >= 100 ? 'fill-full' : pct >= 50 ? 'fill-med' : 'fill-low';
+    var cardCls = 'cal-day-card' + (isFull ? ' card-full' : count > 0 ? ' card-has-spots' : '');
+
+    html += '<div class="' + cardCls + '">';
+    html += '<div class="cal-day-card-time">' + esc(slot.time) + '</div>';
+    html += '<div class="cal-day-card-capacity">';
+    html += '<span>' + count + ' / ' + max + ' booked</span>';
+    html += '<div class="cal-day-cap-bar"><div class="cal-day-cap-fill ' + fillCls + '" style="width:' + pct + '%"></div></div>';
+    html += '</div>';
+
+    if (members.length > 0) {
+      html += '<div class="cal-day-members-list">';
+      members.forEach(function(m) {
+        html += '<div class="cal-day-member-row">';
+        html += '<span class="cal-day-member-name">' + esc(m.name || 'Unknown') + '</span>';
+        html += ' ' + calPlanBadge(m.plan);
+        if (m.email) html += '<span class="cal-day-member-detail">' + esc(m.email) + '</span>';
+        if (m.phone) html += '<span class="cal-day-member-detail">' + esc(m.phone) + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (!isFull) {
+      html += '<button class="cal-day-add-btn" onclick="openAddSlotModal()">+ Add Member</button>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calRenderMonth(container, label) {
+  var year = calCurrentDate.getFullYear();
+  var month = calCurrentDate.getMonth();
+  label.textContent = CAL_MONTH_NAMES[month] + ' ' + year;
+
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  // Monday-based: 0=Mon
+  var startDow = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  var data = calGetEffectiveData();
+
+  // Precompute session counts per day-of-week
+  var daySummary = {};
+  for (var d = 0; d < 6; d++) {
+    var slots = data[d] || [];
+    var totalSessions = slots.length;
+    var totalBookings = 0;
+    slots.forEach(function(s) { totalBookings += (s.members || []).length; });
+    daySummary[d] = { sessions: totalSessions, bookings: totalBookings };
+  }
+
+  var allDayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var html = '<div class="cal-month-grid">';
+  allDayNames.forEach(function(n) {
+    html += '<div class="cal-month-header">' + n + '</div>';
+  });
+
+  // Fill leading blanks
+  var prevMonth = new Date(year, month, 0);
+  for (var i = startDow - 1; i >= 0; i--) {
+    var pd = prevMonth.getDate() - i;
+    html += '<div class="cal-month-cell other-month"><div class="cal-month-day-num">' + pd + '</div></div>';
+  }
+
+  // Days of month
+  for (var day = 1; day <= lastDay.getDate(); day++) {
+    var dt = new Date(year, month, day);
+    var dow = dt.getDay() === 0 ? 6 : dt.getDay() - 1;
+    var isToday = dt.getTime() === today.getTime();
+    var info = dow < 6 ? daySummary[dow] : { sessions: 0, bookings: 0 };
+    var hasSess = info.sessions > 0;
+    var cls = 'cal-month-cell' + (hasSess ? ' has-sessions' : '') + (isToday ? ' today-cell' : '');
+    var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+
+    html += '<div class="' + cls + '" onclick="calSwitchToDay(\'' + dateStr + '\')">';
+    html += '<div class="cal-month-day-num">' + day + '</div>';
+    if (hasSess) {
+      html += '<div class="cal-month-info">' + info.sessions + ' session' + (info.sessions > 1 ? 's' : '') + '<br>' + info.bookings + ' booked</div>';
+    }
+    html += '</div>';
+  }
+
+  // Trailing blanks
+  var totalCells = startDow + lastDay.getDate();
+  var trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (var i = 1; i <= trailing; i++) {
+    html += '<div class="cal-month-cell other-month"><div class="cal-month-day-num">' + i + '</div></div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function calFindSlot(daySlots, time) {
+  for (var i = 0; i < daySlots.length; i++) {
+    if (daySlots[i].time === time) return daySlots[i];
+  }
+  return null;
+}
+
+function calTimeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  var match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return 0;
+  var h = parseInt(match[1]);
+  var m = parseInt(match[2]);
+  var ampm = match[3].toUpperCase();
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+function openAddSlotModal() {
+  document.getElementById('addslot-day').value = '0';
+  document.getElementById('addslot-time').value = '';
+  document.getElementById('addslot-capacity').value = 4;
+  document.getElementById('addslot-modal').classList.add('open');
+}
+
+function closeAddSlotModal() {
+  document.getElementById('addslot-modal').classList.remove('open');
+}
+
+async function createSlot() {
+  var day = parseInt(document.getElementById('addslot-day').value);
+  var time = document.getElementById('addslot-time').value.trim();
+  var capacity = parseInt(document.getElementById('addslot-capacity').value) || 4;
+
+  if (!time) { showToast('Please enter a time', 'error'); return; }
+
+  try {
+    await apiPost({
+      action: 'create_slot',
+      day_of_week: day,
+      time: time,
+      max_capacity: capacity
+    });
+    showToast('Time slot created', 'success');
+    closeAddSlotModal();
+    loadCalendar();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ─── GENERAL MESSAGES ───
+
+async function loadGeneralMessages() {
+  var loading = document.getElementById('gmsg-loading');
+  var content = document.getElementById('gmsg-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'contacts' });
+    var messages = resp.data || resp.contacts || [];
+
+    // Update nav badge
+    var badge = document.getElementById('gmsg-badge');
+    if (badge) { if (messages.length > 0) { badge.textContent = messages.length; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
+
+    var tbody = document.getElementById('gmsg-tbody');
+    if (messages.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No messages yet</td></tr>';
+    } else {
+      tbody.innerHTML = messages.map(function(m) {
+        return '<tr>' +
+          '<td><strong>' + esc(m.name || '') + '</strong></td>' +
+          '<td>' + esc(m.email || '') + '</td>' +
+          '<td>' + esc(m.phone || '—') + '</td>' +
+          '<td style="max-width:300px;white-space:pre-wrap;">' + esc(m.message || '—') + '</td>' +
+          '<td style="white-space:nowrap;">' + formatDate(m.created_at) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load messages. ' + esc(err.message) + '</div>';
+  }
+}
+
+// ─── CONTACTS ───
+// API: { success: true, data: [...] }
+// Each: id, name, email, phone, message, created_at
+
+async function loadContacts() {
+  var loading = document.getElementById('contacts-loading');
+  var content = document.getElementById('contacts-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'contacts' });
+    var contacts = resp.data || [];
+
+    var tbody = document.getElementById('contacts-tbody');
+    if (contacts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No messages yet</td></tr>';
+    } else {
+      tbody.innerHTML = contacts.map(function(c) {
+        return '<tr>' +
+          '<td>' + esc(c.name || '') + '</td>' +
+          '<td>' + esc(c.email || '') + '</td>' +
+          '<td>' + esc(c.phone || '--') + '</td>' +
+          '<td title="' + esc(c.message || '') + '">' + esc(truncate(c.message || '', 80)) + '</td>' +
+          '<td>' + formatDate(c.created_at) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load messages. ' + esc(err.message) + '</div>';
+  }
+}
+
+// ─── MODAL CLOSE ON BACKDROP CLICK (ignore drags) ───
+var modalMouseDownTarget = null;
+document.getElementById('event-modal').addEventListener('mousedown', function(e) {
+  modalMouseDownTarget = e.target;
+});
+document.getElementById('event-modal').addEventListener('mouseup', function(e) {
+  if (e.target === this && modalMouseDownTarget === this) closeEventModal();
+  modalMouseDownTarget = null;
+});
+document.getElementById('confirm-dialog').addEventListener('mousedown', function(e) {
+  modalMouseDownTarget = e.target;
+});
+document.getElementById('confirm-dialog').addEventListener('mouseup', function(e) {
+  if (e.target === this && modalMouseDownTarget === this) closeConfirm();
+  modalMouseDownTarget = null;
+});
+
+// ─── NEW MODAL BACKDROP CLOSE ───
+['accept-modal','assign-modal','addslot-modal','addmember-modal','cal-slot-modal'].forEach(function(id) {
+  var el = document.getElementById(id);
+  var downTarget = null;
+  el.addEventListener('mousedown', function(e) { downTarget = e.target; });
+  el.addEventListener('mouseup', function(e) {
+    if (e.target === el && downTarget === el) {
+      el.classList.remove('open');
+    }
+    downTarget = null;
+  });
+});
+
+// ─── KEYBOARD ───
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeEventModal();
+    closeConfirm();
+    closeAcceptModal();
+    closeAssignModal();
+    closeAddSlotModal();
+    closeAddMemberModal();
+    closePlanModal();
+    closeTestimonialModal();
+  }
+});
+
+// ═══════════════════════════════════════════════
+// CMS — PLAN CONFIG
+// ═══════════════════════════════════════════════
+
+var cachedPlans = [];
+
+async function loadPlanConfig() {
+  var loading = document.getElementById('planconfig-loading');
+  var content = document.getElementById('planconfig-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  try {
+    var data = await apiGet({ action: 'all_plans' });
+    cachedPlans = data.plans || [];
+    var tbody = document.getElementById('planconfig-tbody');
+    tbody.innerHTML = '';
+    cachedPlans.forEach(function(p) {
+      var price = '$' + (p.price_cents / 100).toFixed(0);
+      var featureList = (p.features || []).join(', ');
+      if (featureList.length > 50) featureList = featureList.substring(0, 47) + '...';
+      tbody.innerHTML +=
+        '<tr>' +
+        '<td>' + p.display_order + '</td>' +
+        '<td><strong>' + esc(p.name) + '</strong></td>' +
+        '<td>' + price + ' / ' + esc(p.period_label) + '</td>' +
+        '<td>' + (p.badge_text ? esc(p.badge_text) : '--') + '</td>' +
+        '<td style="max-width:200px;font-size:12px;">' + esc(featureList) + '</td>' +
+        '<td>' + statusBadge(p.status) + '</td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="btn-outline btn-sm" onclick="editPlan(\'' + p.id + '\')">Edit</button> ' +
+          '<button class="btn-outline btn-sm btn-danger" onclick="deletePlan(\'' + p.id + '\',\'' + esc(p.name).replace(/'/g, "\\'") + '\')">Delete</button>' +
+        '</td>' +
+        '</tr>';
+    });
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.textContent = 'Error: ' + err.message;
+  }
+}
+
+function openPlanModal() {
+  document.getElementById('plan-edit-id').value = '';
+  document.getElementById('plan-name').value = '';
+  document.getElementById('plan-price').value = '';
+  document.getElementById('plan-period').value = 'session';
+  document.getElementById('plan-badge-text').value = '';
+  document.getElementById('plan-badge-style').value = 'pop';
+  document.getElementById('plan-description').value = '';
+  document.getElementById('plan-features').value = '';
+  document.getElementById('plan-order').value = '0';
+  document.getElementById('plan-status').value = 'active';
+  document.getElementById('plan-modal-title').innerHTML = 'Add <em>Plan</em>';
+  document.getElementById('plan-save-btn').textContent = 'Create Plan';
+  document.getElementById('plan-modal').classList.add('open');
+}
+
+function closePlanModal() {
+  document.getElementById('plan-modal').classList.remove('open');
+}
+
+function editPlan(id) {
+  var plan = cachedPlans.find(function(p) { return p.id === id; });
+  if (!plan) return;
+  document.getElementById('plan-edit-id').value = plan.id;
+  document.getElementById('plan-name').value = plan.name || '';
+  document.getElementById('plan-price').value = plan.price_cents ? (plan.price_cents / 100).toFixed(0) : '';
+  document.getElementById('plan-period').value = plan.period_label || 'session';
+  document.getElementById('plan-badge-text').value = plan.badge_text || '';
+  document.getElementById('plan-badge-style').value = plan.badge_style || 'pop';
+  document.getElementById('plan-description').value = plan.description || '';
+  document.getElementById('plan-features').value = (plan.features || []).join('\n');
+  document.getElementById('plan-order').value = plan.display_order || 0;
+  document.getElementById('plan-status').value = plan.status || 'active';
+  document.getElementById('plan-modal-title').innerHTML = 'Edit <em>Plan</em>';
+  document.getElementById('plan-save-btn').textContent = 'Save Changes';
+  document.getElementById('plan-modal').classList.add('open');
+}
+
+async function savePlan() {
+  var editId = document.getElementById('plan-edit-id').value;
+  var priceDollars = parseFloat(document.getElementById('plan-price').value);
+  var featuresRaw = document.getElementById('plan-features').value;
+  var features = featuresRaw.split('\n').map(function(f) { return f.trim(); }).filter(function(f) { return f; });
+
+  var payload = {
+    name: document.getElementById('plan-name').value.trim(),
+    price_cents: Math.round(priceDollars * 100),
+    period_label: document.getElementById('plan-period').value.trim() || 'session',
+    badge_text: document.getElementById('plan-badge-text').value.trim() || null,
+    badge_style: document.getElementById('plan-badge-style').value,
+    description: document.getElementById('plan-description').value.trim() || null,
+    features: features,
+    display_order: parseInt(document.getElementById('plan-order').value) || 0,
+    status: document.getElementById('plan-status').value,
+  };
+
+  if (!payload.name || isNaN(payload.price_cents)) {
+    showToast('Name and price are required', 'error');
+    return;
+  }
+
+  try {
+    if (editId) {
+      payload.action = 'update_plan';
+      payload.plan_id = editId;
+    } else {
+      payload.action = 'create_plan';
+    }
+    await apiPost(payload);
+    closePlanModal();
+    showToast(editId ? 'Plan updated' : 'Plan created', 'success');
+    loadPlanConfig();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function deletePlan(id, name) {
+  showConfirm('Delete plan "' + name + '"?', async function() {
+    try {
+      await apiPost({ action: 'delete_plan', plan_id: id });
+      showToast('Plan deleted', 'success');
+      loadPlanConfig();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CMS — BOOKING LINKS
+// ═══════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════
+// CMS — TESTIMONIALS
+// ═══════════════════════════════════════════════
+
+var cachedTestimonials = [];
+
+async function loadTestimonials() {
+  var loading = document.getElementById('testimonials-loading');
+  var content = document.getElementById('testimonials-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  try {
+    var data = await apiGet({ action: 'all_testimonials' });
+    cachedTestimonials = data.testimonials || [];
+    var tbody = document.getElementById('testimonials-tbody');
+    tbody.innerHTML = '';
+    cachedTestimonials.forEach(function(t) {
+      var quote = truncate(t.quote, 60);
+      tbody.innerHTML +=
+        '<tr>' +
+        '<td style="max-width:250px;font-size:12px;">' + esc(quote) + '</td>' +
+        '<td>' + esc(t.attribution) + '</td>' +
+        '<td>' + esc(t.page) + '</td>' +
+        '<td>' + statusBadge(t.status) + '</td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="btn-outline btn-sm" onclick="editTestimonial(\'' + t.id + '\')">Edit</button> ' +
+          '<button class="btn-outline btn-sm btn-danger" onclick="deleteTestimonial(\'' + t.id + '\')">Delete</button>' +
+        '</td>' +
+        '</tr>';
+    });
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.textContent = 'Error: ' + err.message;
+  }
+}
+
+function openTestimonialModal() {
+  document.getElementById('testimonial-edit-id').value = '';
+  document.getElementById('testimonial-quote').value = '';
+  document.getElementById('testimonial-attribution').value = 'Client Testimonial · Toowoomba';
+  document.getElementById('testimonial-page').value = 'home';
+  document.getElementById('testimonial-order').value = '0';
+  document.getElementById('testimonial-status').value = 'active';
+  document.getElementById('testimonial-modal-title').innerHTML = 'Add <em>Testimonial</em>';
+  document.getElementById('testimonial-save-btn').textContent = 'Create Testimonial';
+  document.getElementById('testimonial-modal').classList.add('open');
+}
+
+function closeTestimonialModal() {
+  document.getElementById('testimonial-modal').classList.remove('open');
+}
+
+function editTestimonial(id) {
+  var t = cachedTestimonials.find(function(x) { return x.id === id; });
+  if (!t) return;
+  document.getElementById('testimonial-edit-id').value = t.id;
+  document.getElementById('testimonial-quote').value = t.quote || '';
+  document.getElementById('testimonial-attribution').value = t.attribution || '';
+  document.getElementById('testimonial-page').value = t.page || 'home';
+  document.getElementById('testimonial-order').value = t.display_order || 0;
+  document.getElementById('testimonial-status').value = t.status || 'active';
+  document.getElementById('testimonial-modal-title').innerHTML = 'Edit <em>Testimonial</em>';
+  document.getElementById('testimonial-save-btn').textContent = 'Save Changes';
+  document.getElementById('testimonial-modal').classList.add('open');
+}
+
+async function saveTestimonial() {
+  var editId = document.getElementById('testimonial-edit-id').value;
+  var payload = {
+    quote: document.getElementById('testimonial-quote').value.trim(),
+    attribution: document.getElementById('testimonial-attribution').value.trim() || 'Client Testimonial · Toowoomba',
+    page: document.getElementById('testimonial-page').value,
+    display_order: parseInt(document.getElementById('testimonial-order').value) || 0,
+    status: document.getElementById('testimonial-status').value,
+  };
+  if (!payload.quote) {
+    showToast('Quote is required', 'error');
+    return;
+  }
+  try {
+    if (editId) {
+      payload.action = 'update_testimonial';
+      payload.testimonial_id = editId;
+    } else {
+      payload.action = 'create_testimonial';
+    }
+    await apiPost(payload);
+    closeTestimonialModal();
+    showToast(editId ? 'Testimonial updated' : 'Testimonial created', 'success');
+    loadTestimonials();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function deleteTestimonial(id) {
+  showConfirm('Delete this testimonial?', async function() {
+    try {
+      await apiPost({ action: 'delete_testimonial', testimonial_id: id });
+      showToast('Testimonial deleted', 'success');
+      loadTestimonials();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CMS — MEDIA LIBRARY
+// ═══════════════════════════════════════════════
+
+async function loadMediaLibrary() {
+  var loading = document.getElementById('media-loading');
+  var content = document.getElementById('media-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  try {
+    var data = await apiGet({ action: 'media' });
+    var files = data.files || [];
+    var grid = document.getElementById('media-grid');
+    if (files.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--bark);">No media uploaded yet.</div>';
+    } else {
+      grid.innerHTML = '';
+      files.forEach(function(f) {
+        var isVideo = /\.(mp4|mov|webm|avi)$/i.test(f.name);
+        var card = document.createElement('div');
+        card.style.cssText = 'border:1px solid var(--stone);background:var(--warm-white);overflow:hidden;';
+        var preview = '';
+        if (isVideo) {
+          preview = '<div style="height:120px;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--bark);">&#9654;</div>';
+        } else {
+          preview = '<img src="' + esc(f.url) + '" style="width:100%;height:120px;object-fit:cover;display:block;">';
+        }
+        card.innerHTML = preview +
+          '<div style="padding:10px;">' +
+          '<div style="font-size:11px;color:var(--deep);word-break:break-all;margin-bottom:8px;" title="' + esc(f.name) + '">' + esc(truncate(f.name, 25)) + '</div>' +
+          '<div style="display:flex;gap:6px;">' +
+          '<button class="btn-outline btn-sm" onclick="copyMediaUrl(\'' + esc(f.url).replace(/'/g, "\\'") + '\')">Copy URL</button>' +
+          '<button class="btn-outline btn-sm btn-danger" onclick="deleteMediaFile(\'' + esc(f.name).replace(/'/g, "\\'") + '\')">Delete</button>' +
+          '</div></div>';
+        grid.appendChild(card);
+      });
+    }
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.textContent = 'Error: ' + err.message;
+  }
+}
+
+function triggerMediaUpload() {
+  document.getElementById('media-upload-input').click();
+}
+
+async function handleMediaUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('File too large (max 50MB)', 'error');
+    return;
+  }
+  showToast('Uploading...', '');
+  var reader = new FileReader();
+  reader.onload = async function() {
+    try {
+      var base64 = reader.result.split(',')[1];
+      await apiPost({
+        action: 'upload_media',
+        file_data: base64,
+        file_name: file.name,
+        content_type: file.type,
+      });
+      showToast('File uploaded', 'success');
+      input.value = '';
+      loadMediaLibrary();
+    } catch (err) {
+      showToast('Upload failed: ' + err.message, 'error');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function copyMediaUrl(url) {
+  navigator.clipboard.writeText(url).then(function() {
+    showToast('URL copied', 'success');
+  }).catch(function() {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = url;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('URL copied', 'success');
+  });
+}
+
+function deleteMediaFile(path) {
+  showConfirm('Delete this file?', async function() {
+    try {
+      await apiPost({ action: 'delete_media', path: path });
+      showToast('File deleted', 'success');
+      loadMediaLibrary();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
+}
+
+</script>
+</body>
+</html>

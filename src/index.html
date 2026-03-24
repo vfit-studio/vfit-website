@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VFIT — Boutique Fitness Studio, Toowoomba</title>
+<meta name="description" content="VFIT is Toowoomba's boutique fitness studio offering Studio Sessions, Pi'lattes at The Dairy Ravensbourne, and Run Club. Led by Georgie Valdal.">
+<meta property="og:title" content="VFIT — Boutique Fitness Studio, Toowoomba">
+<meta property="og:description" content="Three distinct ways to move — Studio Sessions, Pi'lattes, and Run Club. Boutique fitness in Toowoomba.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://vfit-studio.netlify.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VFIT — Boutique Fitness Studio, Toowoomba">
+<meta name="twitter:description" content="Three distinct ways to move — Studio Sessions, Pi'lattes, and Run Club.">
+<meta name="twitter:image" content="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/index.css">
+</head>
+<body>
+
+<a href="#main" class="skip-nav">Skip to content</a>
+
+<!-- ============================================
+     NAV
+     ============================================ -->
+<nav id="navbar">
+  <button class="nav-logo" onclick="showPage('home')">VFIT</button>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><button onclick="showPage('memberships')">Studio Sessions</button></li>
+      <li><button onclick="showPage('pilattes')">Pi'lattes</button></li>
+      <li><button onclick="showPage('runclub')">Run Club</button></li>
+      <li><button onclick="showPage('about')">About</button></li>
+    </ul>
+    <button class="nav-cta" onclick="showPage('contact')">Contact</button>
+  </div>
+  <button class="hamburger" onclick="toggleMobile()" aria-label="Toggle navigation menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ============================================
+     FULL-SCREEN MENU — LIGHT
+     ============================================ -->
+<div class="mobile-overlay" id="mobileMenu">
+  <button onclick="mobileNav('home')">Home</button>
+  <button onclick="mobileNav('memberships')">Studio Sessions</button>
+  <button onclick="mobileNav('pilattes')">Pi'lattes</button>
+  <button onclick="mobileNav('runclub')">Run Club</button>
+  <button onclick="mobileNav('about')">About</button>
+  <button onclick="mobileNav('contact')">Contact</button>
+  <div class="overlay-contact">
+    <p>Follow</p>
+    <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">@valdalfit</a>
+    <div class="overlay-address">Shop 8/203 Margaret St<br>Toowoomba City QLD 4350</div>
+  </div>
+</div>
+
+<!-- ============================================
+     PAGE: HOME
+     ============================================ -->
+<div class="page active" id="page-home">
+<main id="main">
+
+<!-- HERO — Full-bleed image background -->
+<section class="home-hero">
+  <img class="home-hero-video" src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" alt="VFIT Studio" loading="eager">
+  <div class="home-hero-left">
+    <p class="home-hero-eyebrow" style="color:var(--clay);">Toowoomba's Boutique Fitness Studio</p>
+    <h1>Move with<br><em>Purpose.</em></h1>
+    <p class="home-hero-desc" style="color:rgba(254,252,248,0.7);">Three distinct ways to move — exclusive studio sessions, monthly Pilates at The Dairy, and a weekly run club. All led by Georgie Valdal.</p>
+    <div class="home-hero-actions">
+      <button class="btn-outline-light" onclick="document.getElementById('panel-studio').scrollIntoView({behavior:'smooth'})">Explore</button>
+    </div>
+  </div>
+  <div class="scroll-indicator" style="z-index:3;">
+    <span style="color:var(--clay);">Scroll</span>
+    <div class="scroll-line" style="background:var(--clay);"></div>
+  </div>
+</section>
+
+<!-- OFFERING 1: STUDIO SESSIONS (Light) -->
+<section class="offering-panel" id="panel-studio" style="background:var(--sand);min-height:auto;padding:100px 72px;">
+  <div style="max-width:600px;">
+    <span class="op-badge reveal" style="background:var(--clay);color:var(--deep);">Exclusive &middot; Members Only</span>
+    <div class="gold-line reveal"></div>
+    <p class="op-eyebrow reveal" style="color:var(--bark);">Private Gym Access</p>
+    <h2 class="op-title reveal rd1" style="color:var(--deep);">Studio<br><em>Sessions.</em></h2>
+    <p class="op-desc reveal rd2" style="color:#6b5e52;">Private gym access. Small group training with a maximum of four people. Recurring weekly sessions, expert coaching in an intimate, purposeful environment.</p>
+    <p class="reveal rd2" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--bark);margin-bottom:32px;font-style:italic;">From $60 per session</p>
+    <div class="reveal rd3" style="display:flex;gap:16px;flex-wrap:wrap;">
+      <button class="btn-ghost" onclick="showPage('memberships')">View Plans</button>
+    </div>
+  </div>
+</section>
+
+<!-- OFFERING 2: PI'LATTES (Light) -->
+<section class="offering-panel" style="background:var(--cream);min-height:auto;padding:100px 72px;">
+  <div style="max-width:600px;">
+    <span class="op-badge reveal" style="background:var(--sage);color:var(--warm-white);">Monthly &middot; Open to All</span>
+    <p class="op-eyebrow reveal" style="color:var(--bark);">The Dairy, Ravensbourne</p>
+    <h2 class="op-title reveal rd1" style="color:var(--deep);">Pi'lattes at<br><em>The Dairy.</em></h2>
+    <p class="op-desc reveal rd2" style="color:#6b5e52;">Mat Pilates at one of SEQ's most stunning venues. A burn that fires up your core, followed by a complimentary coffee from Then Bakehouse Caf&eacute;.</p>
+    <div class="reveal rd3">
+      <button class="btn-ghost" onclick="showPage('pilattes')">View Details</button>
+    </div>
+  </div>
+</section>
+
+<!-- OFFERING 3: RUN CLUB / TRACK TUESDAY (Light) -->
+<section class="offering-panel" id="panel-rc" style="background:var(--sand);min-height:auto;padding:100px 72px;">
+  <div style="max-width:600px;">
+    <span class="op-badge reveal" style="background:var(--sage);color:var(--warm-white);">Weekly &middot; Open to All</span>
+    <p class="op-eyebrow reveal" style="color:var(--bark);">Every Tuesday &middot; 5:15 AM</p>
+    <h2 class="op-title reveal rd1" style="color:var(--deep);">Track<br><em>Tuesday.</em></h2>
+    <p class="op-desc reveal rd2" style="color:#6b5e52;">All fitness levels welcome — intervals, tempo runs, strength circuits. No two sessions are the same. Led by Georgie Valdal with world-class credentials in Track &amp; Field.</p>
+    <div class="reveal rd3">
+      <button class="btn-ghost" onclick="showPage('runclub')">View Details</button>
+    </div>
+  </div>
+</section>
+
+<!-- Hidden countdown elements (JS needs these IDs) -->
+<div style="display:none;" aria-hidden="true">
+  <div id="homePlWidget"><span id="homePlDate"></span><div id="homePlTimer"><span id="homePlDays"></span><span id="homePlHours"></span><span id="homePlMins"></span><span id="homePlSecs"></span></div><span id="homePlStatus"></span></div>
+  <div id="homeRcWidget"><span id="homeRcDate"></span><div id="homeRcTimer"><span id="homeRcDays"></span><span id="homeRcHours"></span><span id="homeRcMins"></span><span id="homeRcSecs"></span></div><span id="homeRcStatus"></span></div>
+</div>
+
+<!-- GEORGIE / ABOUT TEASER — Light Split -->
+<section class="georgie-editorial">
+  <div class="georgie-editorial-img-wrap">
+    <img class="georgie-editorial-img" src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg" alt="Georgie Valdal, VFIT founder" loading="lazy">
+  </div>
+  <div class="georgie-editorial-content">
+    <p class="section-label reveal">The Founder</p>
+    <h2 class="reveal rd1">Georgie<br><em>Valdal.</em></h2>
+    <p class="reveal rd2">With nearly two decades in the industry, Georgie has built her career at the highest levels of private fitness — training celebrities, executives, and the world's most discerning clients. Now she's brought all of it to Toowoomba.</p>
+    <button class="btn-ghost reveal rd3" onclick="showPage('about')">Read More</button>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<div class="testimonial">
+  <div class="testimonial-inner reveal">
+    <blockquote id="tQuote">"So refreshing to have a trainer that keeps things new, exciting and challenging. No matter what stage of fitness I'm in, VFIT always gets the most out of every session."</blockquote>
+    <div class="t-divider"></div>
+    <p class="t-author" id="tAuthor">Client Testimonial &middot; Toowoomba</p>
+    <div class="carousel-nav">
+      <button class="carousel-arrow" onclick="changeTestimonial(-1)" aria-label="Previous testimonial">&#8592;</button>
+      <div class="carousel-dots" id="carouselDots"></div>
+      <button class="carousel-arrow" onclick="changeTestimonial(1)" aria-label="Next testimonial">&#8594;</button>
+    </div>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>Studio Sessions</span><span class="marquee-dot"> &middot; </span>
+    <span>Pi'lattes</span><span class="marquee-dot"> &middot; </span>
+    <span>Run Club</span><span class="marquee-dot"> &middot; </span>
+    <span>Pilates</span><span class="marquee-dot"> &middot; </span>
+    <span>Strength &amp; Conditioning</span><span class="marquee-dot"> &middot; </span>
+    <span>Stretch Therapy</span><span class="marquee-dot"> &middot; </span>
+    <span>Toowoomba</span><span class="marquee-dot"> &middot; </span>
+    <span>Studio Sessions</span><span class="marquee-dot"> &middot; </span>
+    <span>Pi'lattes</span><span class="marquee-dot"> &middot; </span>
+    <span>Run Club</span><span class="marquee-dot"> &middot; </span>
+    <span>Pilates</span><span class="marquee-dot"> &middot; </span>
+    <span>Strength &amp; Conditioning</span><span class="marquee-dot"> &middot; </span>
+    <span>Stretch Therapy</span><span class="marquee-dot"> &middot; </span>
+    <span>Toowoomba</span><span class="marquee-dot"> &middot; </span>
+  </div>
+</div>
+
+</main>
+
+<!-- Home countdowns (hidden helper elements) -->
+<div class="home-countdowns" aria-hidden="true">
+  <div class="home-cd-card" onclick="showPage('memberships')"><div class="home-cd-label">Studio Sessions</div></div>
+  <div class="home-cd-divider"></div>
+  <div class="home-cd-card" onclick="showPage('pilattes')"><div class="home-cd-label">Pi'lattes</div></div>
+  <div class="home-cd-divider"></div>
+  <div class="home-cd-card" onclick="showPage('runclub')"><div class="home-cd-label">Run Club</div></div>
+</div>
+
+<!-- HOME FOOTER -->
+<footer>
+  <div>
+    <span class="footer-brand">VFIT</span>
+    <p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p>
+  </div>
+  <div class="footer-col">
+    <h4>Explore</h4>
+    <ul>
+      <li><button onclick="showPage('memberships')">Studio Sessions</button></li>
+      <li><button onclick="showPage('pilattes')">Pi'lattes</button></li>
+      <li><button onclick="showPage('runclub')">Run Club</button></li>
+      <li><button onclick="showPage('about')">About</button></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Studio</h4>
+    <ul>
+      <li><span>Shop 8/203 Margaret St</span></li>
+      <li><span>Toowoomba City QLD 4350</span></li>
+      <li><button onclick="showPage('contact')">Contact</button></li>
+      <li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li>
+      <li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li>
+    </ul>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; <span class="yr"></span> VFIT — Boutique Fitness Studio, Toowoomba</p>
+    <button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button>
+  </div>
+</footer>
+</div>
+
+<!-- ============================================
+     PAGE: RUN CLUB
+     ============================================ -->
+<div class="page" id="page-runclub">
+  <section class="cinematic-hero" style="position:relative;overflow:hidden;">
+    <video autoplay muted loop playsinline poster="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.25;"><source src="assets/runclub.mp4" type="video/mp4"></video>
+    <div class="cinematic-hero-bg-text">Run</div>
+    <p class="page-hero-eyebrow" style="color:var(--clay);">Open to Public &middot; Weekly</p>
+    <h1 style="font-family:'Cormorant Garamond',serif;font-size:clamp(58px,8vw,120px);font-weight:300;line-height:.93;letter-spacing:-.02em;color:var(--warm-white);margin-bottom:28px;position:relative;z-index:2;opacity:0;animation:fadeUp .8s ease .35s forwards;">Track<br><em style="font-style:italic;color:var(--clay);display:block;">Tuesday.</em></h1>
+    <p class="page-hero-desc" style="color:rgba(254,252,248,.5);">All fitness levels welcome — intervals, tempo runs, strength circuits. No two sessions are the same. Led by Georgie Valdal with world-class credentials in Track &amp; Field.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" id="rcHeroBtn" onclick="openSimpleModal('Run Club (Track Tuesday)','Book Run Club')">Book Your Spot</button>
+      <button class="btn-outline" style="border-color:rgba(201,185,154,.3);color:var(--clay);" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <section style="background:var(--sand);padding:80px 24px;">
+    <div style="max-width:460px;margin:0 auto;">
+      <div class="countdown-widget" id="rcWidget">
+        <p class="countdown-label" id="rcCountdownLabel">Next Session</p>
+        <div class="countdown-to-label" id="rcCountdownToLabel"></div>
+        <div class="countdown-timer" id="rcCountdown">
+          <div class="countdown-unit"><span class="countdown-num" id="rcDays">0</span><span class="countdown-txt">Days</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="rcHours">0</span><span class="countdown-txt">Hrs</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="rcMins">0</span><span class="countdown-txt">Min</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="rcSecs">0</span><span class="countdown-txt">Sec</span></div>
+        </div>
+        <div class="countdown-session-date" id="rcSessionDate" style="display:none;"></div>
+        <div class="spots-bar hidden" id="rcSpotsBar">
+          <div class="spots-text"><span class="spots-dot open" id="rcDot"></span><span id="rcLabel">Loading...</span></div>
+          <div class="spots-track"><div class="spots-fill" id="rcFill" style="width:0%"></div></div>
+          <div class="spots-fast" id="rcFast" style="display:none;">Spots filling fast</div>
+        </div>
+        <div class="countdown-follow-text" id="rcFollowText" style="display:none;"></div>
+        <button class="widget-btn open" id="rcBtn" onclick="openSimpleModal('Run Club (Track Tuesday)','Book Run Club')">Book Your Spot</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="info-cards">
+    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">I</span><p class="info-card-label">Location</p><p class="info-card-value">Glennie School Track</p></div>
+    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">II</span><p class="info-card-label">When</p><p class="info-card-value">Every Tuesday</p></div>
+    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">III</span><p class="info-card-label">Time</p><p class="info-card-value">5:15 – 6:00 AM</p></div>
+  </div>
+
+  <section class="section" style="background:var(--cream);">
+    <div class="section-inner">
+      <p class="section-label reveal">What to Expect</p>
+      <h2 class="section-title reveal rd1">Run better,<br><em>every week.</em></h2>
+      <div class="expect-grid">
+        <div class="reveal rd1"><div class="expect-num">01</div><div class="expect-title">All Levels Welcome</div><p class="expect-text">Brand new to running or training for your next event — there's a place for you.</p></div>
+        <div class="reveal rd2"><div class="expect-num">02</div><div class="expect-title">No Two Sessions Alike</div><p class="expect-text">Each Tuesday is programmed differently — intervals, tempo, strength circuits.</p></div>
+        <div class="reveal rd3"><div class="expect-num">03</div><div class="expect-title">Expert Coaching</div><p class="expect-text">Led by Georgie Valdal with world-class Track and Field credentials.</p></div>
+        <div class="reveal rd4"><div class="expect-num">04</div><div class="expect-title">Real Community</div><p class="expect-text">Early mornings are better together. A welcoming group that celebrates every milestone.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-strip">
+    <div class="cta-strip-inner">
+      <p class="section-label reveal" style="color:var(--clay);">Join Us</p>
+      <h2 class="reveal rd1">See you at the <em>track.</em></h2>
+      <p class="reveal rd2">Tuesdays at 5:15 AM &middot; Glennie School Track &middot; All levels welcome.</p>
+      <button class="btn-primary reveal rd3" id="rcCtaBtn" onclick="openSimpleModal('Run Club (Track Tuesday)','Book Run Club')">Book Your Spot</button>
+    </div>
+  </div>
+
+  <footer>
+    <div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('about')">About</button></li></ul></div>
+    <div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div>
+    <div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div>
+  </footer>
+</div>
+
+<!-- ============================================
+     PAGE: PI'LATTES
+     ============================================ -->
+<div class="page" id="page-pilattes">
+  <section class="page-hero" style="background:var(--cream);position:relative;overflow:hidden;">
+    <video autoplay muted loop playsinline poster="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.2;"><source src="assets/pilattes.mp4" type="video/mp4"></video>
+    <div class="page-hero-bg" style="color:rgba(201,185,154,.06);">Pilates</div>
+    <p class="page-hero-eyebrow">Open to Public &middot; Monthly</p>
+    <h1>Pi'lattes<br><em>at The Dairy.</em></h1>
+    <p class="page-hero-desc">Mat Pilates at one of SEQ's most stunning venues. A burn that fires up your core, followed by a complimentary coffee from Then Bakehouse Caf&eacute;. All equipment provided.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" id="plHeroBtn" onclick="openSimpleModal('Pi\'lattes','Book Pi\'lattes')">Book Your Spot</button>
+      <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <section style="background:var(--sand);padding:80px 24px;">
+    <div style="max-width:460px;margin:0 auto;">
+      <div class="countdown-widget" id="plWidget">
+        <p class="countdown-label" id="plCountdownLabel">Next Session</p>
+        <div class="countdown-to-label" id="plCountdownToLabel"></div>
+        <div class="countdown-timer" id="plCountdown">
+          <div class="countdown-unit"><span class="countdown-num" id="plDays">0</span><span class="countdown-txt">Days</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="plHours">0</span><span class="countdown-txt">Hrs</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="plMins">0</span><span class="countdown-txt">Min</span></div>
+          <span class="countdown-sep">:</span>
+          <div class="countdown-unit"><span class="countdown-num" id="plSecs">0</span><span class="countdown-txt">Sec</span></div>
+        </div>
+        <div class="countdown-session-date" id="plSessionDate" style="display:none;"></div>
+        <div class="spots-bar hidden" id="plSpotsBar">
+          <div class="spots-text"><span class="spots-dot open" id="plDot"></span><span id="plLabel">Loading...</span></div>
+          <div class="spots-track"><div class="spots-fill" id="plFill" style="width:0%"></div></div>
+          <div class="spots-fast" id="plFast" style="display:none;">Spots filling fast</div>
+        </div>
+        <div class="countdown-follow-text" id="plFollowText" style="display:none;"></div>
+        <button class="widget-btn open" id="plBtn" onclick="openSimpleModal('Pi\'lattes','Book Pi\'lattes')">Book Your Spot</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="info-cards">
+    <div class="info-card reveal"><span class="info-card-icon" aria-hidden="true">I</span><p class="info-card-label">Venue</p><p class="info-card-value">The Dairy<br>Ravensbourne</p></div>
+    <div class="info-card reveal rd1"><span class="info-card-icon" aria-hidden="true">II</span><p class="info-card-label">Frequency</p><p class="info-card-value">Monthly Sundays<br><span style="font-size:12px;color:var(--bark);display:block;margin-top:6px;">Follow <a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer" style="color:var(--bark);">@valdalfit</a> for dates</span></p></div>
+    <div class="info-card reveal rd2"><span class="info-card-icon" aria-hidden="true">III</span><p class="info-card-label">Time</p><p class="info-card-value">7:00 – 8:00 AM</p></div>
+  </div>
+
+  <section class="section" style="background:var(--warm-white);">
+    <div class="section-inner">
+      <p class="section-label reveal">What's Included</p>
+      <h2 class="section-title reveal rd1">Everything you<br><em>need.</em></h2>
+      <div class="expect-grid">
+        <div class="reveal rd1"><div class="expect-num">&#x2726;</div><div class="expect-title">All Equipment Provided</div><p class="expect-text">Just show up. Mats, props and everything you need is taken care of.</p></div>
+        <div class="reveal rd2"><div class="expect-num">&#x2726;</div><div class="expect-title">Complimentary Coffee</div><p class="expect-text">A coffee from Then Bakehouse Caf&eacute; is included in every class ticket.</p></div>
+        <div class="reveal rd3"><div class="expect-num">&#x2726;</div><div class="expect-title">Expert Instruction</div><p class="expect-text">A thoughtfully designed session for all levels by VFIT's instructors.</p></div>
+        <div class="reveal rd4"><div class="expect-num">&#x2726;</div><div class="expect-title">Stunning Setting</div><p class="expect-text">The Dairy is one of South-East Queensland's most beautiful venues.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-strip">
+    <div class="cta-strip-inner">
+      <p class="section-label reveal" style="color:var(--clay);">Monthly Classes</p>
+      <h2 class="reveal rd1">Spots are <em>limited.</em></h2>
+      <p class="reveal rd2">Monthly Sundays &middot; The Dairy, Ravensbourne &middot; 7:00–8:00 AM &middot; Coffee included.</p>
+      <button class="btn-primary reveal rd3" id="plCtaBtn" onclick="openSimpleModal('Pi\'lattes','Book Pi\'lattes')">Book Your Spot</button>
+    </div>
+  </div>
+
+  <footer>
+    <div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('about')">About</button></li></ul></div>
+    <div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div>
+    <div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div>
+  </footer>
+</div>
+
+<!-- ============================================
+     PAGE: STUDIO SESSIONS (MEMBERSHIPS)
+     ============================================ -->
+<div class="page" id="page-memberships">
+  <div class="compact-header" style="position:relative;overflow:hidden;">
+    <video autoplay muted playsinline poster="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/89f1d767-5458-4258-b797-66c07ac4875a/DSC09877.JPEG" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 70%;z-index:0;opacity:0.25;"><source src="assets/studio-sessions.mp4" type="video/mp4"></video>
+    <div class="compact-header-inner" style="position:relative;z-index:2;">
+      <p class="page-hero-eyebrow" style="opacity:0;animation:fadeUp .8s ease .2s forwards;">Exclusive &middot; Private Gym Access</p>
+      <div class="gold-accent"></div>
+      <h1 style="opacity:0;animation:fadeUp .8s ease .35s forwards;">Studio<br><em>Sessions.</em></h1>
+      <p style="opacity:0;animation:fadeUp .8s ease .5s forwards;">Priced per session. Select a plan to enquire — we'll match your preferred days and times.</p>
+    </div>
+  </div>
+
+  <section style="background:var(--warm-white);padding:0;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div class="membership-grid" id="membershipGrid">
+        <!-- Dynamically populated from API, fallback below -->
+        <div class="membership-card reveal">
+          <span class="card-badge badge-pop">Most Popular</span>
+          <div class="card-title">Signature</div>
+          <div class="card-price"><span class="card-price-num">$60</span><span class="card-price-unit">&nbsp;/ session</span></div>
+          <div class="card-divider"></div>
+          <ul class="card-features">
+            <li class="card-feature">Weekly recurring group session/s (max 4 ppl)</li>
+            <li class="card-feature">3-month minimum commitment</li>
+            <li class="card-feature">Best value per session</li>
+          </ul>
+          <button class="select-btn" onclick="openMembershipWizard('Signature','$60','session',['Weekly recurring group session/s (max 4 ppl)','3-month minimum commitment','Best value per session'])">Select &amp; Enquire</button>
+        </div>
+        <div class="membership-card reveal rd1">
+          <span class="card-badge badge-flex">No Commitment</span>
+          <div class="card-title">Flexible</div>
+          <div class="card-price"><span class="card-price-num">$70</span><span class="card-price-unit">&nbsp;/ session</span></div>
+          <div class="card-divider"></div>
+          <ul class="card-features">
+            <li class="card-feature">Weekly recurring group session/s (max 4 ppl)</li>
+            <li class="card-feature">No minimum contract</li>
+            <li class="card-feature">Full flexibility, no lock-in</li>
+          </ul>
+          <button class="select-btn" onclick="openMembershipWizard('Flexible','$70','session',['Weekly recurring group session/s (max 4 ppl)','No minimum contract','Full flexibility, no lock-in'])">Select &amp; Enquire</button>
+        </div>
+        <div class="membership-card reveal rd2">
+          <span class="card-badge badge-vip">&#x2726; VIP</span>
+          <div class="card-title">VIP</div>
+          <div class="card-price"><span class="card-price-num">$190</span><span class="card-price-unit">&nbsp;/ session</span></div>
+          <div class="card-divider"></div>
+          <p class="card-desc">1-on-1 coaching, premium access, full lifestyle support.</p>
+          <ul class="card-features">
+            <li class="card-feature">Weekly private 1-on-1 PT session</li>
+            <li class="card-feature">Direct line to Georgie anytime</li>
+            <li class="card-feature">Fridge access (juices, waters &amp; snacks)</li>
+            <li class="card-feature">3-month commitment</li>
+          </ul>
+          <button class="select-btn" onclick="openMembershipWizard('VIP','$190','session',['Weekly private 1-on-1 PT session','Direct line to Georgie anytime','Fridge access (juices, waters & snacks)','3-month commitment'])">Select &amp; Enquire</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--cream);">
+    <div class="section-inner">
+      <p class="section-label reveal">Why Small Group</p>
+      <h2 class="section-title reveal rd1">Small by design,<br><em>powerful by nature.</em></h2>
+      <div class="pillars-grid">
+        <div class="reveal rd1"><div class="pillar-num">01</div><div class="pillar-title">Intimate &amp; Intentional</div><p class="pillar-text">Every member is seen, coached and progressed every single session.</p></div>
+        <div class="reveal rd2"><div class="pillar-num">02</div><div class="pillar-title">Recurring &amp; Consistent</div><p class="pillar-text">Same time, same group, every week. Real results come from routine.</p></div>
+        <div class="reveal rd3"><div class="pillar-num">03</div><div class="pillar-title">Expert Programming</div><p class="pillar-text">Progressively built sessions — a long-term movement practice.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="testimonial" id="testimonial-studio">
+    <div class="testimonial-inner reveal">
+      <blockquote>"So refreshing to have a trainer that keeps things new, exciting and challenging. VFIT always gets the most out of every session."</blockquote>
+      <div class="t-divider"></div>
+      <p class="t-author">Member Testimonial &middot; Toowoomba</p>
+    </div>
+  </div>
+
+  <footer>
+    <div><span class="footer-brand">VFIT</span><p class="footer-tagline">Exclusive small group training.<br>Private gym access, Toowoomba.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('runclub')">Run Club</button></li><li><button onclick="showPage('about')">About</button></li></ul></div>
+    <div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div>
+    <div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div>
+  </footer>
+</div>
+
+<!-- ============================================
+     PAGE: ABOUT
+     ============================================ -->
+<div class="page" id="page-about">
+  <section class="page-hero" style="background:var(--cream);">
+    <div class="page-hero-bg">VFIT</div>
+    <p class="page-hero-eyebrow">Our Story</p>
+    <h1>World-class<br><em>coaching.</em></h1>
+    <p class="page-hero-desc">VFIT was born from a belief that everyone deserves the quality of training found in the world's leading private studios — right here in Toowoomba.</p>
+    <div class="page-hero-actions">
+      <button class="btn-primary" onclick="showPage('contact')">Get in Touch</button>
+      <button class="btn-outline" onclick="showPage('home')">&#8592; Home</button>
+    </div>
+  </section>
+
+  <div class="pull-quote reveal">
+    <blockquote>"Everyone deserves the quality of training found in the world's leading private studios."</blockquote>
+  </div>
+
+  <div class="about-split">
+    <div class="about-img">
+      <img src="https://images.squarespace-cdn.com/content/v1/65364431ba61ae35026dfa32/ac84636d-ca66-4a87-9347-aa829c413aa9/Georgie-Valdal-VFIT-Founder.jpg" alt="Georgie Valdal, VFIT founder" loading="lazy">
+    </div>
+    <div class="about-content">
+      <p class="section-label reveal">The Founder</p>
+      <h2 class="reveal rd1">Georgie<br><em>Valdal.</em></h2>
+      <p class="reveal rd2">With nearly two decades in the industry, Georgie has built her career at the highest levels of private fitness — training celebrities, executives, and the world's most discerning clients.</p>
+      <p class="reveal rd3">Holding world-class credentials in Pilates, Strength and Conditioning, Stretch Therapy and Track and Field. Now she's brought all of it to Toowoomba — in an intimate studio designed entirely around you.</p>
+    </div>
+  </div>
+
+
+  <section class="section" style="background:var(--warm-white);">
+    <div class="section-inner">
+      <p class="section-label reveal">Our Values</p>
+      <h2 class="section-title reveal rd1">What we<br><em>believe in.</em></h2>
+      <div class="pillars-grid">
+        <div class="reveal rd1"><div class="pillar-num">01</div><div class="pillar-title">Quality Over Quantity</div><p class="pillar-text">Smaller groups, better coaching, real attention.</p></div>
+        <div class="reveal rd2"><div class="pillar-num">02</div><div class="pillar-title">Movement for Life</div><p class="pillar-text">Whether you're 18 or 80, movement should build you up.</p></div>
+        <div class="reveal rd3"><div class="pillar-num">03</div><div class="pillar-title">Community First</div><p class="pillar-text">The relationships extend far beyond the studio.</p></div>
+        <div class="reveal rd4"><div class="pillar-num">04</div><div class="pillar-title">Results You Feel</div><p class="pillar-text">Stronger physically and mentally. That's the VFIT standard.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="testimonial" id="testimonial-about">
+    <div class="testimonial-inner reveal">
+      <blockquote>"No matter what stage of fitness I'm in, VFIT always tailor their training to get the most out of my sessions."</blockquote>
+      <div class="t-divider"></div>
+      <p class="t-author">Client Testimonial &middot; Toowoomba</p>
+    </div>
+  </div>
+
+  <footer>
+    <div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('runclub')">Run Club</button></li></ul></div>
+    <div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><button onclick="showPage('contact')">Contact</button></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li></ul></div>
+    <div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div>
+  </footer>
+</div>
+
+<!-- ============================================
+     PAGE: CONTACT
+     ============================================ -->
+<div class="page" id="page-contact">
+  <section class="page-hero" style="min-height:55vh;background:var(--cream);">
+    <p class="page-hero-eyebrow">Get in Touch</p>
+    <h1>Book.<br><em>Connect.</em></h1>
+    <p class="page-hero-desc">Whether you're ready to join, have a question, or just want to know more — we'd love to hear from you.</p>
+  </section>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <p class="section-label reveal">Find Us</p>
+      <h2 class="reveal rd1">Visit the<br><em>Studio.</em></h2>
+      <div class="contact-detail reveal rd2">
+        <p class="contact-detail-label">Address</p>
+        <address class="contact-detail-value">Shop 8/203 Margaret St<br>Toowoomba City QLD 4350</address>
+      </div>
+      <div class="contact-detail reveal rd2">
+        <p class="contact-detail-label">Run Club</p>
+        <p class="contact-detail-value">Glennie School Track<br>Tuesdays &middot; 5:15 AM</p>
+      </div>
+      <div class="contact-detail reveal rd2">
+        <p class="contact-detail-label">Pi'lattes</p>
+        <p class="contact-detail-value">The Dairy, Ravensbourne<br>Monthly Sundays &middot; 7:00 AM</p>
+      </div>
+      <a href="https://maps.app.goo.gl/tEuLFAM49yoJuzKv9" target="_blank" rel="noopener noreferrer" class="btn-primary reveal rd3" style="margin-top:8px;">Get Directions</a>
+    </div>
+    <div class="contact-form-wrap">
+      <p class="section-label reveal">Send a Message</p>
+      <h2 class="reveal rd1">We'd love to<br><em>hear from you.</em></h2>
+      <form id="contactForm" onsubmit="return submitContact(event)">
+        <div class="form-group reveal rd2"><label class="form-label" for="cName">Your Name</label><input class="form-input" id="cName" type="text" placeholder="First & last name" required></div>
+        <div class="form-group reveal rd2"><label class="form-label" for="cEmail">Email</label><input class="form-input" id="cEmail" type="email" placeholder="hello@email.com" required></div>
+        <div class="form-group reveal rd2"><label class="form-label" for="cPhone">Phone</label><input class="form-input" id="cPhone" type="tel" placeholder="04xx xxx xxx"></div>
+        <div class="form-group reveal rd2"><label class="form-label" for="cMessage">Message</label><textarea class="form-textarea" id="cMessage" placeholder="Tell us about your goals..."></textarea></div>
+        <div id="contactError" style="display:none;color:#c0392b;font-size:13px;margin-bottom:12px;text-align:center;padding:8px 12px;background:#fdf0ef;border-radius:8px;"></div>
+        <button type="submit" class="btn-primary reveal rd3" id="btnContact" style="width:100%;padding:16px;">Send Message</button>
+      </form>
+      <div id="contactSuccess" style="display:none;text-align:center;padding:60px 0;">
+        <div class="success-icon">&#x2726;</div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;margin-bottom:12px;">Message <em style="font-style:italic;color:var(--bark);">received.</em></h3>
+        <p style="font-size:14px;color:#6b5e52;">We'll be in touch shortly.</p>
+      </div>
+    </div>
+  </div>
+
+  <iframe class="map-embed" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3543.5!2d151.9534!3d-27.5598!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b964a47c8cb3333%3A0x0!2s203+Margaret+St%2C+Toowoomba+City+QLD+4350!5e0!3m2!1sen!2sau!4v1" allowfullscreen loading="lazy" title="VFIT Studio Location"></iframe>
+
+  <footer>
+    <div><span class="footer-brand">VFIT</span><p class="footer-tagline">A timeless approach to fitness.<br>Toowoomba's boutique luxury studio.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><button onclick="showPage('home')">Home</button></li><li><button onclick="showPage('memberships')">Studio Sessions</button></li><li><button onclick="showPage('pilattes')">Pi'lattes</button></li><li><button onclick="showPage('runclub')">Run Club</button></li></ul></div>
+    <div class="footer-col"><h4>Studio</h4><ul><li><span>Shop 8/203 Margaret St</span></li><li><span>Toowoomba City QLD 4350</span></li><li><a href="https://www.instagram.com/valdalfit" target="_blank" rel="noopener noreferrer">Follow @valdalfit</a></li><li><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></li></ul></div>
+    <div class="footer-bottom"><p>&copy; <span class="yr"></span> VFIT</p><button class="footer-terms" onclick="openTerms()">Terms &amp; Conditions</button></div>
+  </footer>
+</div>
+
+<!-- ============================================
+     BOOKING MODAL
+     ============================================ -->
+<div class="modal-backdrop" id="bookingModal" onclick="if(event.target===this)closeSimpleModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSimpleModal()" aria-label="Close">&times;</button>
+    <div id="modalForm">
+      <h3 class="modal-title" id="modalTitle">Book <em>Now</em></h3>
+      <p class="modal-subtitle">Fill in your details and we'll get back to you within 24 hours.</p>
+      <form onsubmit="return submitBooking(event)">
+        <input type="hidden" id="bInterest" name="interest" value="General Enquiry">
+        <div class="form-group"><label class="form-label" for="bName">Your Name</label><input class="form-input" id="bName" type="text" placeholder="First & last name" required></div>
+        <div class="form-group"><label class="form-label" for="bEmail">Email</label><input class="form-input" id="bEmail" type="email" placeholder="hello@email.com" required></div>
+        <div class="form-group"><label class="form-label" for="bPhone">Phone</label><input class="form-input" id="bPhone" type="tel" placeholder="04xx xxx xxx" required></div>
+        <button type="submit" class="btn-primary" id="btnBooking" style="width:100%;padding:16px;">Send Enquiry</button>
+      </form>
+    </div>
+    <div class="modal-success" id="modalSuccess">
+      <div class="success-icon">&#x2726;</div>
+      <h3>Thank <em>you.</em></h3>
+      <p>We'll be in touch within 24 hours to confirm your spot.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MEMBERSHIP WIZARD
+     ============================================ -->
+<div class="wiz-backdrop" id="wizModal" onclick="if(event.target===this)closeWizard()">
+  <div class="wiz-modal">
+    <button class="modal-close" onclick="closeWizard()" aria-label="Close">&times;</button>
+    <p class="wiz-step-label" id="wizStepLabel">Step 1 of 4</p>
+    <div class="wiz-viewport">
+      <div class="wiz-track" id="wizTrack">
+        <div class="wiz-step" id="wizStep1">
+          <h3 class="wiz-step-title">Your <em>Plan</em></h3>
+          <p class="wiz-step-desc">Confirm the membership you'd like to enquire about.</p>
+          <div class="wiz-plan-summary" id="wizPlanSummary">
+            <div class="wiz-plan-name" id="wizPlanName">Signature</div>
+            <div class="wiz-plan-price" id="wizPlanPrice">$60 <span>/ session</span></div>
+            <ul class="wiz-plan-features" id="wizPlanFeatures"></ul>
+          </div>
+          <div class="wiz-footer"><div></div><button class="wiz-next" onclick="wizNext()">Continue</button></div>
+        </div>
+        <div class="wiz-step" id="wizStep2">
+          <h3 class="wiz-step-title">Your <em>Schedule</em></h3>
+          <p class="wiz-step-desc">Tell us when works best for you.</p>
+          <label class="wiz-field-label">How many sessions per week?</label>
+          <div class="wiz-pills" id="wizSessionPills">
+            <button class="wiz-pill large" onclick="wizSelectSession(this,1)">1</button>
+            <button class="wiz-pill large" onclick="wizSelectSession(this,2)">2</button>
+            <button class="wiz-pill large" onclick="wizSelectSession(this,3)">3</button>
+            <button class="wiz-pill large" onclick="wizSelectSession(this,4)">4</button>
+          </div>
+          <label class="wiz-field-label">Preferred days</label>
+          <div class="wiz-day-chips" id="wizDayChips">
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Mon</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Tue</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Wed</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Thu</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Fri</button>
+            <button class="wiz-day-chip" onclick="wizToggleDay(this)">Sat</button>
+          </div>
+          <label class="wiz-field-label">Preferred time</label>
+          <div class="wiz-time-slots" id="wizTimeSlots"></div>
+          <div class="wiz-footer"><button class="wiz-back" onclick="wizBack()">Back</button><button class="wiz-next" onclick="wizNext()">Continue</button></div>
+        </div>
+        <div class="wiz-step" id="wizStep3">
+          <h3 class="wiz-step-title">Your <em>Details</em></h3>
+          <p class="wiz-step-desc">How can we reach you?</p>
+          <div class="form-group"><label class="form-label" for="wizName">Your Name</label><input class="form-input" id="wizName" type="text" placeholder="First & last name" required></div>
+          <div class="form-group"><label class="form-label" for="wizEmail">Email</label><input class="form-input" id="wizEmail" type="email" placeholder="hello@email.com" required></div>
+          <div class="form-group"><label class="form-label" for="wizPhone">Phone</label><input class="form-input" id="wizPhone" type="tel" placeholder="04xx xxx xxx" required></div>
+          <div class="form-group"><label class="form-label" for="wizNotes">Notes <span style="opacity:.5">(optional)</span></label><textarea class="form-textarea" id="wizNotes" placeholder="Anything else we should know..." style="min-height:70px;"></textarea></div>
+          <div class="wiz-footer"><button class="wiz-back" onclick="wizBack()">Back</button><button class="wiz-next" onclick="wizNext()">Continue</button></div>
+        </div>
+        <div class="wiz-step" id="wizStep4">
+          <h3 class="wiz-step-title">Review &amp; <em>Send</em></h3>
+          <p class="wiz-step-desc">Check your details before sending.</p>
+          <div id="wizReviewContent"></div>
+          <div id="wizError" style="display:none;color:#c0392b;font-size:13px;margin:0 0 12px;text-align:center;padding:8px 12px;background:#fdf0ef;border-radius:8px;"></div>
+          <div class="wiz-footer"><button class="wiz-back" onclick="wizBack()">Back</button><button class="wiz-next" id="wizSubmitBtn" onclick="wizSubmit()">Send Enquiry</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-success" id="wizSuccess">
+      <div class="success-icon">&#x2726;</div>
+      <h3>Thank <em>you.</em></h3>
+      <p>We will be in touch shortly.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     TERMS MODAL
+     ============================================ -->
+<div class="terms-backdrop" id="termsModal" onclick="if(event.target===this)closeTerms()">
+  <div class="terms-modal">
+    <button class="modal-close" onclick="closeTerms()" aria-label="Close">&times;</button>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;margin-bottom:8px;">Terms &amp; <em style="font-style:italic;color:var(--bark);">Conditions</em></h2>
+    <p style="font-size:13px;color:#6b5e52;margin-bottom:36px;">Please read carefully before participating in any VFIT session.</p>
+    <div style="background:var(--sand);padding:28px 32px;margin-bottom:40px;border-left:3px solid var(--clay);">
+      <p class="terms-body">By signing this document I acknowledge and agree to the terms below in consideration of participation in a session with Georgie Valdal and VFit.</p>
+    </div>
+    <div class="terms-section-t"><h3 class="terms-heading">1. Assumption of Risks</h3><p class="terms-body">You understand the Session may involve inherent risks including high physical exertion and potential accidents. You assume full responsibility for any injury or damage.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">2. Medical Conditions</h3><p class="terms-body">It is your responsibility to understand your health condition, maintain appropriate medical insurance, and disclose any limitations. You represent you are in good health and participating voluntarily.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">3. Release &amp; Indemnity</h3><p class="terms-body">To the fullest extent permitted by law, you release and indemnify VFit from any claims, actions, liabilities, costs or expenses arising from your participation.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">4. Governing Law</h3><p class="terms-body">Governed by Australian law. Disputes subject to Queensland courts.</p></div>
+    <div class="terms-section-t"><h3 class="terms-heading">5. Acknowledgment</h3><p class="terms-body">You have read and understood this agreement and voluntarily agree to be bound by its terms for any Session with VFit.</p></div>
+  </div>
+</div>
+
+<!-- ============================================
+     LIGHTBOX
+     ============================================ -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close lightbox">&times;</button>
+  <img id="lightboxImg" src="" alt="Gallery image">
+  <div class="lightbox-arrows">
+    <button class="lightbox-arrow" onclick="navLightbox(-1)" aria-label="Previous image">&#8592;</button>
+    <button class="lightbox-arrow" onclick="navLightbox(1)" aria-label="Next image">&#8594;</button>
+  </div>
+</div>
+
+<!-- ============================================
+     COOKIE BANNER
+     ============================================ -->
+<div class="cookie-banner" id="cookieBanner">
+  <p>We use cookies to improve your experience. By continuing to use this site you agree to our use of cookies. <button onclick="openTerms()" style="background:none;border:none;color:var(--clay);cursor:pointer;font-family:'Jost',sans-serif;font-size:12px;font-weight:300;text-decoration:underline;padding:0;">Privacy Policy</button></p>
+  <button class="cookie-accept" onclick="acceptCookies()">Accept</button>
+</div>
+
+<!-- ============================================
+     JAVASCRIPT — Copied verbatim from Version B
+     ============================================ -->
+<script type="module" src="./js/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><!-- v=20260325c -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+<title>VFIT Admin</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/admin.css">
+</head>
+<body>
+
+<!-- ─── LOGIN SCREEN ─── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">VFIT</div>
+    <div class="login-subtitle">Admin Panel</div>
+    <form id="login-form" onsubmit="return handleLogin(event)">
+      <input type="password" id="login-password" class="login-field" placeholder="Enter password" autocomplete="current-password" required>
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" class="btn-primary" style="width:100%;" id="login-btn">Enter</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── DASHBOARD SHELL ─── -->
+<div id="dashboard-shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="topbar-hamburger" onclick="toggleMobileSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="topbar-logo" href="/">VFIT</a>
+    <span class="topbar-center">Admin</span>
+    <button class="topbar-logout" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <ul class="sidebar-nav">
+      <li><button class="active" onclick="showPage('overview')" data-page="overview"><span class="nav-icon">&#9632;</span> Dashboard</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Sessions</li>
+      <li><button onclick="showPage('runclub')" data-page="runclub"><span class="nav-icon">&#9654;</span> Run Club</button></li>
+      <li><button onclick="showPage('pilattes')" data-page="pilattes"><span class="nav-icon">&#9654;</span> Pi'lattes</button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Members</li>
+      <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
+      <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
+      <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
+      <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
+      <li><button onclick="showPage('media-library')" data-page="media-library"><span class="nav-icon">&#9634;</span> Media</button></li>
+    </ul>
+  </div>
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- OVERVIEW -->
+    <div class="admin-page active" id="page-overview">
+      <div class="page-header">
+        <h1 class="page-title"><em>Dashboard</em></h1>
+      </div>
+      <div id="overview-loading" class="loading">Loading dashboard...</div>
+      <div id="overview-content" style="display:none;">
+        <div class="stat-grid" id="overview-stats"></div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin-bottom:16px;">Upcoming Events</h3>
+        <div id="overview-upcoming"></div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="admin-page" id="page-events">
+      <div class="page-header">
+        <h1 class="page-title"><em>Events</em></h1>
+        <button class="btn-primary" onclick="openEventModal()">+ Create Event</button>
+      </div>
+      <div id="events-loading" class="loading">Loading events...</div>
+      <div id="events-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Type</th><th>Session Date</th><th>Tickets Open</th><th>Spots</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="events-empty" class="empty-state" style="display:none;">No events yet. Create your first event to get started.</div>
+    </div>
+
+    <!-- RUN CLUB -->
+    <div class="admin-page" id="page-runclub">
+      <div class="page-header">
+        <h1 class="page-title"><em>Run Club</em></h1>
+        <button class="btn-primary" onclick="openEventModal(null,'runclub')">+ New Session</button>
+      </div>
+      <div id="rc-loading" class="loading">Loading...</div>
+      <div id="rc-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Glofox URL</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="rc-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="rc-empty" class="empty-state" style="display:none;">No Run Club sessions yet. Create one to get started.</div>
+    </div>
+
+    <!-- PI'LATTES -->
+    <div class="admin-page" id="page-pilattes">
+      <div class="page-header">
+        <h1 class="page-title"><em>Pi'lattes</em></h1>
+        <button class="btn-primary" onclick="openEventModal(null,'pilattes')">+ New Session</button>
+      </div>
+      <div id="pl-loading" class="loading">Loading...</div>
+      <div id="pl-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Glofox URL</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="pl-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="pl-empty" class="empty-state" style="display:none;">No Pi'lattes sessions yet. Create one to get started.</div>
+    </div>
+
+    <!-- BOOKINGS (keep for backward compat but hidden from nav) -->
+    <div class="admin-page" id="page-bookings">
+      <div class="page-header">
+        <h1 class="page-title"><em>Bookings</em></h1>
+      </div>
+      <div class="filter-bar">
+        <label>Filter by Event</label>
+        <select id="bookings-event-filter" onchange="loadBookings()">
+          <option value="">All Events</option>
+        </select>
+      </div>
+      <div class="summary-bar" id="bookings-summary" style="display:none;"></div>
+      <div id="bookings-loading" class="loading">Loading bookings...</div>
+      <div id="bookings-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Amount</th><th>Booked At</th><th>Actions</th></tr></thead>
+            <tbody id="bookings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERSHIPS -->
+    <div class="admin-page" id="page-memberships">
+      <div class="page-header">
+        <h1 class="page-title"><em>Memberships</em></h1>
+      </div>
+      <div id="memberships-loading" class="loading">Loading memberships...</div>
+      <div id="memberships-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="memberships-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERSHIP REQUESTS -->
+    <div class="admin-page" id="page-membership-requests">
+      <div class="page-header">
+        <h1 class="page-title"><em>Membership Requests</em></h1>
+      </div>
+      <div id="mreq-loading" class="loading">Loading requests...</div>
+      <div id="mreq-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="mreq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBER LIST -->
+    <div class="admin-page" id="page-member-list">
+      <div class="page-header">
+        <h1 class="page-title"><em>Member List</em></h1>
+        <button class="btn-primary" onclick="openAddMemberModal()">+ Add Member</button>
+      </div>
+      <div id="mlist-loading" class="loading">Loading members...</div>
+      <div id="mlist-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions/wk</th><th>Assigned Slots</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="mlist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CONTACTS -->
+    <div class="admin-page" id="page-contacts">
+      <div class="page-header">
+        <h1 class="page-title"><em>Messages</em></h1>
+      </div>
+      <div id="contacts-loading" class="loading">Loading messages...</div>
+      <div id="contacts-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody id="contacts-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAN CONFIG -->
+    <div class="admin-page" id="page-plan-config">
+      <div class="page-header">
+        <h1 class="page-title"><em>Membership Plans</em></h1>
+        <button class="btn-primary" onclick="openPlanModal()">+ New Plan</button>
+      </div>
+      <div id="planconfig-loading" class="loading">Loading plans...</div>
+      <div id="planconfig-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Order</th><th>Name</th><th>Price</th><th>Badge</th><th>Features</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="planconfig-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERAL MESSAGES -->
+    <div class="admin-page" id="page-general-messages">
+      <div class="page-header">
+        <h1 class="page-title"><em>General Messages</em></h1>
+      </div>
+      <div id="gmsg-loading" class="loading">Loading messages...</div>
+      <div id="gmsg-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Date</th></tr></thead>
+            <tbody id="gmsg-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKING LINKS -->
+    <!-- TESTIMONIALS -->
+    <div class="admin-page" id="page-testimonials">
+      <div class="page-header">
+        <h1 class="page-title"><em>Testimonials</em></h1>
+        <button class="btn-primary" onclick="openTestimonialModal()">+ New Testimonial</button>
+      </div>
+      <div id="testimonials-loading" class="loading">Loading testimonials...</div>
+      <div id="testimonials-content" style="display:none;">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Quote</th><th>Attribution</th><th>Page</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="testimonials-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDIA LIBRARY -->
+    <div class="admin-page" id="page-media-library">
+      <div class="page-header">
+        <h1 class="page-title"><em>Media Library</em></h1>
+        <button class="btn-primary" onclick="triggerMediaUpload()">+ Upload</button>
+        <input type="file" id="media-upload-input" accept="image/*,video/*" style="display:none;" onchange="handleMediaUpload(this)">
+      </div>
+      <div id="media-loading" class="loading">Loading media...</div>
+      <div id="media-content" style="display:none;">
+        <div id="media-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /dashboard-shell -->
+
+<!-- ─── PLAN MODAL ─── -->
+<div class="modal-backdrop" id="plan-modal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closePlanModal()">&times;</button>
+    <h2 class="modal-title" id="plan-modal-title">Add <em>Plan</em></h2>
+    <input type="hidden" id="plan-edit-id" value="">
+    <div class="form-group">
+      <label class="form-label">Plan Name</label>
+      <input type="text" class="form-input" id="plan-name" placeholder="e.g. Signature">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Price (dollars)</label>
+      <input type="number" class="form-input" id="plan-price" min="0" step="1" placeholder="60">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Period Label</label>
+      <input type="text" class="form-input" id="plan-period" placeholder="session" value="session">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Badge Text</label>
+      <input type="text" class="form-input" id="plan-badge-text" placeholder="e.g. Most Popular">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Badge Style</label>
+      <select class="form-input form-select" id="plan-badge-style">
+        <option value="pop">Popular (dark)</option>
+        <option value="flex">Flex (outline)</option>
+        <option value="vip">VIP (deep)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description <span style="opacity:.5">(optional tagline)</span></label>
+      <input type="text" class="form-input" id="plan-description" placeholder="Short tagline...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Features <span style="opacity:.5">(one per line)</span></label>
+      <textarea class="form-input" id="plan-features" rows="5" placeholder="Weekly recurring group session/s (max 4 ppl)&#10;3-month minimum commitment"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Display Order</label>
+      <input type="number" class="form-input" id="plan-order" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input form-select" id="plan-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" id="plan-save-btn" onclick="savePlan()">Create Plan</button>
+  </div>
+</div>
+
+<!-- ─── TESTIMONIAL MODAL ─── -->
+<div class="modal-backdrop" id="testimonial-modal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeTestimonialModal()">&times;</button>
+    <h2 class="modal-title" id="testimonial-modal-title">Add <em>Testimonial</em></h2>
+    <input type="hidden" id="testimonial-edit-id" value="">
+    <div class="form-group">
+      <label class="form-label">Quote</label>
+      <textarea class="form-input" id="testimonial-quote" rows="4" placeholder="Client quote..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Attribution</label>
+      <input type="text" class="form-input" id="testimonial-attribution" placeholder="Client Testimonial · Toowoomba">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Page</label>
+      <select class="form-input form-select" id="testimonial-page">
+        <option value="home">Home</option>
+        <option value="studio">Studio Sessions</option>
+        <option value="about">About</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Display Order</label>
+      <input type="number" class="form-input" id="testimonial-order" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input form-select" id="testimonial-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" id="testimonial-save-btn" onclick="saveTestimonial()">Create Testimonial</button>
+  </div>
+</div>
+
+<!-- ─── ACCEPT MEMBERSHIP MODAL ─── -->
+<div class="modal-backdrop" id="accept-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAcceptModal()">&times;</button>
+    <h2 class="modal-title">Accept <em id="accept-member-name"></em></h2>
+    <p style="font-size:13px;color:var(--bark);margin-bottom:24px;">Plan: <strong id="accept-member-plan"></strong></p>
+    <input type="hidden" id="accept-membership-id">
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="acceptMembership()">Accept &amp; Create Member</button>
+  </div>
+</div>
+
+
+<!-- ─── ADD SLOT MODAL ─── -->
+<div class="modal-backdrop" id="addslot-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddSlotModal()">&times;</button>
+    <h2 class="modal-title">Add <em>Time Slot</em></h2>
+    <div class="form-group">
+      <label class="form-label">Day of Week</label>
+      <select class="form-input form-select" id="addslot-day" required>
+        <option value="0">Monday</option>
+        <option value="1">Tuesday</option>
+        <option value="2">Wednesday</option>
+        <option value="3">Thursday</option>
+        <option value="4">Friday</option>
+        <option value="5">Saturday</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Time (e.g. 5:15 AM)</label>
+      <input type="text" class="form-input" id="addslot-time" placeholder="5:15 AM" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Max Capacity</label>
+      <input type="number" class="form-input" id="addslot-capacity" min="1" value="4" required>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createSlot()">Create Slot</button>
+  </div>
+</div>
+
+
+<!-- ─── ADD MEMBER MODAL ─── -->
+<div class="modal-backdrop" id="addmember-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddMemberModal()">&times;</button>
+    <h2 class="modal-title">Add <em>Member</em></h2>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="addmember-name" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="addmember-email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-input" id="addmember-phone">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <input type="text" class="form-input" id="addmember-plan" placeholder="e.g. 3x per week">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sessions Per Week</label>
+      <input type="number" class="form-input" id="addmember-sessions" min="1" max="7" value="3">
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createMemberManual()">Create Member</button>
+  </div>
+</div>
+
+<!-- ─── EVENT MODAL ─── -->
+<div class="modal-backdrop" id="event-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEventModal()">&times;</button>
+    <h2 class="modal-title" id="event-modal-title">Create <em>Event</em></h2>
+    <form id="event-form" onsubmit="return handleEventSubmit(event)">
+      <input type="hidden" id="event-edit-id">
+      <div class="form-group">
+        <label class="form-label">Event Name</label>
+        <input type="text" class="form-input" id="event-name" required>
+      </div>
+      <input type="hidden" id="event-type">
+      <div class="form-group">
+        <label class="form-label">Session Date</label>
+        <input type="datetime-local" class="form-input" id="event-session-date" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tickets Open Date</label>
+        <input type="datetime-local" class="form-input" id="event-tickets-open">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Glofox Booking URL</label>
+        <input type="text" class="form-input" id="event-glofox-url" placeholder="https://app.glofox.com/..." required>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:8px;" id="event-submit-btn">Create Event</button>
+    </form>
+  </div>
+</div>
+
+<!-- ─── CONFIRM DIALOG ─── -->
+<div class="confirm-backdrop" id="confirm-dialog">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button class="btn-outline btn-sm" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-outline btn-sm btn-danger" id="confirm-yes" onclick="confirmAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST ─── -->
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./js/admin.js"></script>
+</body>
+</html>
