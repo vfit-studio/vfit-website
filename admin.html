@@ -735,16 +735,14 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       <li><button onclick="showPage('runclub')" data-page="runclub"><span class="nav-icon">&#9654;</span> Run Club</button></li>
       <li><button onclick="showPage('pilattes')" data-page="pilattes"><span class="nav-icon">&#9654;</span> Pi'lattes</button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Members</li>
-      <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests</button></li>
+      <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
+      <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9993;</span> Notifications <span id="notif-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Plans</button></li>
       <li><button onclick="showPage('booking-links')" data-page="booking-links"><span class="nav-icon">&#9654;</span> Booking Links</button></li>
       <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
       <li><button onclick="showPage('media-library')" data-page="media-library"><span class="nav-icon">&#9634;</span> Media</button></li>
-      <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Studio</li>
-      <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9993;</span> Notifications</button></li>
-      <li><button onclick="showPage('contacts')" data-page="contacts"><span class="nav-icon">&#9998;</span> Messages</button></li>
     </ul>
   </div>
 
@@ -871,7 +869,7 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       <div id="mreq-content" style="display:none;">
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Sessions</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody id="mreq-tbody"></tbody>
           </table>
         </div>
@@ -1103,10 +1101,6 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
     <h2 class="modal-title">Accept <em id="accept-member-name"></em></h2>
     <p style="font-size:13px;color:var(--bark);margin-bottom:24px;">Plan: <strong id="accept-member-plan"></strong></p>
     <input type="hidden" id="accept-membership-id">
-    <div class="form-group">
-      <label class="form-label">Sessions Per Week</label>
-      <input type="number" class="form-input" id="accept-sessions-per-week" min="1" max="7" value="3" required>
-    </div>
     <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="acceptMembership()">Accept &amp; Create Member</button>
   </div>
 </div>
@@ -1722,15 +1716,6 @@ async function loadTypePage(pre, type) {
       '</tr>';
     }).join('');
 
-    // Populate bookings dropdown
-    var sel = document.getElementById(pre + '-event-select');
-    sel.innerHTML = '<option value="">Select a session...</option>';
-    typeEvents.forEach(function(ev) {
-      sel.innerHTML += '<option value="' + esc(ev.id) + '">' + esc(ev.name) + ' — ' + formatDate(ev.session_date) + '</option>';
-    });
-
-    // Clear bookings
-    document.getElementById(pre + '-bookings-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--bark);padding:20px;">Select a session above</td></tr>';
 
     loading.style.display = 'none';
     content.style.display = 'block';
@@ -1948,7 +1933,7 @@ async function loadMembershipRequests() {
 
     var tbody = document.getElementById('mreq-tbody');
     if (members.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="11" class="empty-state">No enquiries yet</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No enquiries yet</td></tr>';
     } else {
       tbody.innerHTML = members.map(function(m) {
         var id = m.id;
@@ -1959,29 +1944,40 @@ async function loadMembershipRequests() {
           '<td>' + esc(m.email || '') + '</td>' +
           '<td>' + esc(m.phone || '--') + '</td>' +
           '<td>' + esc(m.plan || '') + '</td>' +
-          '<td>' + esc(m.sessions || '') + '</td>' +
           '<td>' + esc(m.days || '') + '</td>' +
           '<td>' + esc(m.times || '') + '</td>' +
           '<td title="' + esc(m.notes || '') + '">' + esc(truncate(m.notes || '', 40)) + '</td>' +
           '<td>' + statusBadge(m.status || 'new') + '</td>' +
           '<td>' + formatDate(m.created_at) + '</td>' +
-          '<td>' +
-            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\',\'' + esc((m.name || '').replace(/'/g, '')) + '\',\'' + esc((m.plan || '').replace(/'/g, '')) + '\')">Accept</button>' : '') +
-            '<select class="status-select" onchange="updateMembershipStatus(\'' + esc(id) + '\', this.value)">' +
-              '<option value="new"' + (status === 'new' ? ' selected' : '') + '>New</option>' +
-              '<option value="contacted"' + (status === 'contacted' ? ' selected' : '') + '>Contacted</option>' +
-              '<option value="active"' + (status === 'active' ? ' selected' : '') + '>Active</option>' +
-              '<option value="inactive"' + (status === 'inactive' ? ' selected' : '') + '>Inactive</option>' +
-            '</select>' +
+          '<td style="white-space:nowrap;">' +
+            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\',\'' + esc((m.name || '').replace(/'/g, '')) + '\',\'' + esc((m.plan || '').replace(/'/g, '')) + '\')">Accept &amp; Create Member</button>' : '') +
+            '<button class="btn-outline btn-sm btn-danger" onclick="deleteMembershipRequest(\'' + esc(id) + '\')">Delete</button>' +
           '</td>' +
         '</tr>';
       }).join('');
     }
 
+    // Update nav badge with unread (new) count
+    var newCount = members.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
+    var badge = document.getElementById('mreq-badge');
+    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
     loading.innerHTML = '<div class="empty-state">Could not load requests. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function deleteMembershipRequest(id) {
+  if (!confirm('Delete this request?')) return;
+  try {
+    await apiPost({ action: 'delete_membership_request', membership_id: id });
+    showToast('Request deleted', 'success');
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
   }
 }
 
@@ -2050,8 +2046,7 @@ async function loadMemberList() {
           '<td>' + (m.sessions_per_week || '--') + '</td>' +
           '<td style="font-size:12px;max-width:200px;">' + slots + '</td>' +
           '<td><span class="badge ' + statusCls + '">' + esc(status) + '</span></td>' +
-          '<td>' +
-          '</td>' +
+          '<td><button class="btn-outline btn-sm btn-danger" onclick="deleteMember(\'' + esc(id) + '\')">Delete</button></td>' +
         '</tr>';
       }).join('');
     }
@@ -2060,6 +2055,17 @@ async function loadMemberList() {
     content.style.display = 'block';
   } catch (err) {
     loading.innerHTML = '<div class="empty-state">Could not load members. ' + esc(err.message) + '</div>';
+  }
+}
+
+async function deleteMember(id) {
+  if (!confirm('Delete this member?')) return;
+  try {
+    await apiPost({ action: 'delete_member', member_id: id });
+    showToast('Member deleted', 'success');
+    loadMemberList();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
   }
 }
 
@@ -2745,6 +2751,11 @@ async function loadNotifications() {
   try {
     var data = await apiGet({ action: 'notifications' });
     var notifs = data.notifications || [];
+
+    // Update nav badge with unnotified count
+    var unnotified = notifs.filter(function(n) { return !n.notified; }).length;
+    var nbadge = document.getElementById('notif-badge');
+    if (nbadge) { if (unnotified > 0) { nbadge.textContent = unnotified; nbadge.style.display = 'inline'; } else { nbadge.style.display = 'none'; } }
 
     var tbody = document.getElementById('notifications-tbody');
     if (notifs.length === 0) {

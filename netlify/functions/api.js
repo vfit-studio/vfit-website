@@ -1553,6 +1553,18 @@ exports.handler = async (event) => {
           return await handleUploadMedia(body);
         case 'delete_media':
           return await handleDeleteMedia(body);
+        case 'delete_membership_request':
+          requireAdmin(body.admin_key);
+          if (!body.membership_id) return respond(400, { success: false, error: 'membership_id required' });
+          const { error: delMreqErr } = await supabase.from('memberships').delete().eq('id', body.membership_id);
+          if (delMreqErr) throw delMreqErr;
+          return respond(200, { success: true });
+        case 'delete_member':
+          requireAdmin(body.admin_key);
+          if (!body.member_id) return respond(400, { success: false, error: 'member_id required' });
+          const { error: delMemErr } = await supabase.from('members').delete().eq('id', body.member_id);
+          if (delMemErr) throw delMemErr;
+          return respond(200, { success: true });
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
