@@ -738,7 +738,6 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
       <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
-      <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9825;</span> Notifications <span id="notif-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
       <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
@@ -893,26 +892,6 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       </div>
     </div>
 
-
-    <!-- NOTIFICATIONS -->
-    <div class="admin-page" id="page-notifications">
-      <div class="page-header">
-        <h1 class="page-title"><em>Notifications</em></h1>
-      </div>
-      <div id="notifications-loading" class="loading">Loading notifications...</div>
-      <div id="notifications-content" style="display:none;">
-        <div style="margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-          <button class="btn-outline btn-sm" onclick="sendNotifications('run_club')">Send Run Club Notifications</button>
-          <button class="btn-outline btn-sm" onclick="sendNotifications('pilattes')">Send Pi'lattes Notifications</button>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Interest</th><th>Type</th><th>Notified</th><th>Date</th></tr></thead>
-            <tbody id="notifications-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
     <!-- CONTACTS -->
     <div class="admin-page" id="page-contacts">
@@ -1381,13 +1360,6 @@ async function loadNavBadges() {
     if (badge) { if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
   } catch(e) {}
   try {
-    var nresp = await apiGet({ action: 'notifications' });
-    var notifs = nresp.notifications || [];
-    var unnotified = notifs.filter(function(n) { return !n.notified; }).length;
-    var nbadge = document.getElementById('notif-badge');
-    if (nbadge) { if (unnotified > 0) { nbadge.textContent = unnotified; nbadge.style.display = 'inline'; } else { nbadge.style.display = 'none'; } }
-  } catch(e) {}
-  try {
     var gresp = await apiGet({ action: 'contacts' });
     var msgs = gresp.data || gresp.contacts || [];
     var gbadge = document.getElementById('gmsg-badge');
@@ -1436,7 +1408,6 @@ function showPage(page) {
     case 'member-list': loadMemberList(); break;
     case 'calendar': loadCalendar(); break;
     case 'general-messages': loadGeneralMessages(); break;
-    case 'notifications': loadNotifications(); break;
     case 'contacts': loadContacts(); break;
     case 'plan-config': loadPlanConfig(); break;
     case 'testimonials': loadTestimonials(); break;
@@ -2782,65 +2753,6 @@ async function loadGeneralMessages() {
   } catch (err) {
     loading.innerHTML = '<div class="empty-state">Could not load messages. ' + esc(err.message) + '</div>';
   }
-}
-
-// ─── NOTIFICATIONS ───
-// API: { success: true, notifications: [...] }
-// Each: id, email, name, interest, type, notified (boolean), created_at
-
-async function loadNotifications() {
-  var loading = document.getElementById('notifications-loading');
-  var content = document.getElementById('notifications-content');
-  loading.style.display = 'block';
-  content.style.display = 'none';
-
-  try {
-    var data = await apiGet({ action: 'notifications' });
-    var notifs = data.notifications || [];
-
-    // Update nav badge with unnotified count
-    var unnotified = notifs.filter(function(n) { return !n.notified; }).length;
-    var nbadge = document.getElementById('notif-badge');
-    if (nbadge) { if (unnotified > 0) { nbadge.textContent = unnotified; nbadge.style.display = 'inline'; } else { nbadge.style.display = 'none'; } }
-
-    var tbody = document.getElementById('notifications-tbody');
-    if (notifs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No signups yet</td></tr>';
-    } else {
-      tbody.innerHTML = notifs.map(function(n) {
-        var notifiedIcon = n.notified
-          ? '<span class="notified-yes" title="Notified">&#10003;</span>'
-          : '<span class="notified-no" title="Not notified">&mdash;</span>';
-        return '<tr>' +
-          '<td>' + esc(n.name || '') + '</td>' +
-          '<td>' + esc(n.email || '') + '</td>' +
-          '<td>' + esc(n.interest || '') + '</td>' +
-          '<td>' + esc(n.type || 'notify') + '</td>' +
-          '<td>' + notifiedIcon + '</td>' +
-          '<td>' + formatDate(n.created_at) + '</td>' +
-        '</tr>';
-      }).join('');
-    }
-
-    loading.style.display = 'none';
-    content.style.display = 'block';
-  } catch (err) {
-    loading.innerHTML = '<div class="empty-state">Could not load notifications. ' + esc(err.message) + '</div>';
-  }
-}
-
-function sendNotifications(eventType) {
-  var label = eventType === 'run_club' ? 'Run Club' : "Pi'lattes";
-  showConfirm('Send notifications for ' + label + '? This will email all subscribers who have not been notified yet.', async function() {
-    try {
-      var result = await apiPost({ action: 'send_notifications', event_type: eventType });
-      var count = result.count || 0;
-      showToast('Notifications sent for ' + label + ' (' + count + ' notified)', 'success');
-      loadNotifications();
-    } catch (err) {
-      showToast('Error: ' + err.message, 'error');
-    }
-  });
 }
 
 // ─── CONTACTS ───
