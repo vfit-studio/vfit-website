@@ -741,7 +741,6 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9825;</span> Notifications <span id="notif-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
-      <li><button onclick="showPage('booking-links')" data-page="booking-links"><span class="nav-icon">&#9654;</span> Glofox Links</button></li>
       <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
       <li><button onclick="showPage('media-library')" data-page="media-library"><span class="nav-icon">&#9634;</span> Media</button></li>
     </ul>
@@ -965,29 +964,6 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
     </div>
 
     <!-- BOOKING LINKS -->
-    <div class="admin-page" id="page-booking-links">
-      <div class="page-header">
-        <h1 class="page-title"><em>Glofox Links</em></h1>
-      </div>
-      <p style="font-size:13px;color:var(--bark);margin-bottom:32px;line-height:1.8;">Set your Glofox booking URLs below. When a URL is set, the booking buttons on the public site will open Glofox instead of the built-in form.</p>
-      <div id="bookinglinks-loading" class="loading">Loading...</div>
-      <div id="bookinglinks-content" style="display:none;">
-        <div style="border:1px solid var(--stone);background:var(--warm-white);padding:32px;margin-bottom:24px;">
-          <div class="form-group">
-            <label class="form-label">Run Club — Glofox Booking URL</label>
-            <input type="text" class="form-input" id="link-runclub" placeholder="https://app.glofox.com/..." data-section="runclub" data-key="booking_url">
-            <p style="font-size:11px;color:var(--clay);margin-top:6px;">Leave empty to use the built-in booking form</p>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pi'lattes — Glofox Booking URL</label>
-            <input type="text" class="form-input" id="link-pilattes" placeholder="https://app.glofox.com/..." data-section="pilattes" data-key="booking_url">
-            <p style="font-size:11px;color:var(--clay);margin-top:6px;">Leave empty to use the built-in booking form</p>
-          </div>
-          <button class="btn-primary" style="margin-top:16px;" onclick="saveBookingLinks()">Save Links</button>
-        </div>
-      </div>
-    </div>
-
     <!-- TESTIMONIALS -->
     <div class="admin-page" id="page-testimonials">
       <div class="page-header">
@@ -1463,7 +1439,6 @@ function showPage(page) {
     case 'notifications': loadNotifications(); break;
     case 'contacts': loadContacts(); break;
     case 'plan-config': loadPlanConfig(); break;
-    case 'booking-links': loadBookingLinks(); break;
     case 'testimonials': loadTestimonials(); break;
     case 'media-library': loadMediaLibrary(); break;
   }
@@ -3081,41 +3056,6 @@ function deletePlan(id, name) {
 // ═══════════════════════════════════════════════
 // CMS — BOOKING LINKS
 // ═══════════════════════════════════════════════
-
-async function loadBookingLinks() {
-  var loading = document.getElementById('bookinglinks-loading');
-  var content = document.getElementById('bookinglinks-content');
-  loading.style.display = 'block';
-  content.style.display = 'none';
-  try {
-    var data = await apiGet({ action: 'site_content' });
-    var items = data.content || [];
-    items.forEach(function(item) {
-      if (item.content_key === 'booking_url') {
-        var input = document.getElementById('link-' + item.section);
-        if (input) input.value = item.content_value || '';
-      }
-    });
-    loading.style.display = 'none';
-    content.style.display = 'block';
-  } catch (err) {
-    loading.textContent = 'Error: ' + err.message;
-  }
-}
-
-async function saveBookingLinks() {
-  var items = [];
-  var rcInput = document.getElementById('link-runclub');
-  var plInput = document.getElementById('link-pilattes');
-  items.push({ section: rcInput.dataset.section, content_key: rcInput.dataset.key, content_value: rcInput.value.trim() });
-  items.push({ section: plInput.dataset.section, content_key: plInput.dataset.key, content_value: plInput.value.trim() });
-  try {
-    await apiPost({ action: 'update_site_content', items: items });
-    showToast('Booking links saved', 'success');
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
-}
 
 // ═══════════════════════════════════════════════
 // CMS — TESTIMONIALS
