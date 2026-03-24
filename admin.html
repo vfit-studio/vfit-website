@@ -739,8 +739,8 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
       <li><button onclick="showPage('notifications')" data-page="notifications"><span class="nav-icon">&#9993;</span> Notifications <span id="notif-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
-      <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Plans</button></li>
-      <li><button onclick="showPage('booking-links')" data-page="booking-links"><span class="nav-icon">&#9654;</span> Booking Links</button></li>
+      <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
+      <li><button onclick="showPage('booking-links')" data-page="booking-links"><span class="nav-icon">&#9654;</span> Glofox Links</button></li>
       <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
       <li><button onclick="showPage('media-library')" data-page="media-library"><span class="nav-icon">&#9634;</span> Media</button></li>
     </ul>
@@ -794,7 +794,7 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Spots</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Glofox URL</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="rc-events-tbody"></tbody>
           </table>
         </div>
@@ -813,7 +813,7 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--deep);margin-bottom:12px;">Sessions</h3>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Spots</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Session Date</th><th>Tickets Open</th><th>Glofox URL</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="pl-events-tbody"></tbody>
           </table>
         </div>
@@ -933,7 +933,7 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
     <!-- PLAN CONFIG -->
     <div class="admin-page" id="page-plan-config">
       <div class="page-header">
-        <h1 class="page-title"><em>Plans</em></h1>
+        <h1 class="page-title"><em>Membership Plans</em></h1>
         <button class="btn-primary" onclick="openPlanModal()">+ New Plan</button>
       </div>
       <div id="planconfig-loading" class="loading">Loading plans...</div>
@@ -950,7 +950,7 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
     <!-- BOOKING LINKS -->
     <div class="admin-page" id="page-booking-links">
       <div class="page-header">
-        <h1 class="page-title"><em>Booking Links</em></h1>
+        <h1 class="page-title"><em>Glofox Links</em></h1>
       </div>
       <p style="font-size:13px;color:var(--bark);margin-bottom:32px;line-height:1.8;">Set your Glofox booking URLs below. When a URL is set, the booking buttons on the public site will open Glofox instead of the built-in form.</p>
       <div id="bookinglinks-loading" class="loading">Loading...</div>
@@ -1175,14 +1175,7 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
         <label class="form-label">Event Name</label>
         <input type="text" class="form-input" id="event-name" required>
       </div>
-      <div class="form-group">
-        <label class="form-label">Type</label>
-        <select class="form-input form-select" id="event-type" required>
-          <option value="">Select type...</option>
-          <option value="run_club">Run Club</option>
-          <option value="pilattes">Pi'lattes</option>
-        </select>
-      </div>
+      <input type="hidden" id="event-type">
       <div class="form-group">
         <label class="form-label">Session Date</label>
         <input type="datetime-local" class="form-input" id="event-session-date" required>
@@ -1192,12 +1185,8 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
         <input type="datetime-local" class="form-input" id="event-tickets-open">
       </div>
       <div class="form-group">
-        <label class="form-label">Total Spots</label>
-        <input type="number" class="form-input" id="event-spots-total" min="1" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Price (AUD) &mdash; 0 for free</label>
-        <input type="number" class="form-input" id="event-price" min="0" step="0.01" value="0" required>
+        <label class="form-label">Glofox Booking URL <span style="font-size:10px;color:var(--clay);font-weight:300;">(optional — overrides built-in form)</span></label>
+        <input type="text" class="form-input" id="event-glofox-url" placeholder="https://app.glofox.com/...">
       </div>
       <button type="submit" class="btn-primary" style="width:100%;margin-top:8px;" id="event-submit-btn">Create Event</button>
     </form>
@@ -1590,9 +1579,9 @@ function openEventModal(eventData, presetType) {
     if (eventData.tickets_open) {
       document.getElementById('event-tickets-open').value = toLocalDatetime(eventData.tickets_open);
     }
-    document.getElementById('event-spots-total').value = eventData.spots_total || '';
-    document.getElementById('event-price').value = eventData.price_cents ? (eventData.price_cents / 100).toFixed(2) : '0';
+    document.getElementById('event-glofox-url').value = eventData.glofox_url || '';
   } else {
+    document.getElementById('event-glofox-url').value = '';
     title.innerHTML = 'Create <em>Event</em>';
     btn.textContent = 'Create Event';
     // Set default times: 5:15 AM for studio sessions, 7:00 AM for run club / pi'lattes
@@ -1625,7 +1614,6 @@ function toLocalDatetime(dateStr) {
 async function handleEventSubmit(e) {
   e.preventDefault();
   var editId = document.getElementById('event-edit-id').value;
-  var priceVal = parseFloat(document.getElementById('event-price').value) || 0;
 
   var payload = {
     action: editId ? 'update_event' : 'create_event',
@@ -1633,8 +1621,9 @@ async function handleEventSubmit(e) {
     type: document.getElementById('event-type').value,
     session_date: document.getElementById('event-session-date').value,
     tickets_open: document.getElementById('event-tickets-open').value || null,
-    spots_total: parseInt(document.getElementById('event-spots-total').value) || 0,
-    price_cents: Math.round(priceVal * 100)
+    spots_total: 0,
+    price_cents: 0,
+    glofox_url: document.getElementById('event-glofox-url').value.trim() || null
   };
   if (editId) payload.event_id = editId;
 
@@ -1709,8 +1698,7 @@ async function loadTypePage(pre, type) {
         '<td><strong>' + esc(ev.name) + '</strong></td>' +
         '<td>' + formatDate(ev.session_date) + '</td>' +
         '<td>' + formatDate(ev.tickets_open) + '</td>' +
-        '<td>' + (ev.spots_total || 0) + '</td>' +
-        '<td>' + formatCurrency(ev.price_cents) + '</td>' +
+        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Link ↗</a>' : '—') + '</td>' +
         '<td>' + statusBadge(ev.status || 'active') + '</td>' +
         '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button></td>' +
       '</tr>';
