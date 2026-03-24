@@ -1671,6 +1671,16 @@ function openEventModal(eventData, presetType) {
   } else {
     title.innerHTML = 'Create <em>Event</em>';
     btn.textContent = 'Create Event';
+    // Set default times: 5:15 AM for studio sessions, 7:00 AM for run club / pi'lattes
+    var now = new Date();
+    now.setDate(now.getDate() + 1);
+    now.setSeconds(0); now.setMilliseconds(0);
+    if (presetType === 'run_club' || presetType === 'pilattes') {
+      now.setHours(7, 0);
+    } else {
+      now.setHours(5, 15);
+    }
+    document.getElementById('event-session-date').value = toLocalDatetime(now.toISOString());
   }
 
   modal.classList.add('open');
