@@ -156,10 +156,13 @@ async function handleConfig() {
   // Clean up expired holds before returning live counts
   await cleanupExpiredHolds();
 
+  // Only return future events (session_date >= now) so the frontend
+  // always gets upcoming sessions rather than stale past ones.
   const { data: events, error } = await supabase
     .from('events')
     .select('*')
     .eq('status', 'active')
+    .gte('session_date', new Date().toISOString())
     .order('session_date', { ascending: true });
 
   if (error) throw error;
@@ -176,6 +179,7 @@ async function handleConfig() {
       spots_total: event.spots_total,
       spots_remaining: Math.max(0, event.spots_total - taken),
       price_cents: event.price_cents,
+      glofox_url: event.glofox_url || null,
       status: event.status,
     });
   }
@@ -464,7 +468,7 @@ async function handleMembership(body) {
 
 async function handleCreateEvent(body) {
   requireAdmin(body.admin_key);
-  const { name, type, session_date, spots_total, price_cents } = body;
+  const { name, type, session_date, spots_total, price_cents, glofox_url } = body;
   const tickets_open = body.tickets_open || session_date;
   if (!name || !type || !session_date) {
     return respond(400, { success: false, error: 'name, type, and session_date are required' });
@@ -479,6 +483,7 @@ async function handleCreateEvent(body) {
       session_date,
       spots_total: spots_total || 20,
       price_cents: price_cents || 0,
+      glofox_url: glofox_url || null,
     })
     .select()
     .single();

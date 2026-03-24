@@ -1601,11 +1601,11 @@ function openEventModal(eventData, presetType) {
     document.getElementById('event-glofox-url').value = '';
     title.innerHTML = 'Create <em>Event</em>';
     btn.textContent = 'Create Event';
-    // Set default times: 5:15 AM for studio sessions, 7:00 AM for run club / pi'lattes
+    // Set default times: 5:15 AM for run club / studio sessions, 7:00 AM for pi'lattes
     var now = new Date();
     now.setDate(now.getDate() + 1);
     now.setSeconds(0); now.setMilliseconds(0);
-    if (presetType === 'run_club' || presetType === 'pilattes') {
+    if (presetType === 'pilattes') {
       now.setHours(7, 0);
     } else {
       now.setHours(5, 15);
@@ -1717,7 +1717,7 @@ async function loadTypePage(pre, type) {
         '<td>' + formatDate(ev.tickets_open) + '</td>' +
         '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Link ↗</a>' : '—') + '</td>' +
         '<td>' + statusBadge(ev.status || 'active') + '</td>' +
-        '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button></td>' +
+        '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button></td>' +
       '</tr>';
     }).join('');
 
@@ -2127,16 +2127,23 @@ async function loadSlotsForAssign(memberId) {
 
   try {
     var resp = await apiGet({ action: 'schedule' });
-    var slots = resp.data || resp.slots || [];
     var dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-    // Group by day
+    // API returns { schedule: { "0": [...], "1": [...] } } keyed by day_of_week
     var byDay = {};
     for (var d = 0; d < 6; d++) byDay[d] = [];
-    slots.forEach(function(s) {
-      var day = s.day_of_week;
-      if (day >= 0 && day <= 5) byDay[day].push(s);
-    });
+    if (resp.schedule && typeof resp.schedule === 'object' && !Array.isArray(resp.schedule)) {
+      for (var key in resp.schedule) {
+        var dayIdx = parseInt(key, 10);
+        if (dayIdx >= 0 && dayIdx <= 5) byDay[dayIdx] = resp.schedule[key] || [];
+      }
+    } else {
+      var slots = resp.data || resp.slots || [];
+      slots.forEach(function(s) {
+        var day = s.day_of_week;
+        if (day >= 0 && day <= 5) byDay[day].push(s);
+      });
+    }
 
     var html = '<div class="assign-day-grid">';
     dayNames.forEach(function(dayName, idx) {
