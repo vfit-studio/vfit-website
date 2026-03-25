@@ -177,6 +177,9 @@ nav.scrolled{
    ============================================ */
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.23,1,.32,1),transform .9s cubic-bezier(.23,1,.32,1)}
 .reveal.visible{opacity:1;transform:translateY(0)}
+/* Fallback: if JS observer never fires, reveal after 2s */
+@keyframes revealFallback{to{opacity:1;transform:translateY(0)}}
+.reveal{animation:revealFallback 0s 2.5s forwards}
 .rd1{transition-delay:.12s}
 .rd2{transition-delay:.24s}
 .rd3{transition-delay:.36s}
@@ -277,6 +280,8 @@ nav.scrolled{
   align-items:center;
   overflow:hidden;
 }
+/* Light offering sections (studio, pi'lattes, run club) */
+.offering-section{ padding:100px 72px; }
 .panel-video{
   position:absolute;
   inset:0;
@@ -991,6 +996,8 @@ footer{
   flex-wrap:wrap;gap:12px;
 }
 .footer-bottom p{font-size:11px;color:rgba(254,252,248,.15);letter-spacing:.07em}
+/* Push footer content above cookie banner when it's visible */
+body.cookie-shown footer{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
 
 /* ============================================
    MARQUEE
@@ -1021,11 +1028,12 @@ footer{
   .home-hero-left{padding:140px 36px 60px}
   .home-hero-right{min-height:50vw}
   .offering-panel{min-height:auto}
+  .offering-section{padding:80px 36px}
   .panel-content{padding:100px 36px 80px}
   .offering-panel-content{padding:80px 36px 40px}
   .offering-panel-visual{padding:0 36px 60px}
   .georgie-editorial{grid-template-columns:1fr;min-height:auto}
-  .georgie-editorial-img-wrap{min-height:50vw}
+  .georgie-editorial-img-wrap{min-height:max(50vw,280px)}
   .georgie-editorial-content{padding:60px 36px}
   .about-split,.contact-grid{grid-template-columns:1fr}
   .compact-header{padding:120px 36px 52px}
@@ -1044,6 +1052,7 @@ footer{
 
 @media(max-width:480px){
   .home-hero-left{padding:120px 24px 48px}
+  .offering-section{padding:64px 24px}
   .panel-content{padding:80px 24px 60px}
   .offering-panel-content{padding:64px 24px 32px}
   .offering-panel-visual{padding:0 24px 48px}
