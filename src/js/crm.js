@@ -737,20 +737,23 @@ function closeMemberProfile() {
 async function loadMemberProfile(id) {
   const [memberRes, aptsRes] = await Promise.all([
     apiGet('member', { id }),
-    apiGet('appointments', { member_id: id, include_cancelled: 'false' }),
+    apiGet('appointments', { member_id: id }),
   ]);
 
   const m = memberRes.member;
   if (!m) { toast('Client not found', 'error'); return; }
 
   const apts = aptsRes.appointments || [];
+  // Merge into _calApts so apt sheet can find them
+  apts.forEach(a => { if (!_calApts.find(c => c.id === a.id)) _calApts.push(a); });
   const now = new Date();
-  const upcoming = apts.filter(a => new Date(a.scheduled_at) >= now).slice(0, 5);
+  const upcoming = apts.filter(a => new Date(a.scheduled_at) >= now && a.status !== 'cancelled').slice(0, 5);
   const past = apts.filter(a => new Date(a.scheduled_at) < now).slice(0, 10);
   const attended = past.filter(a => a.status === 'attended').length;
 
   const el = document.getElementById('member-profile-body');
   el.innerHTML = `
+    <!-- Header -->
     <div class="profile-header">
       <div class="profile-avatar">${initials(m.name)}</div>
       <div class="profile-name">${m.name}</div>
@@ -758,10 +761,18 @@ async function loadMemberProfile(id) {
       ${m.start_date ? `<div style="font-size:12px;color:var(--stone);margin-top:4px">Member since ${fmtDate(m.start_date)}</div>` : ''}
     </div>
 
-    <div class="profile-stats">
+    <!-- Quick actions -->
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button class="notes-save-btn" style="flex:1;text-align:center" onclick="openNewSession(null,null,'${m.id}')">+ Schedule</button>
+      ${m.phone ? `<a href="tel:${m.phone}" class="notes-save-btn" style="flex:1;text-align:center;display:flex;align-items:center;justify-content:center">📞 Call</a>` : ''}
+      ${m.email ? `<a href="mailto:${m.email}" class="notes-save-btn" style="flex:1;text-align:center;display:flex;align-items:center;justify-content:center">✉️ Email</a>` : ''}
+    </div>
+
+    <!-- Stats -->
+    <div class="profile-stats" style="margin-bottom:20px">
       <div class="profile-stat">
         <div class="profile-stat-num">${apts.length}</div>
-        <div class="profile-stat-label">Total</div>
+        <div class="profile-stat-label">Sessions</div>
       </div>
       <div class="profile-stat">
         <div class="profile-stat-num">${attended}</div>
@@ -773,22 +784,44 @@ async function loadMemberProfile(id) {
       </div>
     </div>
 
+    <!-- Notes (top — most used) -->
+    <div class="profile-section">
+      <div class="profile-section-title">Session Notes</div>
+      <textarea class="notes-textarea" id="profile-notes" rows="4"
+                placeholder="Add session notes, progress, anything relevant…"
+                onblur="saveMemberNotes('${m.id}')">${m.notes || ''}</textarea>
+      <div style="font-size:11px;color:var(--stone);margin-top:4px">Auto-saves when you tap away</div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Goals</div>
+      <textarea class="notes-textarea" id="profile-goals" rows="2"
+                placeholder="Client's goals, e.g. lose 10kg, run a half marathon…"
+                onblur="saveMemberNotes('${m.id}')">${m.goals || ''}</textarea>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Health & Injuries</div>
+      <textarea class="notes-textarea" id="profile-health" rows="2"
+                placeholder="Injuries, limitations, medical notes…"
+                onblur="saveMemberNotes('${m.id}')">${m.health_notes || ''}</textarea>
+    </div>
+
     <!-- Upcoming sessions -->
     <div class="profile-section">
       <div class="profile-section-title">Upcoming Sessions</div>
       ${upcoming.length > 0
         ? upcoming.map(a => `
-          <div class="profile-apt-card" onclick="openAptSheetFromProfile('${a.id}')">
+          <div class="profile-apt-card" onclick="openAptSheetFromCal('${a.id}')">
             <div class="profile-apt-left">
               <div class="profile-apt-time">${fmtDate(a.scheduled_at)} · ${fmtTime(a.scheduled_at)}</div>
-              <div class="profile-apt-client">${sessionLabel(a.session_type)} · ${a.location || ''}</div>
+              <div class="profile-apt-client">${sessionLabel(a.session_type)}${a.location ? ' · ' + a.location : ''}</div>
             </div>
             ${aptStatusBadge(a.status)}
           </div>
         `).join('')
-        : '<div style="font-size:13px;color:var(--stone);padding:8px 0">No upcoming sessions</div>'
+        : '<div style="font-size:13px;color:var(--stone);padding:8px 0">No upcoming sessions — tap Schedule above</div>'
       }
-      <button class="notes-save-btn" onclick="openNewSession(null,null,'${m.id}')" style="margin-top:8px">+ Schedule Session</button>
     </div>
 
     <!-- Recurring slots -->
@@ -801,45 +834,6 @@ async function loadMemberProfile(id) {
       }).join('')}</div>
     </div>` : ''}
 
-    <!-- Goals -->
-    <div class="profile-section">
-      <div class="profile-section-title">Goals</div>
-      <textarea class="notes-textarea" id="profile-goals"
-                placeholder="Client's goals…" rows="2">${m.goals || ''}</textarea>
-    </div>
-
-    <!-- Health notes -->
-    <div class="profile-section">
-      <div class="profile-section-title">Health & Injuries</div>
-      <textarea class="notes-textarea" id="profile-health"
-                placeholder="Injuries, limitations, medical notes…" rows="2">${m.health_notes || ''}</textarea>
-    </div>
-
-    <!-- General notes -->
-    <div class="profile-section">
-      <div class="profile-section-title">Notes</div>
-      <textarea class="notes-textarea" id="profile-notes"
-                placeholder="General notes…" rows="3">${m.notes || ''}</textarea>
-      <button class="notes-save-btn" onclick="saveMemberNotes('${m.id}')">Save Notes</button>
-    </div>
-
-    <!-- Contact -->
-    <div class="profile-section">
-      <div class="profile-section-title">Contact</div>
-      <div class="profile-contact">
-        ${m.phone ? `
-        <div class="contact-row">
-          <span class="contact-label">Phone</span>
-          <a href="tel:${m.phone}" class="contact-value contact-link">${m.phone}</a>
-        </div>` : ''}
-        ${m.email ? `
-        <div class="contact-row">
-          <span class="contact-label">Email</span>
-          <a href="mailto:${m.email}" class="contact-value contact-link">${m.email}</a>
-        </div>` : ''}
-      </div>
-    </div>
-
     <!-- Session history -->
     ${past.length > 0 ? `
     <div class="profile-section">
@@ -848,7 +842,7 @@ async function loadMemberProfile(id) {
         <div class="profile-apt-card">
           <div class="profile-apt-left">
             <div class="profile-apt-time">${fmtDate(a.scheduled_at)} · ${fmtTime(a.scheduled_at)}</div>
-            <div class="profile-apt-client">${sessionLabel(a.session_type)}${a.notes ? ' · ' + a.notes.slice(0,40) : ''}</div>
+            <div class="profile-apt-client">${sessionLabel(a.session_type)}${a.notes ? ' · ' + a.notes.slice(0,50) : ''}</div>
           </div>
           ${aptStatusBadge(a.status)}
         </div>
@@ -870,25 +864,25 @@ function openAptSheetFromProfile(aptId) {
   openAptSheet(aptId);
 }
 
+let _notesSaveTimer = null;
 async function saveMemberNotes(memberId) {
-  const notes = document.getElementById('profile-notes')?.value || '';
-  const goals = document.getElementById('profile-goals')?.value || '';
-  const healthNotes = document.getElementById('profile-health')?.value || '';
+  const notes = document.getElementById('profile-notes')?.value ?? '';
+  const goals = document.getElementById('profile-goals')?.value ?? '';
+  const healthNotes = document.getElementById('profile-health')?.value ?? '';
 
-  const res = await apiPost({
-    action: 'update_member_notes',
-    member_id: memberId,
-    notes, goals, health_notes: healthNotes,
-  });
+  // Only save if something actually changed
+  const cached = _members.find(m => m.id === memberId) || {};
+  if (notes === (cached.notes || '') && goals === (cached.goals || '') && healthNotes === (cached.health_notes || '')) return;
 
-  if (res.success) {
-    toast('Notes saved');
-    // Update local cache
-    const idx = _members.findIndex(m => m.id === memberId);
-    if (idx >= 0) { _members[idx].notes = notes; _members[idx].goals = goals; _members[idx].health_notes = healthNotes; }
-  } else {
-    toast('Could not save', 'error');
-  }
+  clearTimeout(_notesSaveTimer);
+  _notesSaveTimer = setTimeout(async () => {
+    const res = await apiPost({ action: 'update_member_notes', member_id: memberId, notes, goals, health_notes: healthNotes });
+    if (res.success) {
+      const idx = _members.findIndex(m => m.id === memberId);
+      if (idx >= 0) { _members[idx].notes = notes; _members[idx].goals = goals; _members[idx].health_notes = healthNotes; }
+      toast('Notes saved');
+    }
+  }, 300);
 }
 
 function editCurrentMember() {
@@ -1030,30 +1024,34 @@ function openEnquirySheet(id) {
   `).join('');
 
   document.getElementById('enquiry-sheet-body').innerHTML = `
-    <div class="sheet-title" style="padding-bottom:8px">${statusBadge(e.status)}</div>
-    <div class="enquiry-detail-name">${e.name}</div>
+    <div style="padding:16px 20px 0">
+      <div style="font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--stone);margin-bottom:6px">${fmtDate(e.created_at)}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--deep);margin-bottom:12px">${e.name}</div>
+      ${e.status !== 'active' ? `
+      <button class="btn-full" id="accept-btn-${id}" onclick="acceptEnquiry('${id}')"
+              style="margin:0 0 16px;width:100%;background:var(--moss)">
+        ✓ Accept as Member
+      </button>` : `<div style="margin-bottom:12px">${statusBadge('active')}</div>`}
+    </div>
 
-    <div class="enquiry-status-row">${statusBtns}</div>
+    <div class="enquiry-status-row" style="border-top:1px solid var(--sand);padding-top:14px">${statusBtns}</div>
 
     <div class="apt-detail-row"><span class="apt-detail-label">Plan</span><span class="apt-detail-value">${e.plan || '—'}</span></div>
     <div class="apt-detail-row"><span class="apt-detail-label">Sessions</span><span class="apt-detail-value">${e.sessions || '—'}</span></div>
     <div class="apt-detail-row"><span class="apt-detail-label">Days</span><span class="apt-detail-value">${e.days || '—'}</span></div>
     <div class="apt-detail-row"><span class="apt-detail-label">Times</span><span class="apt-detail-value">${e.times || '—'}</span></div>
     ${e.notes ? `<div class="apt-detail-row"><span class="apt-detail-label">Notes</span><span class="apt-detail-value">${e.notes}</span></div>` : ''}
-    <div class="apt-detail-row"><span class="apt-detail-label">Received</span><span class="apt-detail-value">${fmtDate(e.created_at)}</span></div>
 
     <div class="enq-quick-actions">
       ${e.phone ? `<a href="tel:${e.phone}" class="enq-quick-btn">📞 Call</a>` : ''}
       ${e.email ? `<a href="mailto:${e.email}" class="enq-quick-btn">✉️ Email</a>` : ''}
     </div>
 
-    <div style="padding:0 20px 8px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--stone)">Internal Notes</div>
-    <textarea class="apt-notes-area" id="enq-notes-field" placeholder="Notes for yourself…">${e.admin_notes || ''}</textarea>
-    <button class="btn-full secondary" onclick="saveEnquiryNotes('${id}')" style="margin-top:8px">Save Notes</button>
-
-    ${e.status !== 'active' ? `
-    <button class="btn-full" onclick="acceptEnquiry('${id}')" style="margin-top:8px;margin-bottom:20px">Accept as Member →</button>
-    ` : `<div style="height:20px"></div>`}
+    <div style="padding:0 20px 8px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--stone)">Your Notes</div>
+    <textarea class="apt-notes-area" id="enq-notes-field"
+              placeholder="Add internal notes…"
+              onblur="saveEnquiryNotes('${id}')">${e.admin_notes || ''}</textarea>
+    <div style="padding:6px 20px 24px;font-size:11px;color:var(--stone)">Auto-saves when you tap away</div>
   `;
   openSheet('enquiry-sheet');
 }
@@ -1072,30 +1070,45 @@ async function setEnquiryStatus(id, status, btn) {
 }
 
 async function saveEnquiryNotes(id) {
-  const notes = document.getElementById('enq-notes-field').value;
+  const field = document.getElementById('enq-notes-field');
+  if (!field) return;
+  const notes = field.value;
+  const e = _enquiries.find(e => e.id === id);
+  if (e && notes === (e.admin_notes || '')) return; // no change
   const res = await apiPost({ action: 'update_enquiry_notes', membership_id: id, admin_notes: notes, last_contacted_at: new Date().toISOString() });
   if (res.success) {
-    const e = _enquiries.find(e => e.id === id);
     if (e) e.admin_notes = notes;
     toast('Notes saved');
-  } else {
-    toast('Could not save', 'error');
   }
 }
 
 async function acceptEnquiry(id) {
   const e = _enquiries.find(e => e.id === id);
   if (!e) return;
-  if (!confirm('Accept ' + e.name + ' as a member?')) return;
 
-  const res = await apiPost({ action: 'accept_membership', membership_id: id, name: e.name, email: e.email, phone: e.phone, plan: e.plan, sessions_per_week: parseInt(e.sessions) || 3 });
+  const btn = document.getElementById('accept-btn-' + id);
+  if (btn) { btn.disabled = true; btn.textContent = 'Accepting…'; }
+
+  const res = await apiPost({
+    action: 'accept_membership',
+    membership_id: id,
+    name: e.name, email: e.email, phone: e.phone,
+    plan: e.plan, sessions_per_week: parseInt(e.sessions) || 3,
+  });
+
   if (res.success) {
-    toast(e.name + ' is now a member!');
     closeAllSheets();
-    await loadMembers();
-    await loadInbox();
-    if (_activeTab === 'clients') renderClientList();
+    // Parallel reload — don't wait on each other
+    await Promise.all([loadMembers(), loadInbox()]);
+    toast(e.name + ' added as a member!');
+    // Navigate straight to their profile
+    if (res.member && res.member.id) {
+      setTimeout(() => openMemberProfile(res.member.id), 200);
+    } else {
+      switchTab('clients');
+    }
   } else {
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Accept as Member'; }
     toast(res.error || 'Could not accept', 'error');
   }
 }

@@ -625,6 +625,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .btn-full.danger { background: var(--red); }
+.btn-full.accept { background: var(--moss); }
 
 /* ─── MEMBER PICKER ─── */
 .picker-btn {
