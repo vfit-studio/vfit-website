@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main:  resolve(__dirname, 'src/index.html'),
         admin: resolve(__dirname, 'src/admin.html'),
+        crm:   resolve(__dirname, 'src/crm.html'),
       },
     },
   },

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>VFIT CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/crm.css">
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="crm-login">
+  <div class="login-card">
+    <div class="login-wordmark">VFIT</div>
+    <div class="login-subtitle">Studio CRM</div>
+    <input type="password" id="crm-password" placeholder="Password"
+           autocomplete="current-password" style="font-size:16px"
+           onkeydown="if(event.key==='Enter')crmLogin()">
+    <button class="login-btn" onclick="crmLogin()">Enter</button>
+    <div id="crm-login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="crm-app" style="display:none">
+
+  <!-- Topbar -->
+  <header class="crm-topbar">
+    <span class="topbar-wordmark">VFIT</span>
+    <span id="topbar-tab-label" class="topbar-tab-label"></span>
+    <button class="topbar-logout" onclick="crmLogout()">Logout</button>
+  </header>
+
+  <!-- Tab content -->
+  <main class="crm-content">
+
+    <!-- ─── TODAY ─── -->
+    <section id="tab-today" class="crm-tab active">
+      <div class="today-header">
+        <div id="today-date" class="today-date"></div>
+        <div id="today-greeting" class="today-greeting"></div>
+      </div>
+      <div id="today-stats" class="stat-strip"></div>
+      <div class="section-header">Today's Sessions</div>
+      <div id="today-sessions">
+        <div class="loading-pulse"></div>
+        <div class="loading-pulse"></div>
+      </div>
+      <div class="section-header" id="action-header" style="display:none">Action Required</div>
+      <div id="action-required"></div>
+    </section>
+
+    <!-- ─── CALENDAR ─── -->
+    <section id="tab-calendar" class="crm-tab">
+      <div class="cal-nav-row">
+        <button class="cal-nav-btn" onclick="shiftWeek(-1)">‹</button>
+        <span id="cal-month-label" class="cal-month-label"></span>
+        <button class="cal-nav-btn" onclick="shiftWeek(1)">›</button>
+      </div>
+      <div id="week-strip" class="week-strip"></div>
+      <div id="cal-day-header" class="cal-day-header"></div>
+      <div id="day-timeline" class="timeline-wrap"></div>
+      <button class="add-session-fab" onclick="openNewSession(null,null,null)">+ Add Session</button>
+    </section>
+
+    <!-- ─── CLIENTS ─── -->
+    <section id="tab-clients" class="crm-tab">
+      <div class="clients-toolbar">
+        <input type="search" id="client-search" class="search-input"
+               placeholder="Search clients…" oninput="filterClients()" autocomplete="off">
+        <button class="btn-add-icon" onclick="openAddMemberSheet(null)">+</button>
+      </div>
+      <div class="filter-chips" id="client-filter-chips">
+        <button class="chip active" onclick="setClientFilter('all',this)">All</button>
+        <button class="chip" onclick="setClientFilter('active',this)">Active</button>
+        <button class="chip" onclick="setClientFilter('paused',this)">Paused</button>
+        <button class="chip" onclick="setClientFilter('cancelled',this)">Cancelled</button>
+      </div>
+      <div id="client-list">
+        <div class="loading-pulse"></div>
+        <div class="loading-pulse"></div>
+        <div class="loading-pulse"></div>
+      </div>
+    </section>
+
+    <!-- ─── INBOX ─── -->
+    <section id="tab-inbox" class="crm-tab">
+      <div class="inbox-seg">
+        <button class="inbox-seg-btn active" id="inbox-enq-btn" onclick="switchInboxTab('enquiries')">
+          Enquiries <span id="enq-dot" class="inbox-seg-dot" style="display:none"></span>
+        </button>
+        <button class="inbox-seg-btn" id="inbox-msg-btn" onclick="switchInboxTab('messages')">
+          Messages
+        </button>
+      </div>
+      <div id="inbox-enquiries">
+        <div class="loading-pulse"></div>
+        <div class="loading-pulse"></div>
+      </div>
+      <div id="inbox-messages" style="display:none">
+        <div class="loading-pulse"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── BOTTOM TAB BAR ─── -->
+  <nav class="crm-tab-bar">
+    <button class="tab-btn active" id="tabbtn-today" onclick="switchTab('today')">
+      <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Today
+    </button>
+    <button class="tab-btn" id="tabbtn-calendar" onclick="switchTab('calendar')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+      Calendar
+    </button>
+    <button class="tab-btn" id="tabbtn-clients" onclick="switchTab('clients')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+      Clients
+    </button>
+    <button class="tab-btn" id="tabbtn-inbox" onclick="switchTab('inbox')">
+      <svg viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Inbox
+      <span id="inbox-tab-badge" class="tab-badge" style="display:none"></span>
+    </button>
+  </nav>
+
+  <!-- ═══ SHEETS ═══ -->
+
+  <!-- Backdrop -->
+  <div id="sheet-backdrop" class="sheet-backdrop"></div>
+
+  <!-- Session detail sheet -->
+  <div id="apt-sheet" class="bottom-sheet tall">
+    <div class="sheet-handle"></div>
+    <div id="apt-sheet-body"></div>
+  </div>
+
+  <!-- New session sheet -->
+  <div id="new-session-sheet" class="bottom-sheet tall">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="new-session-title">New Session</div>
+    <div class="form-group">
+      <label>Client</label>
+      <button id="session-client-btn" class="picker-btn" onclick="openMemberPicker()">Select client…</button>
+      <input type="hidden" id="session-member-id">
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <div class="chip-group">
+        <button class="chip active" onclick="selectSessionType('pt',this)">Personal Training</button>
+        <button class="chip" onclick="selectSessionType('runclub',this)">Run Club</button>
+        <button class="chip" onclick="selectSessionType('pilattes',this)">Pi'lattes</button>
+        <button class="chip" onclick="selectSessionType('consult',this)">Consult</button>
+      </div>
+      <input type="hidden" id="session-type" value="pt">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="session-date" style="font-size:16px">
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input type="time" id="session-time" style="font-size:16px">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Duration</label>
+      <div class="chip-group">
+        <button class="chip" onclick="selectDuration(30,this)">30 min</button>
+        <button class="chip active" onclick="selectDuration(60,this)">60 min</button>
+        <button class="chip" onclick="selectDuration(90,this)">90 min</button>
+      </div>
+      <input type="hidden" id="session-duration" value="60">
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <div class="chip-group">
+        <button class="chip active" onclick="selectLocation('Studio',this)">Studio</button>
+        <button class="chip" onclick="selectLocation('Track',this)">Track</button>
+        <button class="chip" onclick="selectLocation('Dairy',this)">Dairy</button>
+        <button class="chip" onclick="selectLocation('Online',this)">Online</button>
+      </div>
+      <input type="hidden" id="session-location" value="Studio">
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="session-notes" style="font-size:16px" placeholder="Session notes…" rows="3"></textarea>
+    </div>
+    <div id="session-error" class="form-error" style="display:none"></div>
+    <button id="save-session-btn" class="btn-full" onclick="saveSession()">Save Session</button>
+    <button class="btn-full secondary" onclick="closeNewSession()" style="margin-top:8px;margin-bottom:20px">Cancel</button>
+  </div>
+
+  <!-- Member picker (opens on top of new session sheet) -->
+  <div id="member-picker-sheet" class="bottom-sheet tall" style="z-index:102">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Select Client</div>
+    <input type="search" id="picker-search" placeholder="Search…"
+           oninput="filterPickerList()" autocomplete="off" style="font-size:16px">
+    <div id="picker-list" class="picker-list"></div>
+  </div>
+
+  <!-- Add / Edit member sheet -->
+  <div id="add-member-sheet" class="bottom-sheet tall">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="add-member-title">Add Client</div>
+    <input type="hidden" id="edit-member-id">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="add-member-name" autocomplete="name" style="font-size:16px" placeholder="Full name">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="add-member-email" autocomplete="email" style="font-size:16px" placeholder="email@example.com">
+    </div>
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="tel" id="add-member-phone" autocomplete="tel" style="font-size:16px" placeholder="0400 000 000">
+    </div>
+    <div class="form-group">
+      <label>Plan</label>
+      <input type="text" id="add-member-plan" style="font-size:16px" placeholder="e.g. Premium">
+    </div>
+    <div class="form-group">
+      <label>Sessions / week</label>
+      <input type="number" id="add-member-sessions" min="1" max="14" value="3" style="font-size:16px">
+    </div>
+    <div id="add-member-error" class="form-error" style="display:none"></div>
+    <button id="save-member-btn" class="btn-full" onclick="saveMember()">Save Client</button>
+    <button class="btn-full secondary" onclick="closeAddMemberSheet()" style="margin-top:8px;margin-bottom:20px">Cancel</button>
+  </div>
+
+  <!-- Enquiry detail sheet -->
+  <div id="enquiry-sheet" class="bottom-sheet tall">
+    <div class="sheet-handle"></div>
+    <div id="enquiry-sheet-body"></div>
+  </div>
+
+  <!-- Message detail sheet -->
+  <div id="message-sheet" class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div id="message-sheet-body"></div>
+  </div>
+
+  <!-- ═══ PROFILE SCREEN ═══ -->
+  <div id="member-profile-screen" class="profile-screen">
+    <div class="profile-topbar">
+      <button class="profile-back" onclick="closeMemberProfile()">‹ Back</button>
+      <button class="profile-edit" id="profile-edit-btn" onclick="editCurrentMember()">Edit</button>
+    </div>
+    <div id="member-profile-body" class="profile-body"></div>
+  </div>
+
+  <!-- ═══ TOAST ═══ -->
+  <div id="crm-toast" class="crm-toast"></div>
+
+</div>
+
+<script type="module" src="./js/crm.js"></script>
+</body>
+</html>

@@ -1391,6 +1391,192 @@ END:VCALENDAR`;
 }
 
 // ═══════════════════════════════════════════════
+// CRM handlers
+// ═══════════════════════════════════════════════
+//
+// Required DB migration (run once in Supabase SQL Editor):
+//
+// create table if not exists appointments (
+//   id              uuid default gen_random_uuid() primary key,
+//   member_id       uuid references members(id) on delete cascade not null,
+//   session_type    text not null default 'pt',
+//   scheduled_at    timestamptz not null,
+//   duration_mins   integer not null default 60,
+//   location        text,
+//   status          text not null default 'scheduled',
+//   notes           text,
+//   linked_event_id uuid references events(id) on delete set null,
+//   created_at      timestamptz default now(),
+//   updated_at      timestamptz default now()
+// );
+// create index if not exists appointments_member_id_idx on appointments(member_id);
+// create index if not exists appointments_scheduled_at_idx on appointments(scheduled_at);
+// alter table members add column if not exists goals text;
+// alter table members add column if not exists health_notes text;
+// alter table memberships add column if not exists admin_notes text;
+// alter table memberships add column if not exists last_contacted_at timestamptz;
+
+async function handleCrmDashboard() {
+  // Active member count + new enquiry count (always available)
+  const { count: activeMembers } = await supabase
+    .from('members').select('*', { count: 'exact', head: true }).eq('status', 'active');
+  const { count: newEnquiries } = await supabase
+    .from('memberships').select('*', { count: 'exact', head: true }).eq('status', 'new');
+
+  // Today's appointments + unbooked members (may fail if table not yet created)
+  let todayApts = [], unbookedMembers = [];
+  try {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const { data: apts } = await supabase
+      .from('appointments')
+      .select('*, members(id, name, email, phone)')
+      .gte('scheduled_at', todayStart.toISOString())
+      .lte('scheduled_at', todayEnd.toISOString())
+      .neq('status', 'cancelled')
+      .order('scheduled_at', { ascending: true });
+    todayApts = apts || [];
+
+    const { data: allActive } = await supabase
+      .from('members').select('id, name').eq('status', 'active');
+    const { data: upcoming } = await supabase
+      .from('appointments').select('member_id')
+      .gte('scheduled_at', now.toISOString()).neq('status', 'cancelled');
+    const bookedIds = new Set((upcoming || []).map(a => a.member_id));
+    unbookedMembers = (allActive || []).filter(m => !bookedIds.has(m.id));
+  } catch (e) { /* appointments table not yet created */ }
+
+  return respond(200, {
+    success: true,
+    today_appointments: todayApts,
+    active_members: activeMembers || 0,
+    new_enquiries: newEnquiries || 0,
+    unbooked_members: unbookedMembers,
+  });
+}
+
+async function handleGetAppointments(params) {
+  let query = supabase
+    .from('appointments')
+    .select('*, members(id, name, email, phone)')
+    .order('scheduled_at', { ascending: true });
+
+  if (params.from && params.to) {
+    query = query.gte('scheduled_at', params.from).lte('scheduled_at', params.to);
+  }
+  if (params.member_id) {
+    query = query.eq('member_id', params.member_id);
+  }
+  if (!params.include_cancelled) {
+    query = query.neq('status', 'cancelled');
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return respond(200, { success: true, appointments: data || [] });
+}
+
+async function handleCreateAppointment(body) {
+  requireAdmin(body.admin_key);
+  const { member_id, session_type, scheduled_at, duration_mins, location, notes, linked_event_id } = body;
+  if (!member_id || !scheduled_at) {
+    return respond(400, { success: false, error: 'member_id and scheduled_at are required' });
+  }
+
+  // Conflict check: any non-cancelled appointment within 30 min window
+  const aptTime = new Date(scheduled_at);
+  const windowStart = new Date(aptTime.getTime() - 30 * 60 * 1000);
+  const windowEnd   = new Date(aptTime.getTime() + 30 * 60 * 1000);
+  const { data: conflicts } = await supabase
+    .from('appointments')
+    .select('id, scheduled_at, members(name)')
+    .gte('scheduled_at', windowStart.toISOString())
+    .lte('scheduled_at', windowEnd.toISOString())
+    .neq('status', 'cancelled');
+
+  if (conflicts && conflicts.length > 0) {
+    const c = conflicts[0];
+    return respond(200, {
+      success: false, conflict: true,
+      conflict_with: c.members?.name || 'another client',
+      conflict_time: c.scheduled_at,
+    });
+  }
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .insert({
+      member_id,
+      session_type: session_type || 'pt',
+      scheduled_at,
+      duration_mins: duration_mins || 60,
+      location: location || null,
+      notes: notes || null,
+      status: 'scheduled',
+      linked_event_id: linked_event_id || null,
+    })
+    .select('*, members(id, name, email, phone)')
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, appointment: data });
+}
+
+async function handleUpdateAppointment(body) {
+  requireAdmin(body.admin_key);
+  const { appointment_id, ...fields } = body;
+  if (!appointment_id) return respond(400, { success: false, error: 'appointment_id is required' });
+  delete fields.admin_key; delete fields.action; delete fields.id; delete fields.created_at;
+  fields.updated_at = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(fields)
+    .eq('id', appointment_id)
+    .select('*, members(id, name, email, phone)')
+    .single();
+  if (error) throw error;
+  return respond(200, { success: true, appointment: data });
+}
+
+async function handleDeleteAppointment(body) {
+  requireAdmin(body.admin_key);
+  const { appointment_id } = body;
+  if (!appointment_id) return respond(400, { success: false, error: 'appointment_id is required' });
+  const { error } = await supabase
+    .from('appointments')
+    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', appointment_id);
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+async function handleUpdateMemberNotes(body) {
+  requireAdmin(body.admin_key);
+  const { member_id, notes, goals, health_notes } = body;
+  if (!member_id) return respond(400, { success: false, error: 'member_id is required' });
+  const update = {};
+  if (notes !== undefined) update.notes = notes;
+  if (goals !== undefined) update.goals = goals;
+  if (health_notes !== undefined) update.health_notes = health_notes;
+  const { data, error } = await supabase.from('members').update(update).eq('id', member_id).select().single();
+  if (error) throw error;
+  return respond(200, { success: true, member: data });
+}
+
+async function handleUpdateEnquiryNotes(body) {
+  requireAdmin(body.admin_key);
+  const { membership_id, admin_notes, status, last_contacted_at } = body;
+  if (!membership_id) return respond(400, { success: false, error: 'membership_id is required' });
+  const update = {};
+  if (admin_notes !== undefined) update.admin_notes = admin_notes;
+  if (status !== undefined) update.status = status;
+  if (last_contacted_at !== undefined) update.last_contacted_at = last_contacted_at;
+  const { error } = await supabase.from('memberships').update(update).eq('id', membership_id);
+  if (error) throw error;
+  return respond(200, { success: true });
+}
+
+// ═══════════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════════
 
@@ -1445,6 +1631,10 @@ exports.handler = async (event) => {
           return await handleGetAllTestimonials();
         case 'media':
           return await handleListMedia();
+        case 'crm_dashboard':
+          return await handleCrmDashboard();
+        case 'appointments':
+          return await handleGetAppointments(params);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -1559,6 +1749,16 @@ exports.handler = async (event) => {
           const { error: delContactErr } = await supabase.from('contacts').delete().eq('id', body.contact_id);
           if (delContactErr) throw delContactErr;
           return respond(200, { success: true });
+        case 'create_appointment':
+          return await handleCreateAppointment(body);
+        case 'update_appointment':
+          return await handleUpdateAppointment(body);
+        case 'delete_appointment':
+          return await handleDeleteAppointment(body);
+        case 'update_member_notes':
+          return await handleUpdateMemberNotes(body);
+        case 'update_enquiry_notes':
+          return await handleUpdateEnquiryNotes(body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
