@@ -1553,6 +1553,12 @@ exports.handler = async (event) => {
           const { error: delMemErr } = await supabase.from('members').delete().eq('id', body.member_id);
           if (delMemErr) throw delMemErr;
           return respond(200, { success: true });
+        case 'delete_contact':
+          requireAdmin(body.admin_key);
+          if (!body.contact_id) return respond(400, { success: false, error: 'contact_id required' });
+          const { error: delContactErr } = await supabase.from('contacts').delete().eq('id', body.contact_id);
+          if (delContactErr) throw delContactErr;
+          return respond(200, { success: true });
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }

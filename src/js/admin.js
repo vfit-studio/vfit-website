@@ -1554,6 +1554,7 @@ async function loadGeneralMessages() {
           '<td>' + esc(m.phone || '—') + '</td>' +
           '<td style="max-width:300px;white-space:pre-wrap;">' + esc(m.message || '—') + '</td>' +
           '<td style="white-space:nowrap;">' + formatDate(m.created_at) + '</td>' +
+          '<td><button class="btn-outline btn-sm btn-danger" onclick="deleteContact(\'' + m.id + '\')">Delete</button></td>' +
         '</tr>';
       }).join('');
     }
@@ -1563,6 +1564,18 @@ async function loadGeneralMessages() {
   } catch (err) {
     loading.innerHTML = '<div class="empty-state">Could not load messages. ' + esc(err.message) + '</div>';
   }
+}
+
+function deleteContact(id) {
+  showConfirm('Delete this message?', async function() {
+    try {
+      await apiPost({ action: 'delete_contact', contact_id: id });
+      showToast('Message deleted', 'success');
+      loadGeneralMessages();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
 }
 
 // ─── CONTACTS ───
@@ -2028,6 +2041,7 @@ window.openTestimonialModal = openTestimonialModal;
 window.closeTestimonialModal = closeTestimonialModal;
 window.editTestimonial = editTestimonial;
 window.saveTestimonial = saveTestimonial;
+window.deleteContact = deleteContact;
 window.deleteTestimonial = deleteTestimonial;
 window.triggerMediaUpload = triggerMediaUpload;
 window.handleMediaUpload = handleMediaUpload;
