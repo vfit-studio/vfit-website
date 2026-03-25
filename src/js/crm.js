@@ -675,30 +675,51 @@ async function loadMembers() {
 }
 
 function renderClientList() {
-  const q = document.getElementById('client-search').value.toLowerCase();
+  const q = (document.getElementById('client-search')?.value || '').toLowerCase();
   const filtered = _members.filter(m => {
     if (_clientFilter !== 'all' && m.status !== _clientFilter) return false;
-    if (q && !m.name.toLowerCase().includes(q)) return false;
+    if (q && !m.name.toLowerCase().includes(q) && !(m.email||'').toLowerCase().includes(q)) return false;
     return true;
   });
 
+  // Stats strip
+  const active = _members.filter(m => m.status === 'active').length;
+  const paused = _members.filter(m => m.status === 'paused').length;
   const el = document.getElementById('client-list');
-  if (filtered.length === 0) {
-    el.innerHTML = '<div class="empty-state">No clients found</div>';
+
+  if (_members.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:60px 24px">
+        <div style="font-size:32px;margin-bottom:12px">👋</div>
+        No clients yet — tap + to add your first one
+      </div>`;
     return;
   }
 
-  el.innerHTML = filtered.map(m => {
+  const statsHtml = `
+    <div class="stat-strip" style="margin-bottom:16px">
+      <div class="stat-pill"><div class="stat-pill-num">${_members.length}</div><div class="stat-pill-label">Total</div></div>
+      <div class="stat-pill"><div class="stat-pill-num">${active}</div><div class="stat-pill-label">Active</div></div>
+      <div class="stat-pill"><div class="stat-pill-num">${paused}</div><div class="stat-pill-label">Paused</div></div>
+    </div>`;
+
+  if (filtered.length === 0) {
+    el.innerHTML = statsHtml + '<div class="empty-state">No clients match that search</div>';
+    return;
+  }
+
+  el.innerHTML = statsHtml + filtered.map(m => {
     const nextSlot = m.slots && m.slots.length > 0
       ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][m.slots[0].day_of_week - 1] + ' · ' + m.slots[0].time
       : '';
+    const statusDot = { active: 'var(--moss)', paused: 'var(--clay)', cancelled: 'var(--stone)' }[m.status] || 'var(--stone)';
     return `
       <div class="client-card" data-status="${m.status}" onclick="openMemberProfile('${m.id}')">
-        <div class="client-avatar">${initials(m.name)}</div>
+        <div class="client-avatar" style="background:${statusDot}20;color:${statusDot}">${initials(m.name)}</div>
         <div class="client-info">
           <div class="client-name">${m.name}</div>
-          <div class="client-plan">${m.plan || ''} · ${m.sessions_per_week || 1}×/wk</div>
-          ${nextSlot ? `<div class="client-next">Recurring: ${nextSlot}</div>` : ''}
+          <div class="client-plan">${m.plan || 'No plan'} · ${m.sessions_per_week || 1}×/wk</div>
+          <div class="client-next">${nextSlot ? 'Recurring: ' + nextSlot : m.email || ''}</div>
         </div>
         <div class="client-arrow">›</div>
       </div>
@@ -848,6 +869,18 @@ async function loadMemberProfile(id) {
         </div>
       `).join('')}
     </div>` : ''}
+
+    <!-- Manage -->
+    <div class="profile-section" style="margin-top:8px">
+      <div class="profile-section-title">Manage</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${m.status !== 'paused' ? `<button class="manage-btn warn" onclick="changeMemberStatus('${m.id}','paused')">Pause</button>` : ''}
+        ${m.status === 'paused' ? `<button class="manage-btn ok" onclick="changeMemberStatus('${m.id}','active')">Reactivate</button>` : ''}
+        ${m.status !== 'cancelled' ? `<button class="manage-btn danger" onclick="changeMemberStatus('${m.id}','cancelled')">Cancel</button>` : ''}
+        ${m.status === 'cancelled' ? `<button class="manage-btn ok" onclick="changeMemberStatus('${m.id}','active')">Reinstate</button>` : ''}
+      </div>
+      <button class="manage-btn delete" style="margin-top:12px;width:100%" onclick="deleteMember('${m.id}','${m.name.replace(/'/g,"\\'")}')">Delete Client</button>
+    </div>
   `;
 }
 
@@ -888,6 +921,41 @@ async function saveMemberNotes(memberId) {
 function editCurrentMember() {
   const m = _members.find(m => m.id === _activeMemberId);
   if (m) openAddMemberSheet(m);
+}
+
+async function changeMemberStatus(id, newStatus) {
+  const labels = { paused: 'Pause', active: 'Reactivate', cancelled: 'Cancel' };
+  const confirmMsg = {
+    paused: 'Pause this client?',
+    active: 'Reactivate this client?',
+    cancelled: 'Cancel this client\'s membership?',
+  }[newStatus];
+  if (!confirm(confirmMsg)) return;
+
+  const res = await apiPost({ action: 'update_member', member_id: id, status: newStatus });
+  if (res.success) {
+    // Update local cache
+    const idx = _members.findIndex(m => m.id === id);
+    if (idx >= 0) _members[idx].status = newStatus;
+    toast('Status updated to ' + newStatus);
+    await loadMemberProfile(id);
+    if (_activeTab === 'clients') renderClientList();
+  } else {
+    toast('Could not update status', 'error');
+  }
+}
+
+async function deleteMember(id, name) {
+  if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+  const res = await apiPost({ action: 'delete_member', member_id: id });
+  if (res.success) {
+    _members = _members.filter(m => m.id !== id);
+    closeMemberProfile();
+    renderClientList();
+    toast(name + ' deleted');
+  } else {
+    toast('Could not delete', 'error');
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -1218,3 +1286,5 @@ window.saveEnquiryNotes   = saveEnquiryNotes;
 window.acceptEnquiry      = acceptEnquiry;
 window.openMessageSheet   = openMessageSheet;
 window.deleteMessage      = deleteMessage;
+window.changeMemberStatus = changeMemberStatus;
+window.deleteMember       = deleteMember;
