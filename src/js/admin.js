@@ -98,6 +98,8 @@ function esc(str) {
 function truncate(str, len) {
   if (!str) return '';
   return str.length > len ? str.slice(0, len) + '...' : str;
+
+function isMobile() { return window.innerWidth <= 768; }
 }
 
 // ─── CONFIRM DIALOG ───
@@ -204,6 +206,18 @@ function showPage(page) {
     b.classList.toggle('active', b.dataset.page === page);
   });
 
+  // Update topbar page label (mobile)
+  var labelEl = document.getElementById('topbar-page-label');
+  if (labelEl) {
+    var pageLabels = {
+      'overview': 'Dashboard', 'runclub': 'Run Club', 'pilattes': "Pi'lattes",
+      'membership-requests': 'Requests', 'member-list': 'Members',
+      'general-messages': 'Messages', 'plan-config': 'Plans',
+      'testimonials': 'Testimonials', 'media-library': 'Media', 'calendar': 'Calendar'
+    };
+    labelEl.textContent = pageLabels[page] || page;
+  }
+
   // Close mobile sidebar
   closeMobileSidebar();
 
@@ -244,6 +258,146 @@ function closeMobileSidebar() {
   document.body.classList.remove('body-no-scroll');
 }
 
+// ─── MOBILE CARD RENDERERS ───
+
+function renderEventCards(events) {
+  if (!events.length) return '<div class="empty-state">No sessions yet.</div>';
+  return '<div class="card-list">' + events.map(function(ev) {
+    var glofox = ev.glofox_url
+      ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Glofox link ↗</a>'
+      : '<span style="background:#f5a623;color:#fff;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600;">⚠ Add Glofox link</span>';
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(ev.name) + '</strong></div>' +
+        statusBadge(ev.status || 'active') +
+      '</div>' +
+      '<div class="data-card-meta">' + formatDate(ev.session_date) + '</div>' +
+      '<div class="data-card-meta">' + glofox + '</div>' +
+      '<div class="data-card-actions">' +
+        '<button class="btn-outline" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button>' +
+        '<button class="btn-outline btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderMembershipRequestCards(members) {
+  if (!members.length) return '<div class="empty-state">No enquiries yet.</div>';
+  return '<div class="card-list">' + members.map(function(m) {
+    var status = (m.status || 'new').toLowerCase();
+    var showAccept = (status === 'new' || status === 'contacted');
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong></div>' +
+        statusBadge(m.status || 'new') +
+      '</div>' +
+      '<div class="data-card-meta">' + esc(m.email || '') + (m.phone ? ' · ' + esc(m.phone) : '') + '</div>' +
+      (m.plan ? '<div class="data-card-meta">Plan: ' + esc(m.plan) + '</div>' : '') +
+      ((m.days || m.times) ? '<div class="data-card-meta">' + esc(m.days || '') + (m.times ? ' — ' + esc(m.times) : '') + '</div>' : '') +
+      (m.notes ? '<div class="data-card-body">' + esc(truncate(m.notes, 120)) + '</div>' : '') +
+      '<div class="data-card-meta" style="font-size:11px;color:var(--clay);">' + formatDate(m.created_at) + '</div>' +
+      '<div class="data-card-actions">' +
+        (showAccept ? '<button class="btn-outline" onclick="openAcceptModal(\'' + esc(m.id) + '\')">Accept</button>' : '') +
+        '<button class="btn-outline btn-danger" onclick="deleteMembershipRequest(\'' + esc(m.id) + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderMemberListCards(members) {
+  if (!members.length) return '<div class="empty-state">No members yet.</div>';
+  return '<div class="card-list">' + members.map(function(m) {
+    var status = (m.status || 'active').toLowerCase();
+    var statusCls = status === 'active' ? 'badge-active' : status === 'paused' ? 'badge-paused' : status === 'cancelled' ? 'badge-cancelled' : 'badge-held';
+    var slots = (m.slots || []).map(function(s) {
+      var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+      return (dayNames[s.day_of_week] || '?') + ' ' + esc(s.time || '');
+    }).join(', ') || 'No slots assigned';
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong></div>' +
+        '<span class="badge ' + statusCls + '">' + esc(status) + '</span>' +
+      '</div>' +
+      '<div class="data-card-meta">' + esc(m.email || '') + (m.phone && m.phone !== '--' ? ' · ' + esc(m.phone) : '') + '</div>' +
+      (m.plan ? '<div class="data-card-meta">Plan: ' + esc(m.plan) + ' · ' + (m.sessions_per_week || 1) + 'x/wk</div>' : '') +
+      '<div class="data-card-meta">Slots: ' + slots + '</div>' +
+      '<div class="data-card-actions">' +
+        '<button class="btn-outline" onclick="openEditMemberModal(\'' + esc(m.id) + '\')">Edit</button>' +
+        '<button class="btn-outline btn-danger" onclick="deleteMember(\'' + esc(m.id) + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderMessageCards(messages) {
+  if (!messages.length) return '<div class="empty-state">No messages yet.</div>';
+  return '<div class="card-list">' + messages.map(function(m) {
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong></div>' +
+        '<span style="font-size:11px;color:var(--clay);white-space:nowrap;">' + formatDate(m.created_at) + '</span>' +
+      '</div>' +
+      '<div class="data-card-meta">' + esc(m.email || '') + (m.phone ? ' · ' + esc(m.phone) : '') + '</div>' +
+      (m.message ? '<div class="data-card-body">' + esc(m.message) + '</div>' : '') +
+      '<div class="data-card-actions">' +
+        '<button class="btn-outline btn-danger" onclick="deleteContact(\'' + m.id + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderOverviewEventCards(events) {
+  if (!events.length) return '<div class="empty-state">No upcoming events.</div>';
+  return '<div class="card-list">' + events.map(function(ev) {
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(ev.name) + '</strong></div>' +
+        statusBadge(ev.status || 'open') +
+      '</div>' +
+      '<div class="data-card-meta">' + esc(ev.type || '') + ' · ' + formatDate(ev.session_date) + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderPlanCards(plans) {
+  if (!plans.length) return '<div class="empty-state">No plans yet.</div>';
+  return '<div class="card-list">' + plans.map(function(p) {
+    var price = '$' + (p.price_cents / 100).toFixed(0);
+    var featureList = (p.features || []).join(', ');
+    if (featureList.length > 80) featureList = featureList.substring(0, 77) + '...';
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(p.name) + '</strong></div>' +
+        statusBadge(p.status) +
+      '</div>' +
+      '<div class="data-card-meta">' + price + ' / ' + esc(p.period_label) + (p.badge_text ? ' · ' + esc(p.badge_text) : '') + '</div>' +
+      (featureList ? '<div class="data-card-meta" style="font-size:12px;">' + esc(featureList) + '</div>' : '') +
+      '<div class="data-card-actions">' +
+        '<button class="btn-outline" onclick="editPlan(\'' + p.id + '\')">Edit</button>' +
+        '<button class="btn-outline btn-danger" onclick="deletePlan(\'' + p.id + '\',\'' + esc(p.name).replace(/'/g, "\\'") + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderTestimonialCards(testimonials) {
+  if (!testimonials.length) return '<div class="empty-state">No testimonials yet.</div>';
+  return '<div class="card-list">' + testimonials.map(function(t) {
+    return '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-name"><strong>' + esc(t.attribution) + '</strong></div>' +
+        statusBadge(t.status) +
+      '</div>' +
+      '<div class="data-card-meta" style="font-size:11px;">Page: ' + esc(t.page) + '</div>' +
+      (t.quote ? '<div class="data-card-body">' + esc(truncate(t.quote, 140)) + '</div>' : '') +
+      '<div class="data-card-actions">' +
+        '<button class="btn-outline" onclick="editTestimonial(\'' + t.id + '\')">Edit</button>' +
+        '<button class="btn-outline btn-danger" onclick="deleteTestimonial(\'' + t.id + '\')">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
 // ─── OVERVIEW ───
 // API: { success: true, dashboard: { total_bookings, total_revenue_cents, upcoming_events, total_memberships, total_contacts } }
 
@@ -282,6 +436,8 @@ async function loadOverview() {
     var upcomingEl = document.getElementById('overview-upcoming');
     if (upcomingEvents.length === 0) {
       upcomingEl.innerHTML = '<div class="empty-state">No upcoming events</div>';
+    } else if (isMobile()) {
+      upcomingEl.innerHTML = renderOverviewEventCards(upcomingEvents);
     } else {
       var rows = upcomingEvents.map(function(ev) {
         return '<tr>' +
@@ -488,7 +644,14 @@ async function loadTypePage(pre, type) {
       return;
     }
 
-    // Render events table
+    if (isMobile()) {
+      content.innerHTML = renderEventCards(typeEvents);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
+    // Render events table (desktop)
     var tbody = document.getElementById(pre + '-events-tbody');
     tbody.innerHTML = typeEvents.map(function(ev) {
       return '<tr>' +
@@ -500,7 +663,6 @@ async function loadTypePage(pre, type) {
         '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button></td>' +
       '</tr>';
     }).join('');
-
 
     loading.style.display = 'none';
     content.style.display = 'block';
@@ -719,12 +881,26 @@ async function loadMembershipRequests() {
     var resp = await apiGet({ action: 'memberships' });
     var members = resp.data || [];
 
+    _loadedMembershipRequests = members;
+
+    // Update nav badge with unread (new) count
+    var newCount = members.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
+    var badge = document.getElementById('mreq-badge');
+    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+
+    if (isMobile()) {
+      content.innerHTML = renderMembershipRequestCards(members);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
     var tbody = document.getElementById('mreq-tbody');
     if (members.length === 0) {
       tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No enquiries yet</td></tr>';
     } else {
-      _loadedMembershipRequests = members;
-    tbody.innerHTML = members.map(function(m) {
+      tbody.innerHTML = members.map(function(m) {
         var id = m.id;
         var status = (m.status || 'new').toLowerCase();
         var showAccept = (status === 'new' || status === 'contacted');
@@ -745,12 +921,6 @@ async function loadMembershipRequests() {
         '</tr>';
       }).join('');
     }
-
-    // Update nav badge with unread (new) count
-    var newCount = members.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
-    var badge = document.getElementById('mreq-badge');
-    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
-    else { badge.style.display = 'none'; }
 
     loading.style.display = 'none';
     content.style.display = 'block';
@@ -822,6 +992,14 @@ async function loadMemberList() {
     var members = resp.data || resp.members || [];
 
     _loadedMembers = members;
+
+    if (isMobile()) {
+      content.innerHTML = renderMemberListCards(members);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
     var tbody = document.getElementById('mlist-tbody');
     if (members.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No members yet</td></tr>';
@@ -1604,6 +1782,13 @@ async function loadGeneralMessages() {
     var badge = document.getElementById('gmsg-badge');
     if (badge) { if (messages.length > 0) { badge.textContent = messages.length; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
 
+    if (isMobile()) {
+      content.innerHTML = renderMessageCards(messages);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
     var tbody = document.getElementById('gmsg-tbody');
     if (messages.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No messages yet</td></tr>';
@@ -1735,6 +1920,14 @@ async function loadPlanConfig() {
   try {
     var data = await apiGet({ action: 'all_plans' });
     cachedPlans = data.plans || [];
+
+    if (isMobile()) {
+      content.innerHTML = renderPlanCards(cachedPlans);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
     var tbody = document.getElementById('planconfig-tbody');
     tbody.innerHTML = '';
     cachedPlans.forEach(function(p) {
@@ -1869,6 +2062,14 @@ async function loadTestimonials() {
   try {
     var data = await apiGet({ action: 'all_testimonials' });
     cachedTestimonials = data.testimonials || [];
+
+    if (isMobile()) {
+      content.innerHTML = renderTestimonialCards(cachedTestimonials);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      return;
+    }
+
     var tbody = document.getElementById('testimonials-tbody');
     tbody.innerHTML = '';
     cachedTestimonials.forEach(function(t) {
