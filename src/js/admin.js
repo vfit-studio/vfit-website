@@ -495,7 +495,7 @@ async function loadTypePage(pre, type) {
         '<td><strong>' + esc(ev.name) + '</strong></td>' +
         '<td>' + formatDate(ev.session_date) + '</td>' +
         '<td>' + formatDate(ev.tickets_open) + '</td>' +
-        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Link ↗</a>' : '—') + '</td>' +
+        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Link ↗</a>' : '<span style="background:#f5a623;color:#fff;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600;">⚠ Add Glofox link</span>') + '</td>' +
         '<td>' + statusBadge(ev.status || 'active') + '</td>' +
         '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button></td>' +
       '</tr>';
