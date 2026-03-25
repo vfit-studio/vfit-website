@@ -738,7 +738,7 @@ async function handleGetMember(memberId) {
 
 async function handleAcceptMembership(body) {
   requireAdmin(body.admin_key);
-  const { membership_id, sessions_per_week } = body;
+  const { membership_id, name, email, phone, plan, sessions_per_week } = body;
   if (!membership_id) return respond(400, { success: false, error: 'membership_id is required' });
 
   // Fetch the membership enquiry
@@ -749,15 +749,15 @@ async function handleAcceptMembership(body) {
     .single();
   if (fetchErr || !enquiry) return respond(404, { success: false, error: 'membership_not_found' });
 
-  // Create the member record
+  // Create the member record (override fields from modal if provided)
   const { data: member, error: insertErr } = await supabase
     .from('members')
     .insert({
       membership_id: enquiry.id,
-      name: enquiry.name,
-      email: enquiry.email,
-      phone: enquiry.phone,
-      plan: enquiry.plan,
+      name: name || enquiry.name,
+      email: email || enquiry.email,
+      phone: phone || enquiry.phone || null,
+      plan: plan || enquiry.plan,
       sessions_per_week: sessions_per_week || 1,
       status: 'active',
       start_date: new Date().toISOString().split('T')[0],

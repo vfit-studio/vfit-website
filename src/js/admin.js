@@ -706,6 +706,9 @@ async function updateMembershipStatus(id, status) {
 
 // ─── MEMBERSHIP REQUESTS ───
 
+var _loadedMembershipRequests = [];
+var _loadedMembers = [];
+
 async function loadMembershipRequests() {
   var loading = document.getElementById('mreq-loading');
   var content = document.getElementById('mreq-content');
@@ -720,7 +723,8 @@ async function loadMembershipRequests() {
     if (members.length === 0) {
       tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No enquiries yet</td></tr>';
     } else {
-      tbody.innerHTML = members.map(function(m) {
+      _loadedMembershipRequests = members;
+    tbody.innerHTML = members.map(function(m) {
         var id = m.id;
         var status = (m.status || 'new').toLowerCase();
         var showAccept = (status === 'new' || status === 'contacted');
@@ -735,7 +739,7 @@ async function loadMembershipRequests() {
           '<td>' + statusBadge(m.status || 'new') + '</td>' +
           '<td>' + formatDate(m.created_at) + '</td>' +
           '<td style="white-space:nowrap;">' +
-            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\',\'' + esc((m.name || '').replace(/'/g, '')) + '\',\'' + esc((m.plan || '').replace(/'/g, '')) + '\')">Accept &amp; Create Member</button>' : '') +
+            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\')">Accept &amp; Create Member</button>' : '') +
             '<button class="btn-outline btn-sm btn-danger" onclick="deleteMembershipRequest(\'' + esc(id) + '\')">Delete</button>' +
           '</td>' +
         '</tr>';
@@ -766,10 +770,14 @@ async function deleteMembershipRequest(id) {
   }
 }
 
-function openAcceptModal(membershipId, name, plan) {
+function openAcceptModal(membershipId) {
+  var m = _loadedMembershipRequests.find(function(r) { return r.id === membershipId; }) || {};
   document.getElementById('accept-membership-id').value = membershipId;
-  document.getElementById('accept-member-name').textContent = name;
-  document.getElementById('accept-member-plan').textContent = plan;
+  document.getElementById('accept-name').value = m.name || '';
+  document.getElementById('accept-email').value = m.email || '';
+  document.getElementById('accept-phone').value = m.phone || '';
+  document.getElementById('accept-plan').value = m.plan || '';
+  document.getElementById('accept-sessions').value = m.sessions_per_week || 1;
   document.getElementById('accept-modal').classList.add('open');
 }
 
@@ -779,11 +787,19 @@ function closeAcceptModal() {
 
 async function acceptMembership() {
   var membershipId = document.getElementById('accept-membership-id').value;
+  var name = document.getElementById('accept-name').value.trim();
+  var email = document.getElementById('accept-email').value.trim();
+  if (!name || !email) { showToast('Name and email are required', 'error'); return; }
 
   try {
     await apiPost({
       action: 'accept_membership',
-      membership_id: membershipId
+      membership_id: membershipId,
+      name: name,
+      email: email,
+      phone: document.getElementById('accept-phone').value.trim(),
+      plan: document.getElementById('accept-plan').value.trim(),
+      sessions_per_week: parseInt(document.getElementById('accept-sessions').value) || 1
     });
     showToast('Member created successfully', 'success');
     closeAcceptModal();
@@ -805,6 +821,7 @@ async function loadMemberList() {
     var resp = await apiGet({ action: 'members' });
     var members = resp.data || resp.members || [];
 
+    _loadedMembers = members;
     var tbody = document.getElementById('mlist-tbody');
     if (members.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No members yet</td></tr>';
@@ -828,7 +845,10 @@ async function loadMemberList() {
           '<td>' + (m.sessions_per_week || '--') + '</td>' +
           '<td style="font-size:12px;max-width:200px;">' + slots + '</td>' +
           '<td><span class="badge ' + statusCls + '">' + esc(status) + '</span></td>' +
-          '<td><button class="btn-outline btn-sm btn-danger" onclick="deleteMember(\'' + esc(id) + '\')">Delete</button></td>' +
+          '<td style="white-space:nowrap;">' +
+            '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openEditMemberModal(\'' + esc(id) + '\')">Edit</button>' +
+            '<button class="btn-outline btn-sm btn-danger" onclick="deleteMember(\'' + esc(id) + '\')">Delete</button>' +
+          '</td>' +
         '</tr>';
       }).join('');
     }
@@ -845,6 +865,47 @@ async function deleteMember(id) {
   try {
     await apiPost({ action: 'delete_member', member_id: id });
     showToast('Member deleted', 'success');
+    loadMemberList();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function openEditMemberModal(id) {
+  var m = _loadedMembers.find(function(x) { return x.id === id; }) || {};
+  document.getElementById('editmember-id').value = id;
+  document.getElementById('editmember-name').value = m.name || '';
+  document.getElementById('editmember-email').value = m.email || '';
+  document.getElementById('editmember-phone').value = m.phone || '';
+  document.getElementById('editmember-plan').value = m.plan || '';
+  document.getElementById('editmember-sessions').value = m.sessions_per_week || 1;
+  document.getElementById('editmember-status').value = m.status || 'active';
+  document.getElementById('editmember-modal').classList.add('open');
+}
+
+function closeEditMemberModal() {
+  document.getElementById('editmember-modal').classList.remove('open');
+}
+
+async function saveEditMember() {
+  var id = document.getElementById('editmember-id').value;
+  var name = document.getElementById('editmember-name').value.trim();
+  var email = document.getElementById('editmember-email').value.trim();
+  if (!name || !email) { showToast('Name and email are required', 'error'); return; }
+
+  try {
+    await apiPost({
+      action: 'update_member',
+      member_id: id,
+      name: name,
+      email: email,
+      phone: document.getElementById('editmember-phone').value.trim() || null,
+      plan: document.getElementById('editmember-plan').value.trim(),
+      sessions_per_week: parseInt(document.getElementById('editmember-sessions').value) || 1,
+      status: document.getElementById('editmember-status').value
+    });
+    showToast('Member updated', 'success');
+    closeEditMemberModal();
     loadMemberList();
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
@@ -1632,7 +1693,7 @@ document.getElementById('confirm-dialog').addEventListener('mouseup', function(e
 });
 
 // ─── NEW MODAL BACKDROP CLOSE ───
-['accept-modal','assign-modal','addslot-modal','addmember-modal','cal-slot-modal'].forEach(function(id) {
+['accept-modal','assign-modal','addslot-modal','addmember-modal','editmember-modal','cal-slot-modal'].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
   var downTarget = null;
@@ -1654,6 +1715,7 @@ document.addEventListener('keydown', function(e) {
     closeAssignModal();
     closeAddSlotModal();
     closeAddMemberModal();
+    closeEditMemberModal();
     closePlanModal();
     closeTestimonialModal();
   }
@@ -2026,6 +2088,9 @@ window.openAddMemberModal = openAddMemberModal;
 window.closeAddMemberModal = closeAddMemberModal;
 window.createMemberManual = createMemberManual;
 window.deleteMember = deleteMember;
+window.openEditMemberModal = openEditMemberModal;
+window.closeEditMemberModal = closeEditMemberModal;
+window.saveEditMember = saveEditMember;
 window.openAssignModal = openAssignModal;
 window.closeAssignModal = closeAssignModal;
 window.assignSlot = assignSlot;

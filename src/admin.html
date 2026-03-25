@@ -379,9 +379,28 @@
 <div class="modal-backdrop" id="accept-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeAcceptModal()">&times;</button>
-    <h2 class="modal-title">Accept <em id="accept-member-name"></em></h2>
-    <p style="font-size:13px;color:var(--bark);margin-bottom:24px;">Plan: <strong id="accept-member-plan"></strong></p>
+    <h2 class="modal-title">Accept <em>Member</em></h2>
     <input type="hidden" id="accept-membership-id">
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="accept-name" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="accept-email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-input" id="accept-phone">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <input type="text" class="form-input" id="accept-plan">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sessions Per Week</label>
+      <input type="number" class="form-input" id="accept-sessions" min="1" max="7" value="1">
+    </div>
     <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="acceptMembership()">Accept &amp; Create Member</button>
   </div>
 </div>
@@ -444,6 +463,45 @@
     <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="createMemberManual()">Create Member</button>
   </div>
 </div>
+
+<!-- ─── EDIT MEMBER MODAL ─── -->
+<div class="modal-backdrop" id="editmember-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditMemberModal()">&times;</button>
+    <h2 class="modal-title">Edit <em>Member</em></h2>
+    <input type="hidden" id="editmember-id">
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="editmember-name" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="editmember-email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="text" class="form-input" id="editmember-phone">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Plan</label>
+      <input type="text" class="form-input" id="editmember-plan">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sessions Per Week</label>
+      <input type="number" class="form-input" id="editmember-sessions" min="1" max="7" value="3">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input form-select" id="editmember-status">
+        <option value="active">Active</option>
+        <option value="paused">Paused</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="saveEditMember()">Save Changes</button>
+  </div>
+</div>
+
 
 <!-- ─── EVENT MODAL ─── -->
 <div class="modal-backdrop" id="event-modal">
