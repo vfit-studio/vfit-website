@@ -98,8 +98,6 @@ function esc(str) {
 function truncate(str, len) {
   if (!str) return '';
   return str.length > len ? str.slice(0, len) + '...' : str;
-
-function isMobile() { return window.innerWidth <= 768; }
 }
 
 // ─── CONFIRM DIALOG ───
@@ -436,22 +434,8 @@ async function loadOverview() {
     var upcomingEl = document.getElementById('overview-upcoming');
     if (upcomingEvents.length === 0) {
       upcomingEl.innerHTML = '<div class="empty-state">No upcoming events</div>';
-    } else if (isMobile()) {
-      upcomingEl.innerHTML = renderOverviewEventCards(upcomingEvents);
     } else {
-      var rows = upcomingEvents.map(function(ev) {
-        return '<tr>' +
-          '<td><strong>' + esc(ev.name) + '</strong></td>' +
-          '<td>' + esc(ev.type || '') + '</td>' +
-          '<td>' + formatDate(ev.session_date) + '</td>' +
-          '<td>' + statusBadge(ev.status || 'open') + '</td>' +
-        '</tr>';
-      }).join('');
-      upcomingEl.innerHTML =
-        '<div class="table-wrap"><table class="data-table">' +
-        '<thead><tr><th>Name</th><th>Type</th><th>Session Date</th><th>Status</th></tr></thead>' +
-        '<tbody>' + rows + '</tbody>' +
-        '</table></div>';
+      upcomingEl.innerHTML = renderOverviewEventCards(upcomingEvents);
     }
 
     loading.style.display = 'none';
@@ -644,26 +628,7 @@ async function loadTypePage(pre, type) {
       return;
     }
 
-    if (isMobile()) {
-      content.innerHTML = renderEventCards(typeEvents);
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      return;
-    }
-
-    // Render events table (desktop)
-    var tbody = document.getElementById(pre + '-events-tbody');
-    tbody.innerHTML = typeEvents.map(function(ev) {
-      return '<tr>' +
-        '<td><strong>' + esc(ev.name) + '</strong></td>' +
-        '<td>' + formatDate(ev.session_date) + '</td>' +
-        '<td>' + formatDate(ev.tickets_open) + '</td>' +
-        '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Link ↗</a>' : '<span style="background:#f5a623;color:#fff;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600;">⚠ Add Glofox link</span>') + '</td>' +
-        '<td>' + statusBadge(ev.status || 'active') + '</td>' +
-        '<td><button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button></td>' +
-      '</tr>';
-    }).join('');
-
+    content.innerHTML = renderEventCards(typeEvents);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
@@ -889,39 +854,7 @@ async function loadMembershipRequests() {
     if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
     else { badge.style.display = 'none'; }
 
-    if (isMobile()) {
-      content.innerHTML = renderMembershipRequestCards(members);
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      return;
-    }
-
-    var tbody = document.getElementById('mreq-tbody');
-    if (members.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No enquiries yet</td></tr>';
-    } else {
-      tbody.innerHTML = members.map(function(m) {
-        var id = m.id;
-        var status = (m.status || 'new').toLowerCase();
-        var showAccept = (status === 'new' || status === 'contacted');
-        return '<tr>' +
-          '<td>' + esc(m.name || '') + '</td>' +
-          '<td>' + esc(m.email || '') + '</td>' +
-          '<td>' + esc(m.phone || '--') + '</td>' +
-          '<td>' + esc(m.plan || '') + '</td>' +
-          '<td>' + esc(m.days || '') + '</td>' +
-          '<td>' + esc(m.times || '') + '</td>' +
-          '<td title="' + esc(m.notes || '') + '">' + esc(truncate(m.notes || '', 40)) + '</td>' +
-          '<td>' + statusBadge(m.status || 'new') + '</td>' +
-          '<td>' + formatDate(m.created_at) + '</td>' +
-          '<td style="white-space:nowrap;">' +
-            (showAccept ? '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openAcceptModal(\'' + esc(id) + '\')">Accept &amp; Create Member</button>' : '') +
-            '<button class="btn-outline btn-sm btn-danger" onclick="deleteMembershipRequest(\'' + esc(id) + '\')">Delete</button>' +
-          '</td>' +
-        '</tr>';
-      }).join('');
-    }
-
+    content.innerHTML = renderMembershipRequestCards(members);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
@@ -992,45 +925,7 @@ async function loadMemberList() {
     var members = resp.data || resp.members || [];
 
     _loadedMembers = members;
-
-    if (isMobile()) {
-      content.innerHTML = renderMemberListCards(members);
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      return;
-    }
-
-    var tbody = document.getElementById('mlist-tbody');
-    if (members.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No members yet</td></tr>';
-    } else {
-      tbody.innerHTML = members.map(function(m) {
-        var id = m.id;
-        var status = (m.status || 'active').toLowerCase();
-        var slots = (m.slots || []).map(function(s) {
-          var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat'];
-          return (dayNames[s.day_of_week] || '?') + ' ' + esc(s.time || '');
-        }).join(', ') || '--';
-        var statusCls = status === 'active' ? 'badge-active'
-          : status === 'paused' ? 'badge-paused'
-          : status === 'cancelled' ? 'badge-cancelled'
-          : 'badge-held';
-        return '<tr>' +
-          '<td><strong>' + esc(m.name || '') + '</strong></td>' +
-          '<td>' + esc(m.email || '') + '</td>' +
-          '<td>' + esc(m.phone || '--') + '</td>' +
-          '<td>' + esc(m.plan || '') + '</td>' +
-          '<td>' + (m.sessions_per_week || '--') + '</td>' +
-          '<td style="font-size:12px;max-width:200px;">' + slots + '</td>' +
-          '<td><span class="badge ' + statusCls + '">' + esc(status) + '</span></td>' +
-          '<td style="white-space:nowrap;">' +
-            '<button class="btn-outline btn-sm" style="margin-right:6px;" onclick="openEditMemberModal(\'' + esc(id) + '\')">Edit</button>' +
-            '<button class="btn-outline btn-sm btn-danger" onclick="deleteMember(\'' + esc(id) + '\')">Delete</button>' +
-          '</td>' +
-        '</tr>';
-      }).join('');
-    }
-
+    content.innerHTML = renderMemberListCards(members);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
@@ -1782,29 +1677,7 @@ async function loadGeneralMessages() {
     var badge = document.getElementById('gmsg-badge');
     if (badge) { if (messages.length > 0) { badge.textContent = messages.length; badge.style.display = 'inline'; } else { badge.style.display = 'none'; } }
 
-    if (isMobile()) {
-      content.innerHTML = renderMessageCards(messages);
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      return;
-    }
-
-    var tbody = document.getElementById('gmsg-tbody');
-    if (messages.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No messages yet</td></tr>';
-    } else {
-      tbody.innerHTML = messages.map(function(m) {
-        return '<tr>' +
-          '<td><strong>' + esc(m.name || '') + '</strong></td>' +
-          '<td>' + esc(m.email || '') + '</td>' +
-          '<td>' + esc(m.phone || '—') + '</td>' +
-          '<td style="max-width:300px;white-space:pre-wrap;">' + esc(m.message || '—') + '</td>' +
-          '<td style="white-space:nowrap;">' + formatDate(m.created_at) + '</td>' +
-          '<td><button class="btn-outline btn-sm btn-danger" onclick="deleteContact(\'' + m.id + '\')">Delete</button></td>' +
-        '</tr>';
-      }).join('');
-    }
-
+    content.innerHTML = renderMessageCards(messages);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
@@ -1921,33 +1794,7 @@ async function loadPlanConfig() {
     var data = await apiGet({ action: 'all_plans' });
     cachedPlans = data.plans || [];
 
-    if (isMobile()) {
-      content.innerHTML = renderPlanCards(cachedPlans);
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      return;
-    }
-
-    var tbody = document.getElementById('planconfig-tbody');
-    tbody.innerHTML = '';
-    cachedPlans.forEach(function(p) {
-      var price = '$' + (p.price_cents / 100).toFixed(0);
-      var featureList = (p.features || []).join(', ');
-      if (featureList.length > 50) featureList = featureList.substring(0, 47) + '...';
-      tbody.innerHTML +=
-        '<tr>' +
-        '<td>' + p.display_order + '</td>' +
-        '<td><strong>' + esc(p.name) + '</strong></td>' +
-        '<td>' + price + ' / ' + esc(p.period_label) + '</td>' +
-        '<td>' + (p.badge_text ? esc(p.badge_text) : '--') + '</td>' +
-        '<td style="max-width:200px;font-size:12px;">' + esc(featureList) + '</td>' +
-        '<td>' + statusBadge(p.status) + '</td>' +
-        '<td style="white-space:nowrap;">' +
-          '<button class="btn-outline btn-sm" onclick="editPlan(\'' + p.id + '\')">Edit</button> ' +
-          '<button class="btn-outline btn-sm btn-danger" onclick="deletePlan(\'' + p.id + '\',\'' + esc(p.name).replace(/'/g, "\\'") + '\')">Delete</button>' +
-        '</td>' +
-        '</tr>';
-    });
+    content.innerHTML = renderPlanCards(cachedPlans);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
@@ -2063,29 +1910,7 @@ async function loadTestimonials() {
     var data = await apiGet({ action: 'all_testimonials' });
     cachedTestimonials = data.testimonials || [];
 
-    if (isMobile()) {
-      content.innerHTML = renderTestimonialCards(cachedTestimonials);
-      loading.style.display = 'none';
-      content.style.display = 'block';
-      return;
-    }
-
-    var tbody = document.getElementById('testimonials-tbody');
-    tbody.innerHTML = '';
-    cachedTestimonials.forEach(function(t) {
-      var quote = truncate(t.quote, 60);
-      tbody.innerHTML +=
-        '<tr>' +
-        '<td style="max-width:250px;font-size:12px;">' + esc(quote) + '</td>' +
-        '<td>' + esc(t.attribution) + '</td>' +
-        '<td>' + esc(t.page) + '</td>' +
-        '<td>' + statusBadge(t.status) + '</td>' +
-        '<td style="white-space:nowrap;">' +
-          '<button class="btn-outline btn-sm" onclick="editTestimonial(\'' + t.id + '\')">Edit</button> ' +
-          '<button class="btn-outline btn-sm btn-danger" onclick="deleteTestimonial(\'' + t.id + '\')">Delete</button>' +
-        '</td>' +
-        '</tr>';
-    });
+    content.innerHTML = renderTestimonialCards(cachedTestimonials);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {
