@@ -49,7 +49,7 @@ function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast ' + (type || '') + ' show';
-  setTimeout(function() { t.classList.remove('show'); }, 3500);
+  setTimeout(function() { t.classList.remove('show'); }, type === 'error' ? 8000 : 3500);
 }
 
 function formatDate(d) {
