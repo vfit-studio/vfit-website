@@ -261,8 +261,8 @@ function closeMobileSidebar() {
 function renderEventCards(events) {
   if (!events.length) return '<div class="empty-state">No sessions yet.</div>';
   return '<div class="card-list">' + events.map(function(ev) {
-    var glofox = ev.glofox_url
-      ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" style="color:var(--bark);">Glofox link ↗</a>'
+    var bookBtn = ev.glofox_url
+      ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" class="btn-primary" style="display:inline-block;text-decoration:none;margin-bottom:8px;width:100%;text-align:center;">Book Now ↗</a>'
       : '<span style="background:#f5a623;color:#fff;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600;">⚠ Add Glofox link</span>';
     return '<div class="data-card">' +
       '<div class="data-card-header">' +
@@ -270,7 +270,7 @@ function renderEventCards(events) {
         statusBadge(ev.status || 'active') +
       '</div>' +
       '<div class="data-card-meta">' + formatDate(ev.session_date) + '</div>' +
-      '<div class="data-card-meta">' + glofox + '</div>' +
+      '<div class="data-card-meta" style="margin-top:8px;">' + bookBtn + '</div>' +
       '<div class="data-card-actions">' +
         '<button class="btn-outline" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button>' +
         '<button class="btn-outline btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button>' +
@@ -479,6 +479,7 @@ async function loadEvents() {
         '<td>' + formatCurrency(ev.price_cents) + '</td>' +
         '<td>' + statusBadge(ev.status || 'open') + '</td>' +
         '<td>' +
+          (ev.glofox_url ? '<a href="' + esc(ev.glofox_url) + '" target="_blank" class="btn-outline btn-sm" style="text-decoration:none;">Book Now ↗</a> ' : '') +
           '<button class="btn-outline btn-sm" onclick="editEvent(\'' + esc(ev.id) + '\')">Edit</button> <button class="btn-outline btn-sm btn-danger" onclick="deleteEvent(\'' + esc(ev.id) + '\')">Delete</button>' +
         '</td>' +
       '</tr>';
