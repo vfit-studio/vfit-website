@@ -546,6 +546,15 @@ function toLocalDatetime(dateStr) {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
+function localDatetimeToISO(val) {
+  if (!val) return null;
+  // Parse datetime-local value "YYYY-MM-DDTHH:MM" as local time explicitly
+  var parts = val.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!parts) return null;
+  var d = new Date(+parts[1], +parts[2]-1, +parts[3], +parts[4], +parts[5]);
+  return d.toISOString();
+}
+
 async function handleEventSubmit(e) {
   e.preventDefault();
   var editId = document.getElementById('event-edit-id').value;
@@ -554,7 +563,7 @@ async function handleEventSubmit(e) {
     action: editId ? 'update_event' : 'create_event',
     name: document.getElementById('event-name').value.trim(),
     type: document.getElementById('event-type').value,
-    session_date: document.getElementById('event-session-date').value ? new Date(document.getElementById('event-session-date').value).toISOString() : null,
+    session_date: localDatetimeToISO(document.getElementById('event-session-date').value),
 
     spots_total: 0,
     price_cents: 0,
