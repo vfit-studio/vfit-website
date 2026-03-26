@@ -554,7 +554,7 @@ async function handleEventSubmit(e) {
     action: editId ? 'update_event' : 'create_event',
     name: document.getElementById('event-name').value.trim(),
     type: document.getElementById('event-type').value,
-    session_date: document.getElementById('event-session-date').value,
+    session_date: document.getElementById('event-session-date').value ? new Date(document.getElementById('event-session-date').value).toISOString() : null,
 
     spots_total: 0,
     price_cents: 0,
