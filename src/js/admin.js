@@ -474,7 +474,6 @@ async function loadEvents() {
         '<td><strong>' + esc(ev.name) + '</strong></td>' +
         '<td>' + esc(ev.type || '') + '</td>' +
         '<td>' + formatDate(ev.session_date) + '</td>' +
-        '<td>' + formatDate(ev.tickets_open) + '</td>' +
         '<td>' + spotsTotal + '</td>' +
         '<td>' + formatCurrency(ev.price_cents) + '</td>' +
         '<td>' + statusBadge(ev.status || 'open') + '</td>' +
@@ -514,9 +513,7 @@ function openEventModal(eventData, presetType) {
     if (eventData.session_date) {
       document.getElementById('event-session-date').value = toLocalDatetime(eventData.session_date);
     }
-    if (eventData.tickets_open) {
-      document.getElementById('event-tickets-open').value = toLocalDatetime(eventData.tickets_open);
-    }
+
     document.getElementById('event-glofox-url').value = eventData.glofox_url || '';
   } else {
     document.getElementById('event-glofox-url').value = '';
@@ -558,7 +555,7 @@ async function handleEventSubmit(e) {
     name: document.getElementById('event-name').value.trim(),
     type: document.getElementById('event-type').value,
     session_date: document.getElementById('event-session-date').value,
-    tickets_open: document.getElementById('event-tickets-open').value || null,
+
     spots_total: 0,
     price_cents: 0,
     glofox_url: (function() {
