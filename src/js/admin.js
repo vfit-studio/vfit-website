@@ -561,7 +561,13 @@ async function handleEventSubmit(e) {
     tickets_open: document.getElementById('event-tickets-open').value || null,
     spots_total: 0,
     price_cents: 0,
-    glofox_url: document.getElementById('event-glofox-url').value.trim() || null
+    glofox_url: (function() {
+      var raw = document.getElementById('event-glofox-url').value.trim();
+      if (!raw) return null;
+      // If someone pastes iframe embed code, extract the src URL
+      var match = raw.match(/src=["']([^"']+)["']/);
+      return match ? match[1] : raw;
+    })()
   };
   if (editId) payload.event_id = editId;
 
