@@ -1,4 +1,9 @@
 node_modules/
 dist/
 .env
+.env.local
 .netlify/
+.DS_Store
+
+# Claude Code local settings (may contain API tokens)
+.claude/settings.local.json
