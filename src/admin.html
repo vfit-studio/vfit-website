@@ -46,6 +46,7 @@
       <li><button onclick="showPage('pilattes')" data-page="pilattes"><span class="nav-icon">&#9654;</span> Pi'lattes</button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Members</li>
       <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('enquiry-schedule')" data-page="enquiry-schedule"><span class="nav-icon">&#9635;</span> Enquiry Schedule</button></li>
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
       <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
@@ -183,6 +184,28 @@
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- ENQUIRY SCHEDULE -->
+    <div class="admin-page" id="page-enquiry-schedule">
+      <div class="page-header">
+        <h1 class="page-title"><em>Enquiry Schedule</em></h1>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label for="esched-filter" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);">Show:</label>
+          <select id="esched-filter" onchange="loadEnquirySchedule()" style="font-family:'Jost',sans-serif;font-size:13px;padding:8px 12px;border:1px solid var(--stone);border-radius:4px;background:var(--cream);color:var(--deep);">
+            <option value="new">New only</option>
+            <option value="open">New + Contacted</option>
+            <option value="all">All enquiries</option>
+          </select>
+        </div>
+      </div>
+      <div id="esched-loading" class="loading">Loading enquiries...</div>
+      <div id="esched-content" style="display:none;">
+        <div id="esched-hint" class="esched-hint"></div>
+        <div id="esched-grid-wrap"></div>
+        <div id="esched-detail"></div>
+      </div>
+      <div id="esched-empty" class="empty-state" style="display:none;">No enquiries yet. When new membership requests come in, you'll see them grouped here by preferred day and time.</div>
     </div>
 
     <!-- MEMBER LIST -->

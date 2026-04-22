@@ -209,7 +209,7 @@ function showPage(page) {
   if (labelEl) {
     var pageLabels = {
       'overview': 'Dashboard', 'runclub': 'Run Club', 'pilattes': "Pi'lattes",
-      'membership-requests': 'Requests', 'member-list': 'Members',
+      'membership-requests': 'Requests', 'enquiry-schedule': 'Enquiry Schedule', 'member-list': 'Members',
       'general-messages': 'Messages', 'plan-config': 'Plans',
       'testimonials': 'Testimonials', 'media-library': 'Media', 'calendar': 'Calendar'
     };
@@ -227,6 +227,7 @@ function showPage(page) {
     case 'bookings': loadBookingsPage(); break;
     case 'memberships': loadMemberships(); break;
     case 'membership-requests': loadMembershipRequests(); break;
+    case 'enquiry-schedule': loadEnquirySchedule(); break;
     case 'member-list': loadMemberList(); break;
     case 'calendar': loadCalendar(); break;
     case 'general-messages': loadGeneralMessages(); break;
@@ -884,6 +885,173 @@ async function deleteMembershipRequest(id) {
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
   }
+}
+
+// ─── ENQUIRY SCHEDULE (day × time grid) ───
+
+var _loadedEnquiries = [];
+var _selectedSlotKey = null;
+
+var ESCHED_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','any'];
+var ESCHED_DAY_LABELS = { Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', any:'Any Day' };
+var ESCHED_DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', any:'Any Day' };
+var ESCHED_TIMES = ['Morning','Afternoon','any'];
+var ESCHED_TIME_LABELS = { Morning:'Morning', Afternoon:'Afternoon', any:'Any Time' };
+
+function parseEnquiryDays(s) {
+  if (!s) return ['any'];
+  var trimmed = String(s).trim();
+  if (!trimmed || trimmed.toLowerCase() === 'not specified') return ['any'];
+  var MAP = {
+    mon:'Mon', tue:'Tue', wed:'Wed', thu:'Thu', fri:'Fri', sat:'Sat', sun:'Sun',
+    monday:'Mon', tuesday:'Tue', wednesday:'Wed', thursday:'Thu', friday:'Fri', saturday:'Sat', sunday:'Sun'
+  };
+  var out = [];
+  trimmed.split(/[,;/]+/).forEach(function(part) {
+    var k = part.trim().toLowerCase();
+    if (MAP[k] && out.indexOf(MAP[k]) < 0) out.push(MAP[k]);
+  });
+  return out.length ? out : ['any'];
+}
+
+function parseEnquiryTimes(s) {
+  if (!s) return ['any'];
+  var trimmed = String(s).trim();
+  if (!trimmed || trimmed.toLowerCase() === 'not specified') return ['any'];
+  var out = [];
+  function push(v) { if (out.indexOf(v) < 0) out.push(v); }
+  trimmed.split(/[,;/]+/).forEach(function(part) {
+    var p = part.trim().toLowerCase();
+    if (!p) return;
+    if (p.indexOf('morning') >= 0) return push('Morning');
+    if (p.indexOf('afternoon') >= 0) return push('Afternoon');
+    if (p.indexOf('evening') >= 0 || p.indexOf('night') >= 0) return push('Afternoon');
+    var m = p.match(/(\d{1,2})(?::\d{2})?\s*(am|pm)/);
+    if (m) {
+      var hr = parseInt(m[1], 10);
+      var ampm = m[2];
+      if (ampm === 'am') push('Morning');
+      else if (hr === 12) push('Afternoon');
+      else push('Afternoon');
+    }
+  });
+  return out.length ? out : ['any'];
+}
+
+async function loadEnquirySchedule() {
+  var loading = document.getElementById('esched-loading');
+  var content = document.getElementById('esched-content');
+  var empty = document.getElementById('esched-empty');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    var resp = await apiGet({ action: 'memberships' });
+    var all = resp.data || [];
+
+    var filterEl = document.getElementById('esched-filter');
+    var filter = filterEl ? filterEl.value : 'new';
+    var filtered = all.filter(function(m) {
+      var s = (m.status || 'new').toLowerCase();
+      if (filter === 'new') return s === 'new';
+      if (filter === 'open') return s === 'new' || s === 'contacted';
+      return true;
+    });
+
+    _loadedEnquiries = filtered;
+    _selectedSlotKey = null;
+
+    loading.style.display = 'none';
+    if (all.length === 0) { empty.style.display = 'block'; return; }
+
+    content.style.display = 'block';
+    renderEnquiryGrid(filtered);
+    document.getElementById('esched-detail').innerHTML = '';
+
+    var hint = filtered.length === 0
+      ? 'No enquiries match this filter.'
+      : 'Showing ' + filtered.length + ' enquir' + (filtered.length === 1 ? 'y' : 'ies') + '. Tap a slot to see who wants it.';
+    document.getElementById('esched-hint').textContent = hint;
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load enquiries. ' + esc(err.message) + '</div>';
+  }
+}
+
+function renderEnquiryGrid(enquiries) {
+  var buckets = {};
+  enquiries.forEach(function(m) {
+    var days = parseEnquiryDays(m.days);
+    var times = parseEnquiryTimes(m.times);
+    days.forEach(function(d) {
+      times.forEach(function(t) {
+        var key = d + '|' + t;
+        (buckets[key] = buckets[key] || []).push(m);
+      });
+    });
+  });
+
+  var html = '<table class="esched-grid"><thead><tr><th></th>';
+  ESCHED_DAYS.forEach(function(d) {
+    var cls = d === 'any' ? 'esched-th-any' : '';
+    html += '<th class="' + cls + '">' + ESCHED_DAY_LABELS[d] + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+
+  ESCHED_TIMES.forEach(function(t) {
+    html += '<tr><th class="esched-row-th' + (t === 'any' ? ' esched-th-any' : '') + '">' + ESCHED_TIME_LABELS[t] + '</th>';
+    ESCHED_DAYS.forEach(function(d) {
+      var key = d + '|' + t;
+      var count = (buckets[key] || []).length;
+      var cls = 'esched-cell';
+      if (count > 0) cls += ' has-count';
+      if (_selectedSlotKey === key) cls += ' selected';
+      if (d === 'any' || t === 'any') cls += ' esched-cell-any';
+      var handler = count > 0 ? ' onclick="eschedShow(\'' + key + '\')"' : '';
+      html += '<td class="' + cls + '"' + handler + '>' +
+        (count > 0
+          ? '<span class="esched-count">' + count + '</span>'
+          : '<span class="esched-dash">—</span>') +
+      '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('esched-grid-wrap').innerHTML = html;
+}
+
+function eschedShow(key) {
+  _selectedSlotKey = key;
+  renderEnquiryGrid(_loadedEnquiries);
+
+  var parts = key.split('|');
+  var dayKey = parts[0], timeKey = parts[1];
+
+  var matches = _loadedEnquiries.filter(function(m) {
+    var days = parseEnquiryDays(m.days);
+    var times = parseEnquiryTimes(m.times);
+    return days.indexOf(dayKey) >= 0 && times.indexOf(timeKey) >= 0;
+  });
+
+  var title = ESCHED_DAY_FULL[dayKey] + ' · ' + ESCHED_TIME_LABELS[timeKey];
+  var countLabel = matches.length + ' enquir' + (matches.length === 1 ? 'y' : 'ies');
+  var html = '<div class="esched-detail-card">' +
+    '<div class="esched-detail-head">' +
+      '<h3 class="esched-detail-title"><em>' + esc(title) + '</em> <span>— ' + countLabel + '</span></h3>' +
+      '<button class="btn-outline" onclick="eschedClose()">Close</button>' +
+    '</div>' +
+    renderMembershipRequestCards(matches) +
+  '</div>';
+  document.getElementById('esched-detail').innerHTML = html;
+
+  var detail = document.getElementById('esched-detail');
+  if (detail && detail.scrollIntoView) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function eschedClose() {
+  _selectedSlotKey = null;
+  renderEnquiryGrid(_loadedEnquiries);
+  document.getElementById('esched-detail').innerHTML = '';
 }
 
 function openAcceptModal(membershipId) {
@@ -2123,6 +2291,9 @@ window.openAcceptModal = openAcceptModal;
 window.closeAcceptModal = closeAcceptModal;
 window.acceptMembership = acceptMembership;
 window.deleteMembershipRequest = deleteMembershipRequest;
+window.loadEnquirySchedule = loadEnquirySchedule;
+window.eschedShow = eschedShow;
+window.eschedClose = eschedClose;
 window.openAddMemberModal = openAddMemberModal;
 window.closeAddMemberModal = closeAddMemberModal;
 window.createMemberManual = createMemberManual;
