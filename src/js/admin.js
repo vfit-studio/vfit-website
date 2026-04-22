@@ -895,8 +895,8 @@ var _selectedSlotKey = null;
 var ESCHED_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','any'];
 var ESCHED_DAY_LABELS = { Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', any:'Any Day' };
 var ESCHED_DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', any:'Any Day' };
-var ESCHED_TIMES = ['Morning','Afternoon','any'];
-var ESCHED_TIME_LABELS = { Morning:'Morning', Afternoon:'Afternoon', any:'Any Time' };
+// Canonical time slots offered by the public wizard (keep in sync with src/js/index.js morningSlots/afternoonSlots).
+var ESCHED_CANONICAL_TIMES = ['5:15 AM','6:15 AM','7:15 AM','8:15 AM','9:15 AM','10:15 AM','11:15 AM','12:15 PM','Afternoon'];
 
 function parseEnquiryDays(s) {
   if (!s) return ['any'];
@@ -921,22 +921,52 @@ function parseEnquiryTimes(s) {
   var out = [];
   function push(v) { if (out.indexOf(v) < 0) out.push(v); }
   trimmed.split(/[,;/]+/).forEach(function(part) {
-    var p = part.trim().toLowerCase();
+    var p = part.trim();
     if (!p) return;
-    if (p.indexOf('morning') >= 0) return push('Morning');
-    if (p.indexOf('afternoon') >= 0) return push('Afternoon');
-    if (p.indexOf('evening') >= 0 || p.indexOf('night') >= 0) return push('Afternoon');
-    var m = p.match(/(\d{1,2})(?::\d{2})?\s*(am|pm)/);
+    var lower = p.toLowerCase();
+    if (lower === 'afternoon' || lower.indexOf('afternoon') >= 0) return push('Afternoon');
+    if (lower === 'evening' || lower === 'night') return push('Afternoon');
+    if (lower === 'morning') return push('any'); // unspecified morning → Any Time row
+    var m = p.match(/(\d{1,2}):(\d{2})\s*(am|pm|AM|PM)/);
     if (m) {
       var hr = parseInt(m[1], 10);
-      var ampm = m[2];
-      if (ampm === 'am') push('Morning');
-      else if (hr === 12) push('Afternoon');
-      else push('Afternoon');
+      var mn = m[2];
+      var ampm = m[3].toUpperCase();
+      return push(hr + ':' + mn + ' ' + ampm);
     }
+    push('any');
   });
   return out.length ? out : ['any'];
 }
+
+function eschedTimeToMinutes(t) {
+  if (t === 'any') return 99999;
+  if (t === 'Afternoon') return 13 * 60; // group after morning slots
+  var m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!m) return 99998;
+  var h = parseInt(m[1], 10);
+  var mn = parseInt(m[2], 10);
+  var ampm = m[3].toUpperCase();
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  return h * 60 + mn;
+}
+
+function computeEschedTimeRows(enquiries) {
+  var seen = {};
+  ESCHED_CANONICAL_TIMES.forEach(function(t) { seen[t] = true; });
+  enquiries.forEach(function(m) {
+    parseEnquiryTimes(m.times).forEach(function(t) {
+      if (t !== 'any') seen[t] = true;
+    });
+  });
+  var rows = Object.keys(seen);
+  rows.sort(function(a, b) { return eschedTimeToMinutes(a) - eschedTimeToMinutes(b); });
+  rows.push('any');
+  return rows;
+}
+
+function eschedTimeLabel(t) { return t === 'any' ? 'Any Time' : t; }
 
 async function loadEnquirySchedule() {
   var loading = document.getElementById('esched-loading');
@@ -998,8 +1028,9 @@ function renderEnquiryGrid(enquiries) {
   });
   html += '</tr></thead><tbody>';
 
-  ESCHED_TIMES.forEach(function(t) {
-    html += '<tr><th class="esched-row-th' + (t === 'any' ? ' esched-th-any' : '') + '">' + ESCHED_TIME_LABELS[t] + '</th>';
+  var timeRows = computeEschedTimeRows(enquiries);
+  timeRows.forEach(function(t) {
+    html += '<tr><th class="esched-row-th' + (t === 'any' ? ' esched-th-any' : '') + '">' + esc(eschedTimeLabel(t)) + '</th>';
     ESCHED_DAYS.forEach(function(d) {
       var key = d + '|' + t;
       var count = (buckets[key] || []).length;
@@ -1007,7 +1038,7 @@ function renderEnquiryGrid(enquiries) {
       if (count > 0) cls += ' has-count';
       if (_selectedSlotKey === key) cls += ' selected';
       if (d === 'any' || t === 'any') cls += ' esched-cell-any';
-      var handler = count > 0 ? ' onclick="eschedShow(\'' + key + '\')"' : '';
+      var handler = count > 0 ? ' onclick="eschedShow(\'' + key.replace(/'/g, "\\'") + '\')"' : '';
       html += '<td class="' + cls + '"' + handler + '>' +
         (count > 0
           ? '<span class="esched-count">' + count + '</span>'
@@ -1033,7 +1064,7 @@ function eschedShow(key) {
     return days.indexOf(dayKey) >= 0 && times.indexOf(timeKey) >= 0;
   });
 
-  var title = ESCHED_DAY_FULL[dayKey] + ' · ' + ESCHED_TIME_LABELS[timeKey];
+  var title = ESCHED_DAY_FULL[dayKey] + ' · ' + eschedTimeLabel(timeKey);
   var countLabel = matches.length + ' enquir' + (matches.length === 1 ? 'y' : 'ies');
   var html = '<div class="esched-detail-card">' +
     '<div class="esched-detail-head">' +
