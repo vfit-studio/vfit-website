@@ -896,7 +896,7 @@ var ESCHED_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','any'];
 var ESCHED_DAY_LABELS = { Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', any:'Any Day' };
 var ESCHED_DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', any:'Any Day' };
 // Canonical time slots offered by the public wizard (keep in sync with src/js/index.js morningSlots/afternoonSlots).
-var ESCHED_CANONICAL_TIMES = ['5:15 AM','6:15 AM','7:15 AM','8:15 AM','9:15 AM','10:15 AM','11:15 AM','12:15 PM','Afternoon'];
+var ESCHED_CANONICAL_TIMES = ['5:15 AM','6:15 AM','7:15 AM','8:15 AM','9:15 AM','10:15 AM','11:15 AM','12:15 PM','4:15 PM','5:15 PM','6:15 PM'];
 
 function parseEnquiryDays(s) {
   if (!s) return ['any'];
