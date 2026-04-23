@@ -22,21 +22,63 @@ function planKey(plan) {
   return 'signature';
 }
 
-function cancellationHtml(plan) {
-  var k = planKey(plan);
-  if (k === 'flexible') {
-    return '' +
-      '<p><strong>Flexible Membership</strong> operates on a no lock-in basis.</p>' +
-      '<p><strong>Session cancellations:</strong> a minimum of <strong>4 weeks written notice</strong> is required to cancel or reschedule a scheduled session. Where notice of less than 4 weeks is provided, the full session fee of $70 will be charged regardless of attendance.</p>' +
-      '<p><strong>Membership termination:</strong> you may terminate your Flexible Membership at any time without penalty. There is no minimum commitment period. Termination takes effect immediately upon written notice to Georgie, and no further sessions will be charged from that date.</p>';
+var POLICY_TIERS = {
+  signature: {
+    label: 'Signature Membership',
+    lockIn: '3 months',
+    memberCancel: '2 weeks&rsquo; written notice. Can run concurrently with lock-in.',
+    sessionCancel: '48 hours&rsquo; notice required.',
+    lateFee: 'Full session fee if under 48 hours&rsquo; notice.',
+    pause: 'Max 1 month per year.'
+  },
+  flexible: {
+    label: 'Flexible Membership',
+    lockIn: 'None',
+    memberCancel: '2 weeks&rsquo; written notice.',
+    sessionCancel: '1 week&rsquo;s notice required.',
+    lateFee: 'Full session fee if under 1 week&rsquo;s notice.',
+    pause: 'Max 1 month per year.'
+  },
+  vip: {
+    label: 'VIP Membership',
+    lockIn: '3 months',
+    memberCancel: '2 weeks&rsquo; written notice. Can run concurrently with lock-in.',
+    sessionCancel: '48 hours&rsquo; notice required.',
+    lateFee: 'Full session fee if under 48 hours&rsquo; notice.',
+    pause: 'Max 1 month per year.'
   }
-  // Signature & VIP share the same commitment terms
-  var label = k === 'vip' ? 'VIP Membership' : 'Signature Membership';
-  return '' +
-    '<p><strong>' + label + '</strong> is subject to a minimum 3-month commitment.</p>' +
-    '<p><strong>Session cancellations:</strong> a minimum of <strong>1 week&rsquo;s written notice</strong> is required to cancel or reschedule a scheduled session. Where less notice is provided, the full session fee will be charged regardless of attendance.</p>' +
-    '<p><strong>Minimum term:</strong> you are committed to a minimum period of 3 months from your membership start date. Sessions will continue to be billed throughout this period regardless of attendance.</p>' +
-    '<p><strong>Membership termination:</strong> following the completion of your 3-month minimum term, you may terminate by providing a minimum of <strong>1 month&rsquo;s written notice</strong>. Early termination within the minimum term is not permitted, except in the case of a medical condition supported by a valid doctor&rsquo;s certificate.</p>';
+};
+
+function cancellationHtml(plan) {
+  var t = POLICY_TIERS[planKey(plan)] || POLICY_TIERS.signature;
+
+  function row(label, val) {
+    return '<div class="a-policy-row"><span class="a-policy-lbl">' + label + '</span><span class="a-policy-val">' + val + '</span></div>';
+  }
+
+  var yourPlan = '<div class="a-policy-your"><p class="a-policy-heading">Your plan: ' + t.label + '</p>' +
+    row('Lock-in period', t.lockIn) +
+    row('Membership cancellation', t.memberCancel) +
+    row('Session cancellation', t.sessionCancel) +
+    row('Late cancellation fee', t.lateFee) +
+    row('Pause membership', t.pause) +
+  '</div>';
+
+  var summary = '<p class="a-policy-heading" style="margin-top:22px;">Quick reference summary</p>' +
+    '<div class="a-policy-table-wrap"><table class="a-policy-table">' +
+      '<thead><tr><th></th><th>Signature</th><th>Flexible</th><th>VIP</th></tr></thead>' +
+      '<tbody>' +
+        '<tr><th>Lock-in</th><td>3 months</td><td>None</td><td>3 months</td></tr>' +
+        '<tr><th>Membership cancel</th><td>2 weeks</td><td>2 weeks</td><td>2 weeks</td></tr>' +
+        '<tr><th>Session cancel</th><td>48 hrs</td><td>1 week</td><td>48 hrs</td></tr>' +
+        '<tr><th>Pause</th><td>Max 1 mo/yr</td><td>Max 1 mo/yr</td><td>Max 1 mo/yr</td></tr>' +
+      '</tbody>' +
+    '</table></div>';
+
+  var intro = '<p class="a-policy-effective">Effective April 2026</p>' +
+    '<p>Cancellation terms for each membership tier are outlined below. Membership begins from the date of your first session. By holding a membership, you agree to these terms.</p>';
+
+  return intro + yourPlan + summary;
 }
 
 var WAIVER_HTML = '' +
