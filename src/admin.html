@@ -189,8 +189,8 @@
     <!-- ENQUIRY SCHEDULE -->
     <div class="admin-page" id="page-enquiry-schedule">
       <div class="page-header">
-        <h1 class="page-title"><em>Enquiry Schedule</em></h1>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <h1 class="page-title"><em>Schedule</em></h1>
+        <div id="esched-filter-wrap" style="display:flex;gap:8px;align-items:center;">
           <label for="esched-filter" style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);">Show:</label>
           <select id="esched-filter" onchange="loadEnquirySchedule()" style="font-family:'Jost',sans-serif;font-size:13px;padding:8px 12px;border:1px solid var(--stone);border-radius:4px;background:var(--cream);color:var(--deep);">
             <option value="new">New only</option>
@@ -199,13 +199,17 @@
           </select>
         </div>
       </div>
-      <div id="esched-loading" class="loading">Loading enquiries...</div>
+      <div class="esched-tabs">
+        <button class="esched-tab active" data-mode="enquiries" onclick="eschedSetMode('enquiries')">Enquiries</button>
+        <button class="esched-tab" data-mode="members" onclick="eschedSetMode('members')">Accepted Members</button>
+      </div>
+      <div id="esched-loading" class="loading">Loading...</div>
       <div id="esched-content" style="display:none;">
         <div id="esched-hint" class="esched-hint"></div>
         <div id="esched-grid-wrap"></div>
         <div id="esched-detail"></div>
       </div>
-      <div id="esched-empty" class="empty-state" style="display:none;">No enquiries yet. When new membership requests come in, you'll see them grouped here by preferred day and time.</div>
+      <div id="esched-empty" class="empty-state" style="display:none;"></div>
     </div>
 
     <!-- MEMBER LIST -->

@@ -725,6 +725,31 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
 }
 
 /* ─── ENQUIRY SCHEDULE GRID ─── */
+.esched-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 0 20px;
+  border-bottom: 1px solid var(--stone);
+}
+.esched-tab {
+  background: none;
+  border: none;
+  padding: 10px 18px 12px;
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--clay);
+  cursor: pointer;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.esched-tab:hover { color: var(--bark); }
+.esched-tab.active {
+  color: var(--deep);
+  border-bottom-color: var(--moss);
+}
 .esched-hint {
   font-size: 13px;
   color: var(--bark);

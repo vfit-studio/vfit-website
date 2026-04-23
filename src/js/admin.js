@@ -919,7 +919,23 @@ async function deleteMembershipRequest(id) {
 // ─── ENQUIRY SCHEDULE (day × time grid) ───
 
 var _loadedEnquiries = [];
+var _loadedMembersForGrid = [];
 var _selectedSlotKey = null;
+var _eschedMode = 'enquiries';
+
+function eschedSetMode(mode) {
+  _eschedMode = mode;
+  _selectedSlotKey = null;
+  // Toggle active tab
+  var tabs = document.querySelectorAll('.esched-tab');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', tabs[i].dataset.mode === mode);
+  }
+  // Show filter only in enquiries mode
+  var fw = document.getElementById('esched-filter-wrap');
+  if (fw) fw.style.display = (mode === 'enquiries') ? 'flex' : 'none';
+  loadEnquirySchedule();
+}
 
 var ESCHED_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','any'];
 var ESCHED_DAY_LABELS = { Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', any:'Any Day' };
@@ -1001,11 +1017,41 @@ async function loadEnquirySchedule() {
   var loading = document.getElementById('esched-loading');
   var content = document.getElementById('esched-content');
   var empty = document.getElementById('esched-empty');
+  loading.textContent = _eschedMode === 'members' ? 'Loading members...' : 'Loading enquiries...';
   loading.style.display = 'block';
   content.style.display = 'none';
   empty.style.display = 'none';
 
   try {
+    if (_eschedMode === 'members') {
+      var mresp = await apiGet({ action: 'members' });
+      var all = mresp.members || [];
+      var active = all.filter(function(m) { return (m.status || 'active').toLowerCase() === 'active'; });
+      _loadedMembersForGrid = active;
+      _selectedSlotKey = null;
+
+      loading.style.display = 'none';
+      if (all.length === 0) {
+        empty.textContent = 'No accepted members yet. Accept an enquiry and assign their weekly slots to see them here.';
+        empty.style.display = 'block';
+        return;
+      }
+      content.style.display = 'block';
+      renderEnquiryGrid();
+      document.getElementById('esched-detail').innerHTML = '';
+
+      var slotted = active.filter(function(m) { return m.slots && m.slots.length > 0; });
+      var unslotted = active.length - slotted.length;
+      var hint = active.length === 0
+        ? 'No active members.'
+        : 'Showing ' + slotted.length + ' slotted member' + (slotted.length === 1 ? '' : 's') +
+          (unslotted > 0 ? ' · ' + unslotted + ' active member' + (unslotted === 1 ? '' : 's') + ' without assigned slots yet' : '') +
+          '. Tap a slot to see who’s in it.';
+      document.getElementById('esched-hint').textContent = hint;
+      return;
+    }
+
+    // Enquiries mode (default)
     var resp = await apiGet({ action: 'memberships' });
     var all = resp.data || [];
 
@@ -1022,45 +1068,90 @@ async function loadEnquirySchedule() {
     _selectedSlotKey = null;
 
     loading.style.display = 'none';
-    if (all.length === 0) { empty.style.display = 'block'; return; }
+    if (all.length === 0) {
+      empty.textContent = 'No enquiries yet. When new membership requests come in, you’ll see them grouped here by preferred day and time.';
+      empty.style.display = 'block';
+      return;
+    }
 
     content.style.display = 'block';
-    renderEnquiryGrid(filtered);
+    renderEnquiryGrid();
     document.getElementById('esched-detail').innerHTML = '';
 
-    var hint = filtered.length === 0
+    var enqHint = filtered.length === 0
       ? 'No enquiries match this filter.'
       : 'Showing ' + filtered.length + ' enquir' + (filtered.length === 1 ? 'y' : 'ies') + '. Tap a slot to see who wants it.';
-    document.getElementById('esched-hint').textContent = hint;
+    document.getElementById('esched-hint').textContent = enqHint;
   } catch (err) {
-    loading.innerHTML = '<div class="empty-state">Could not load enquiries. ' + esc(err.message) + '</div>';
+    loading.innerHTML = '<div class="empty-state">Could not load. ' + esc(err.message) + '</div>';
   }
 }
 
-function renderEnquiryGrid(enquiries) {
+var DAY_ABBR = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function eschedBuildBuckets() {
   var buckets = {};
-  enquiries.forEach(function(m) {
-    var days = parseEnquiryDays(m.days);
-    var times = parseEnquiryTimes(m.times);
-    days.forEach(function(d) {
-      times.forEach(function(t) {
-        var key = d + '|' + t;
-        (buckets[key] = buckets[key] || []).push(m);
+  function push(key, item) { (buckets[key] = buckets[key] || []).push(item); }
+
+  if (_eschedMode === 'members') {
+    _loadedMembersForGrid.forEach(function(m) {
+      (m.slots || []).forEach(function(s) {
+        var dayKey = DAY_ABBR[s.day_of_week] || 'any';
+        var timeKey = s.time || 'any';
+        push(dayKey + '|' + timeKey, m);
       });
     });
-  });
+  } else {
+    _loadedEnquiries.forEach(function(m) {
+      var days = parseEnquiryDays(m.days);
+      var times = parseEnquiryTimes(m.times);
+      days.forEach(function(d) {
+        times.forEach(function(t) {
+          push(d + '|' + t, m);
+        });
+      });
+    });
+  }
+  return buckets;
+}
+
+function eschedComputeTimes() {
+  if (_eschedMode === 'members') {
+    // Derive from actual slot times in use
+    var seen = {};
+    ESCHED_CANONICAL_TIMES.forEach(function(t) { seen[t] = true; });
+    _loadedMembersForGrid.forEach(function(m) {
+      (m.slots || []).forEach(function(s) { if (s.time) seen[s.time] = true; });
+    });
+    var rows = Object.keys(seen);
+    rows.sort(function(a, b) { return eschedTimeToMinutes(a) - eschedTimeToMinutes(b); });
+    return rows; // no 'any' row in members mode (members are always on specific slots)
+  }
+  return computeEschedTimeRows(_loadedEnquiries);
+}
+
+function eschedComputeDays() {
+  if (_eschedMode === 'members') {
+    return ['Mon','Tue','Wed','Thu','Fri','Sat']; // no 'any' column in members mode
+  }
+  return ESCHED_DAYS;
+}
+
+function renderEnquiryGrid() {
+  var buckets = eschedBuildBuckets();
+  var days = eschedComputeDays();
+  var times = eschedComputeTimes();
 
   var html = '<table class="esched-grid"><thead><tr><th></th>';
-  ESCHED_DAYS.forEach(function(d) {
+  days.forEach(function(d) {
     var cls = d === 'any' ? 'esched-th-any' : '';
-    html += '<th class="' + cls + '">' + ESCHED_DAY_LABELS[d] + '</th>';
+    html += '<th class="' + cls + '">' + (ESCHED_DAY_LABELS[d] || d) + '</th>';
   });
   html += '</tr></thead><tbody>';
 
-  var timeRows = computeEschedTimeRows(enquiries);
-  timeRows.forEach(function(t) {
+  times.forEach(function(t) {
     html += '<tr><th class="esched-row-th' + (t === 'any' ? ' esched-th-any' : '') + '">' + esc(eschedTimeLabel(t)) + '</th>';
-    ESCHED_DAYS.forEach(function(d) {
+    days.forEach(function(d) {
       var key = d + '|' + t;
       var count = (buckets[key] || []).length;
       var cls = 'esched-cell';
@@ -1082,26 +1173,42 @@ function renderEnquiryGrid(enquiries) {
 
 function eschedShow(key) {
   _selectedSlotKey = key;
-  renderEnquiryGrid(_loadedEnquiries);
+  renderEnquiryGrid();
 
   var parts = key.split('|');
   var dayKey = parts[0], timeKey = parts[1];
+  var title = (ESCHED_DAY_FULL[dayKey] || dayKey) + ' · ' + eschedTimeLabel(timeKey);
 
-  var matches = _loadedEnquiries.filter(function(m) {
-    var days = parseEnquiryDays(m.days);
-    var times = parseEnquiryTimes(m.times);
-    return days.indexOf(dayKey) >= 0 && times.indexOf(timeKey) >= 0;
-  });
-
-  var title = ESCHED_DAY_FULL[dayKey] + ' · ' + eschedTimeLabel(timeKey);
-  var countLabel = matches.length + ' enquir' + (matches.length === 1 ? 'y' : 'ies');
-  var html = '<div class="esched-detail-card">' +
-    '<div class="esched-detail-head">' +
-      '<h3 class="esched-detail-title"><em>' + esc(title) + '</em> <span>— ' + countLabel + '</span></h3>' +
-      '<button class="btn-outline" onclick="eschedClose()">Close</button>' +
-    '</div>' +
-    renderMembershipRequestCards(matches) +
-  '</div>';
+  var html, matches;
+  if (_eschedMode === 'members') {
+    matches = _loadedMembersForGrid.filter(function(m) {
+      return (m.slots || []).some(function(s) {
+        return (DAY_ABBR[s.day_of_week] === dayKey) && s.time === timeKey;
+      });
+    });
+    var countLabel = matches.length + ' member' + (matches.length === 1 ? '' : 's');
+    html = '<div class="esched-detail-card">' +
+      '<div class="esched-detail-head">' +
+        '<h3 class="esched-detail-title"><em>' + esc(title) + '</em> <span>— ' + countLabel + '</span></h3>' +
+        '<button class="btn-outline" onclick="eschedClose()">Close</button>' +
+      '</div>' +
+      renderMemberListCards(matches) +
+    '</div>';
+  } else {
+    matches = _loadedEnquiries.filter(function(m) {
+      var days = parseEnquiryDays(m.days);
+      var times = parseEnquiryTimes(m.times);
+      return days.indexOf(dayKey) >= 0 && times.indexOf(timeKey) >= 0;
+    });
+    var enqCount = matches.length + ' enquir' + (matches.length === 1 ? 'y' : 'ies');
+    html = '<div class="esched-detail-card">' +
+      '<div class="esched-detail-head">' +
+        '<h3 class="esched-detail-title"><em>' + esc(title) + '</em> <span>— ' + enqCount + '</span></h3>' +
+        '<button class="btn-outline" onclick="eschedClose()">Close</button>' +
+      '</div>' +
+      renderMembershipRequestCards(matches) +
+    '</div>';
+  }
   document.getElementById('esched-detail').innerHTML = html;
 
   var detail = document.getElementById('esched-detail');
@@ -1110,7 +1217,7 @@ function eschedShow(key) {
 
 function eschedClose() {
   _selectedSlotKey = null;
-  renderEnquiryGrid(_loadedEnquiries);
+  renderEnquiryGrid();
   document.getElementById('esched-detail').innerHTML = '';
 }
 
@@ -2354,6 +2461,7 @@ window.deleteMembershipRequest = deleteMembershipRequest;
 window.loadEnquirySchedule = loadEnquirySchedule;
 window.eschedShow = eschedShow;
 window.eschedClose = eschedClose;
+window.eschedSetMode = eschedSetMode;
 window.openAddMemberModal = openAddMemberModal;
 window.closeAddMemberModal = closeAddMemberModal;
 window.createMemberManual = createMemberManual;
