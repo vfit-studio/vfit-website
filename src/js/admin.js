@@ -312,6 +312,16 @@ function renderMemberListCards(members) {
       var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat'];
       return (dayNames[s.day_of_week] || '?') + ' ' + esc(s.time || '');
     }).join(', ') || 'No slots assigned';
+
+    var welcomeBtn;
+    if (m.agreed_at) {
+      welcomeBtn = '<button class="btn-outline" disabled title="Agreement confirmed ' + esc(formatDate(m.agreed_at)) + '" style="opacity:0.7;">Agreed &#x2713;</button>';
+    } else if (m.welcome_sent_at) {
+      welcomeBtn = '<button class="btn-outline" onclick="sendWelcome(\'' + esc(m.id) + '\', true)" title="Welcome sent ' + esc(formatDate(m.welcome_sent_at)) + ' &mdash; waiting on confirmation">Resend Welcome</button>';
+    } else {
+      welcomeBtn = '<button class="btn-outline" onclick="sendWelcome(\'' + esc(m.id) + '\', false)">Send Welcome</button>';
+    }
+
     return '<div class="data-card">' +
       '<div class="data-card-header">' +
         '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong></div>' +
@@ -321,11 +331,32 @@ function renderMemberListCards(members) {
       (m.plan ? '<div class="data-card-meta">Plan: ' + esc(m.plan) + ' · ' + (m.sessions_per_week || 1) + 'x/wk</div>' : '') +
       '<div class="data-card-meta">Slots: ' + slots + '</div>' +
       '<div class="data-card-actions">' +
+        welcomeBtn +
         '<button class="btn-outline" onclick="openEditMemberModal(\'' + esc(m.id) + '\')">Edit</button>' +
         '<button class="btn-outline btn-danger" onclick="deleteMember(\'' + esc(m.id) + '\')">Delete</button>' +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
+}
+
+async function sendWelcome(memberId, isResend) {
+  var prompt = isResend
+    ? 'Resend the welcome email + SMS to this member?'
+    : 'Send the welcome email + SMS with the agreement link now?';
+  if (!confirm(prompt)) return;
+  try {
+    var resp = await apiPost({ action: 'send_welcome', member_id: memberId });
+    var bits = [];
+    if (resp.email_configured) bits.push('email sent'); else bits.push('email SKIPPED (Resend not configured)');
+    if (resp.sms_attempted) {
+      if (resp.sms_configured) bits.push('SMS sent');
+      else bits.push('SMS SKIPPED (Twilio not configured)');
+    }
+    showToast('Welcome: ' + bits.join(', '), 'success');
+    loadMemberList();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
 }
 
 function renderMessageCards(messages) {
@@ -2329,6 +2360,7 @@ window.openAddMemberModal = openAddMemberModal;
 window.closeAddMemberModal = closeAddMemberModal;
 window.createMemberManual = createMemberManual;
 window.deleteMember = deleteMember;
+window.sendWelcome = sendWelcome;
 window.openEditMemberModal = openEditMemberModal;
 window.closeEditMemberModal = closeEditMemberModal;
 window.saveEditMember = saveEditMember;

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VFIT Member Agreement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sand:#f5f0e8; --cream:#faf7f2; --stone:#e8e0d4; --clay:#c9b99a;
+    --bark:#8c7660; --moss:#7a8c6e; --deep:#3d3530; --sage:#a8b89a;
+    --warm-white:#fefcf8; --body:#6b5e52;
+  }
+  *,*::before,*::after { box-sizing: border-box; }
+  html,body { margin:0; padding:0; background:var(--sand); color:var(--deep); font-family:'Jost',sans-serif; -webkit-font-smoothing:antialiased; }
+  body { min-height:100vh; padding:40px 16px 80px; }
+  .a-wrap { max-width: 720px; margin: 0 auto; }
+  .a-card { background: var(--cream); border:1px solid var(--stone); border-radius: 4px; padding: 40px 36px; }
+  .a-brand { text-align:center; padding-bottom:28px; border-bottom:1px solid var(--stone); margin-bottom:32px; }
+  .a-brand h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:32px; letter-spacing:0.25em; color:var(--deep); margin:0; }
+  .a-brand p { font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--clay); margin:10px 0 0; }
+  .a-greeting { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:30px; color:var(--deep); margin:0 0 12px; }
+  .a-greeting em { color: var(--bark); }
+  .a-intro { font-size:15px; line-height:1.7; color:var(--body); margin:0 0 28px; }
+  .a-section { margin: 0 0 32px; }
+  .a-section h3 { font-family:'Cormorant Garamond',serif; font-weight:400; font-size:22px; color:var(--deep); margin:0 0 12px; }
+  .a-section p { font-size:14px; line-height:1.75; color:var(--body); margin:0 0 12px; }
+  .a-section ul, .a-section ol { font-size:14px; line-height:1.8; color:var(--body); margin:0 0 12px; padding-left:20px; }
+  .a-section li { margin-bottom:4px; }
+  .a-slots { background: var(--sand); border-left: 3px solid var(--clay); padding: 18px 24px; margin: 0 0 28px; }
+  .a-slots ul { list-style:none; padding:0; margin:0; }
+  .a-slots li { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--deep); padding:6px 0; border-bottom:1px solid var(--stone); }
+  .a-slots li:last-child { border-bottom:none; }
+  .a-slots-note { font-size:13px; color:var(--bark); font-style:italic; margin:0; }
+  .a-legal { background: #fff; border:1px solid var(--stone); border-radius:4px; padding:22px 26px; max-height:420px; overflow-y:auto; font-size:13px; line-height:1.75; color:var(--body); }
+  .a-legal h4 { font-family:'Jost',sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:0.14em; color:var(--bark); margin:18px 0 8px; font-weight:500; }
+  .a-legal h4:first-child { margin-top:0; }
+  .a-legal p { margin:0 0 10px; }
+  .a-legal ol { padding-left:18px; margin:0 0 10px; }
+  .a-legal ol ol { margin-top:6px; }
+  .a-legal li { margin-bottom:6px; }
+  .a-confirm-row { display:flex; gap:12px; align-items:flex-start; padding:18px 0 8px; }
+  .a-confirm-row input[type="checkbox"] { margin-top:3px; width:18px; height:18px; accent-color: var(--moss); flex-shrink:0; }
+  .a-confirm-row label { font-size:14px; line-height:1.6; color:var(--deep); cursor:pointer; }
+  .a-btn { display:block; width:100%; padding:18px 32px; background:var(--deep); color:var(--warm-white); border:none; font-family:'Jost',sans-serif; font-size:12px; letter-spacing:0.24em; text-transform:uppercase; cursor:pointer; margin-top:20px; transition: background 0.2s; }
+  .a-btn:disabled { background:var(--stone); color:var(--clay); cursor:not-allowed; }
+  .a-btn:not(:disabled):hover { background:var(--bark); }
+  .a-err { background:rgba(184,92,92,0.1); color:#b85c5c; padding:12px 16px; border-radius:4px; font-size:13px; margin-bottom:16px; display:none; }
+  .a-success { text-align:center; padding: 40px 20px; }
+  .a-success-icon { font-family:'Cormorant Garamond',serif; font-size:48px; color:var(--moss); margin-bottom:8px; }
+  .a-success h2 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:32px; color:var(--deep); margin:0 0 14px; }
+  .a-success h2 em { color:var(--bark); }
+  .a-success p { font-size:15px; line-height:1.7; color:var(--body); margin:0 0 14px; }
+  .a-loading, .a-error-state { text-align:center; padding:80px 20px; font-size:14px; color:var(--bark); }
+  .a-foot { text-align:center; margin-top:22px; font-size:12px; color:var(--clay); letter-spacing:0.05em; }
+  .a-foot a { color: var(--bark); text-decoration: none; }
+  @media (max-width: 560px) {
+    body { padding: 24px 12px 60px; }
+    .a-card { padding: 28px 22px; }
+    .a-brand h1 { font-size: 26px; }
+    .a-greeting { font-size: 26px; }
+    .a-legal { max-height: 340px; padding: 18px 20px; }
+    .a-slots li { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+  <div class="a-wrap">
+    <div class="a-card" id="a-card">
+      <div class="a-brand">
+        <h1>VFIT</h1>
+        <p>Member Agreement</p>
+      </div>
+      <div id="a-loading" class="a-loading">Loading your details&hellip;</div>
+      <div id="a-error" class="a-error-state" style="display:none;"></div>
+      <div id="a-body" style="display:none;"></div>
+      <div id="a-done" class="a-success" style="display:none;">
+        <div class="a-success-icon">&#x2726;</div>
+        <h2>Thank <em>you.</em></h2>
+        <p id="a-done-msg">Your agreement has been recorded. We can't wait to get started.</p>
+        <p style="font-size:13px;color:var(--bark);">&mdash; <em>Georgie</em></p>
+      </div>
+    </div>
+    <div class="a-foot">VFIT Studio &middot; Toowoomba &middot; <a href="tel:0417645924">0417 645 924</a></div>
+  </div>
+  <script type="module" src="./js/agreement.js"></script>
+</body>
+</html>

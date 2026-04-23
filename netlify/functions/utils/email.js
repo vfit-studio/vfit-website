@@ -162,6 +162,38 @@ async function sendReviewRequestEmail(to, name, eventName, reviewBaseUrl) {
   }).catch(err => console.error('Email error:', err));
 }
 
+// ─── MEMBER WELCOME + AGREEMENT LINK ───
+async function sendWelcomeEmail(to, name, plan, slotLines, agreementUrl, ownerPhone) {
+  const resend = getResend();
+  if (!resend) return;
+  const firstName = (name || 'there').split(' ')[0];
+  const phoneDisplay = ownerPhone || '0417 645 924';
+  const phoneTel = phoneDisplay.replace(/\s+/g, '');
+
+  const slotsHtml = (slotLines && slotLines.length)
+    ? `<ul style="margin:0;padding-left:18px;color:#6b5e52;font-size:14px;line-height:2;">${slotLines.map((s) => `<li>${s}</li>`).join('')}</ul>`
+    : `<p style="font-size:13px;color:#8c7660;margin:0;font-style:italic;">I'll confirm your exact weekly slots shortly.</p>`;
+
+  await resend.emails.send({
+    from: 'VFIT Studio <memberships@vfit-studio.netlify.app>',
+    to: [to],
+    subject: `Welcome to VFIT, ${firstName} ✦`,
+    html: wrap(`
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Welcome, ${firstName}.</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 20px;">I'm so glad to have you joining VFIT. Your placement on the <strong>${plan}</strong> is confirmed, and here are your weekly sessions:</p>
+      <div style="background:#f5f0e8;padding:22px 28px;border-left:3px solid #c9b99a;margin:0 0 28px;">
+        ${slotsHtml}
+      </div>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 20px;">Before your first session, please take a moment to read through and confirm our liability waiver and cancellation policy. It takes less than a minute.</p>
+      <div style="text-align:center;margin:0 0 32px;">
+        <a href="${agreementUrl}" style="display:inline-block;padding:16px 44px;background:#3d3530;color:#fefcf8;text-decoration:none;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-family:Arial,sans-serif;">Review &amp; Confirm</a>
+      </div>
+      <p style="font-size:13px;color:#8c7660;margin:0 0 8px;line-height:1.7;">Any questions at all — reply to this email or text me directly on <a href="tel:${phoneTel}" style="color:#8c7660;">${phoneDisplay}</a>.</p>
+      <p style="font-size:13px;color:#8c7660;margin:18px 0 0;">&mdash; <em>Georgie</em></p>
+    `)
+  }).catch(err => console.error('Welcome email error:', err));
+}
+
 // ─── OWNER NOTIFICATION (Georgie gets this) ───
 async function sendOwnerAlert(subject, bodyHtml) {
   const resend = getResend();
@@ -180,6 +212,7 @@ module.exports = {
   sendBookingsOpenEmail,
   sendBookingConfirmation,
   sendMembershipConfirmation,
+  sendWelcomeEmail,
   sendOwnerAlert,
   sendWaitlistSpotEmail,
   sendReviewRequestEmail,

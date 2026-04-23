@@ -642,6 +642,8 @@ async function handleGetMembers() {
     status: m.status,
     start_date: m.start_date,
     notes: m.notes,
+    welcome_sent_at: m.welcome_sent_at,
+    agreed_at: m.agreed_at,
     slots: slotMap[m.id] || [],
   }));
 
@@ -774,6 +776,150 @@ async function handleAcceptMembership(body) {
   if (updateErr) throw updateErr;
 
   return respond(200, { success: true, member });
+}
+
+const DAY_NAMES_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const OWNER_PHONE_DISPLAY = '0417 645 924';
+
+async function fetchMemberSlots(memberId) {
+  const { data: assignments, error } = await supabase
+    .from('member_slots')
+    .select('schedule_slots(day_of_week, time)')
+    .eq('status', 'active')
+    .eq('member_id', memberId);
+  if (error) return [];
+  return (assignments || [])
+    .filter((a) => a.schedule_slots)
+    .map((a) => ({ day_of_week: a.schedule_slots.day_of_week, time: a.schedule_slots.time }))
+    .sort((a, b) => (a.day_of_week - b.day_of_week) || String(a.time).localeCompare(String(b.time)));
+}
+
+function formatSlotLine(slot) {
+  const day = DAY_NAMES_FULL[slot.day_of_week] || 'Day ' + slot.day_of_week;
+  return `${day} · ${slot.time}`;
+}
+
+async function handleSendWelcome(body) {
+  requireAdmin(body.admin_key);
+  const { member_id } = body;
+  if (!member_id) return respond(400, { success: false, error: 'member_id is required' });
+
+  const { data: member, error: fetchErr } = await supabase
+    .from('members')
+    .select('*')
+    .eq('id', member_id)
+    .single();
+  if (fetchErr || !member) return respond(404, { success: false, error: 'member_not_found' });
+
+  // Ensure token exists (in case row predates the migration default)
+  let token = member.agreement_token;
+  if (!token) {
+    const { randomUUID } = require('crypto');
+    token = randomUUID();
+    await supabase.from('members').update({ agreement_token: token }).eq('id', member_id);
+  }
+
+  const agreementUrl = `${SITE_URL}/agreement.html?token=${token}`;
+
+  // Build slot list: prefer assigned slots, fall back to enquiry preferences
+  const slots = await fetchMemberSlots(member_id);
+  let slotLines = slots.map(formatSlotLine);
+  if (slotLines.length === 0 && member.membership_id) {
+    const { data: enquiry } = await supabase
+      .from('memberships')
+      .select('days, times')
+      .eq('id', member.membership_id)
+      .single();
+    if (enquiry && enquiry.days && enquiry.days !== 'Not specified') {
+      const suffix = (enquiry.times && enquiry.times !== 'Not specified') ? ' — ' + enquiry.times : '';
+      slotLines = [`${enquiry.days}${suffix} (to be confirmed)`];
+    }
+  }
+
+  const { sendWelcomeEmail } = require('./utils/email');
+  const { sendSMS } = require('./utils/sms');
+
+  await sendWelcomeEmail(member.email, member.name, member.plan, slotLines, agreementUrl, OWNER_PHONE_DISPLAY);
+
+  let smsAttempted = false;
+  if (member.phone) {
+    const firstName = (member.name || 'there').split(' ')[0];
+    const smsBody = `Hi ${firstName}, it's Georgie from VFIT. Your sessions are confirmed — check your email for the welcome & to confirm your agreement. Reply or call ${OWNER_PHONE_DISPLAY} any time. — G`;
+    await sendSMS(member.phone, smsBody);
+    smsAttempted = true;
+  }
+
+  await supabase.from('members').update({ welcome_sent_at: new Date().toISOString() }).eq('id', member_id);
+
+  return respond(200, {
+    success: true,
+    email_configured: !!process.env.RESEND_API_KEY,
+    sms_configured: !!process.env.TWILIO_SID,
+    sms_attempted: smsAttempted,
+    agreement_url: agreementUrl,
+  });
+}
+
+async function handleGetAgreement(token) {
+  if (!token) return respond(400, { success: false, error: 'token required' });
+
+  const { data: member, error } = await supabase
+    .from('members')
+    .select('id, name, plan, sessions_per_week, agreed_at')
+    .eq('agreement_token', token)
+    .single();
+  if (error || !member) return respond(404, { success: false, error: 'invalid_token' });
+
+  const slots = await fetchMemberSlots(member.id);
+
+  return respond(200, {
+    success: true,
+    name: member.name,
+    plan: member.plan,
+    sessions_per_week: member.sessions_per_week,
+    slots,
+    agreed_at: member.agreed_at,
+    owner_phone: OWNER_PHONE_DISPLAY,
+  });
+}
+
+async function handleConfirmAgreement(body) {
+  const { token } = body;
+  if (!token) return respond(400, { success: false, error: 'token required' });
+
+  const { data: existing, error } = await supabase
+    .from('members')
+    .select('id, name, plan, agreed_at')
+    .eq('agreement_token', token)
+    .single();
+  if (error || !existing) return respond(404, { success: false, error: 'invalid_token' });
+
+  if (existing.agreed_at) {
+    return respond(200, { success: true, already_agreed: true, agreed_at: existing.agreed_at });
+  }
+
+  const now = new Date().toISOString();
+  const { error: updErr } = await supabase
+    .from('members')
+    .update({ agreed_at: now })
+    .eq('id', existing.id);
+  if (updErr) throw updErr;
+
+  // Notify Georgie
+  try {
+    const { sendOwnerAlert } = require('./utils/email');
+    const { sendOwnerSMS } = require('./utils/sms');
+    const when = new Date(now).toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' });
+    await sendOwnerAlert(
+      `VFIT — ${existing.name} confirmed their agreement`,
+      `<h2 style="font-family:Georgia,serif;font-size:22px;color:#3d3530;margin:0 0 14px;">Agreement confirmed</h2>
+       <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 14px;"><strong>${existing.name}</strong> (${existing.plan}) confirmed their liability waiver and cancellation policy.</p>
+       <p style="font-size:13px;color:#8c7660;margin:0;">${when}</p>`
+    );
+    await sendOwnerSMS(`VFIT: ${existing.name} (${existing.plan}) confirmed their agreement.`);
+  } catch (e) { console.error('Owner notify error:', e); }
+
+  return respond(200, { success: true, agreed_at: now });
 }
 
 async function handleCreateMember(body) {
@@ -1635,6 +1781,8 @@ exports.handler = async (event) => {
           return await handleCrmDashboard();
         case 'appointments':
           return await handleGetAppointments(params);
+        case 'agreement':
+          return await handleGetAgreement(params.token);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -1695,6 +1843,10 @@ exports.handler = async (event) => {
           return await handleCleanupHolds();
         case 'accept_membership':
           return await handleAcceptMembership(body);
+        case 'send_welcome':
+          return await handleSendWelcome(body);
+        case 'confirm_agreement':
+          return await handleConfirmAgreement(body);
         case 'create_member':
           return await handleCreateMember(body);
         case 'update_member':
