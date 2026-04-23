@@ -405,7 +405,7 @@
 
 <!-- ─── ACCEPT MEMBERSHIP MODAL ─── -->
 <div class="modal-backdrop" id="accept-modal">
-  <div class="modal">
+  <div class="modal modal-wide">
     <button class="modal-close" onclick="closeAcceptModal()">&times;</button>
     <h2 class="modal-title">Accept <em>Member</em></h2>
     <input type="hidden" id="accept-membership-id">
@@ -429,7 +429,21 @@
       <label class="form-label">Sessions Per Week</label>
       <input type="number" class="form-input" id="accept-sessions" min="1" max="7" value="1">
     </div>
-    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="acceptMembership()">Accept &amp; Create Member</button>
+
+    <div class="accept-pref-block" id="accept-pref-block">
+      <p class="accept-section-label">They asked for</p>
+      <p id="accept-prefs" class="accept-prefs-text"></p>
+    </div>
+
+    <p class="accept-section-label" style="margin-top:18px;">Confirm which slots to assign</p>
+    <p class="accept-section-hint">Tick the weekly times you're giving them. Slots matching their preferences are highlighted. You can leave this empty and assign later.</p>
+    <div id="accept-slots-loading" class="loading" style="padding:20px 0;">Loading available slots...</div>
+    <div id="accept-slots-empty" class="empty-state" style="display:none;font-size:13px;padding:16px;">
+      No schedule slots exist yet. Close this modal, create slots from the Timetable page, then come back.
+    </div>
+    <div id="accept-slots-grid" class="accept-slots-grid" style="display:none;"></div>
+
+    <button class="btn-primary" id="accept-submit-btn" style="width:100%;margin-top:18px;" onclick="acceptMembership()">Accept Member</button>
   </div>
 </div>
 

@@ -740,7 +740,7 @@ async function handleGetMember(memberId) {
 
 async function handleAcceptMembership(body) {
   requireAdmin(body.admin_key);
-  const { membership_id, name, email, phone, plan, sessions_per_week } = body;
+  const { membership_id, name, email, phone, plan, sessions_per_week, slot_ids } = body;
   if (!membership_id) return respond(400, { success: false, error: 'membership_id is required' });
 
   // Fetch the membership enquiry
@@ -775,7 +775,29 @@ async function handleAcceptMembership(body) {
     .eq('id', membership_id);
   if (updateErr) throw updateErr;
 
-  return respond(200, { success: true, member });
+  // Optionally assign the chosen slots in one go
+  let assigned_slots = [];
+  let slot_errors = [];
+  if (Array.isArray(slot_ids) && slot_ids.length > 0) {
+    for (const slot_id of slot_ids) {
+      const { data: slot } = await supabase.from('schedule_slots').select('*').eq('id', slot_id).single();
+      if (!slot) { slot_errors.push({ slot_id, error: 'not_found' }); continue; }
+      const { count } = await supabase
+        .from('member_slots')
+        .select('*', { count: 'exact', head: true })
+        .eq('slot_id', slot_id)
+        .eq('status', 'active');
+      if ((count || 0) >= slot.max_capacity) {
+        slot_errors.push({ slot_id, time: slot.time, day_of_week: slot.day_of_week, error: 'full' });
+        continue;
+      }
+      const { error: aerr } = await supabase.from('member_slots').insert({ member_id: member.id, slot_id, status: 'active' });
+      if (aerr) slot_errors.push({ slot_id, error: aerr.message });
+      else assigned_slots.push(slot_id);
+    }
+  }
+
+  return respond(200, { success: true, member, assigned_slots, slot_errors });
 }
 
 const DAY_NAMES_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];

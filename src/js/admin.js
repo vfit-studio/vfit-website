@@ -1228,12 +1228,117 @@ function openAcceptModal(membershipId) {
   document.getElementById('accept-email').value = m.email || '';
   document.getElementById('accept-phone').value = m.phone || '';
   document.getElementById('accept-plan').value = m.plan || '';
-  document.getElementById('accept-sessions').value = m.sessions_per_week || 1;
+  document.getElementById('accept-sessions').value = m.sessions || m.sessions_per_week || 1;
+
+  // Render their preferences
+  var prefBlock = document.getElementById('accept-pref-block');
+  var prefText = document.getElementById('accept-prefs');
+  var parts = [];
+  if (m.days && m.days !== 'Not specified') parts.push(esc(m.days));
+  if (m.times && m.times !== 'Not specified') parts.push(esc(m.times));
+  if (m.sessions && m.sessions !== 'Not specified') parts.push(esc(m.sessions) + 'x per week');
+  if (parts.length) {
+    prefText.innerHTML = parts.join(' &middot; ');
+    prefBlock.style.display = 'block';
+  } else {
+    prefText.textContent = 'They didn’t specify preferred times.';
+    prefBlock.style.display = 'block';
+  }
+
+  // Load slot picker
+  _acceptCheckedSlots = {};
+  loadAcceptSlots(m);
+
+  document.getElementById('accept-submit-btn').textContent = 'Accept Member';
   document.getElementById('accept-modal').classList.add('open');
 }
 
 function closeAcceptModal() {
   document.getElementById('accept-modal').classList.remove('open');
+}
+
+var _acceptCheckedSlots = {};
+var _acceptSlotsCache = [];
+
+async function loadAcceptSlots(enquiry) {
+  var loading = document.getElementById('accept-slots-loading');
+  var empty = document.getElementById('accept-slots-empty');
+  var grid = document.getElementById('accept-slots-grid');
+  loading.style.display = 'block';
+  empty.style.display = 'none';
+  grid.style.display = 'none';
+  grid.innerHTML = '';
+
+  try {
+    var resp = await apiGet({ action: 'schedule' });
+    var byDay = {};
+    for (var d = 0; d < 6; d++) byDay[d] = [];
+    if (resp.schedule && typeof resp.schedule === 'object' && !Array.isArray(resp.schedule)) {
+      for (var key in resp.schedule) {
+        var di = parseInt(key, 10);
+        if (di >= 0 && di <= 5) byDay[di] = resp.schedule[key] || [];
+      }
+    }
+
+    // Flatten + cache
+    var all = [];
+    for (var dd = 0; dd < 6; dd++) { (byDay[dd] || []).forEach(function(s) { all.push(s); }); }
+    _acceptSlotsCache = all;
+
+    if (all.length === 0) {
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    // Parse preferences to highlight matches
+    var prefDays = parseEnquiryDays(enquiry.days);      // ['Mon','Wed'] or ['any']
+    var prefTimes = parseEnquiryTimes(enquiry.times);   // ['6:15 AM'] or ['any']
+
+    var DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var DAY_ABBR_LOCAL = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    var html = '';
+    for (var d2 = 0; d2 < 6; d2++) {
+      var daySlots = byDay[d2] || [];
+      if (daySlots.length === 0) continue;
+      var dayMatches = prefDays.indexOf('any') >= 0 || prefDays.indexOf(DAY_ABBR_LOCAL[d2]) >= 0;
+      html += '<div class="accept-day-col"><h4 class="accept-day-head' + (dayMatches ? ' matched' : '') + '">' + DAY_FULL[d2] + '</h4>';
+      daySlots.forEach(function(s) {
+        var count = (s.members || []).length;
+        var max = s.max_capacity || 4;
+        var isFull = count >= max;
+        var timeMatches = prefTimes.indexOf('any') >= 0 || prefTimes.indexOf(s.time) >= 0;
+        var matched = dayMatches && timeMatches;
+        var cls = 'accept-slot-pill' + (matched ? ' matched' : '') + (isFull ? ' full' : '');
+        var disabled = isFull ? ' disabled' : '';
+        var checked = _acceptCheckedSlots[s.id] ? ' checked' : '';
+        html += '<label class="' + cls + '">' +
+          '<input type="checkbox" value="' + esc(s.id) + '"' + checked + disabled + ' onchange="eschedAcceptToggle(this)">' +
+          '<span class="accept-slot-time">' + esc(s.time) + '</span>' +
+          '<span class="accept-slot-cap">' + count + '/' + max + (isFull ? ' · full' : '') + '</span>' +
+        '</label>';
+      });
+      html += '</div>';
+    }
+
+    grid.innerHTML = html;
+    loading.style.display = 'none';
+    grid.style.display = 'grid';
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load slots. ' + esc(err.message) + '</div>';
+  }
+}
+
+function eschedAcceptToggle(el) {
+  if (el.checked) _acceptCheckedSlots[el.value] = true;
+  else delete _acceptCheckedSlots[el.value];
+
+  var tickedCount = Object.keys(_acceptCheckedSlots).length;
+  var btn = document.getElementById('accept-submit-btn');
+  btn.textContent = tickedCount > 0
+    ? 'Accept & Assign ' + tickedCount + ' Slot' + (tickedCount === 1 ? '' : 's')
+    : 'Accept Member';
 }
 
 async function acceptMembership() {
@@ -1242,17 +1347,28 @@ async function acceptMembership() {
   var email = document.getElementById('accept-email').value.trim();
   if (!name || !email) { showToast('Name and email are required', 'error'); return; }
 
+  var slotIds = Object.keys(_acceptCheckedSlots);
+
   try {
-    await apiPost({
+    var resp = await apiPost({
       action: 'accept_membership',
       membership_id: membershipId,
       name: name,
       email: email,
       phone: document.getElementById('accept-phone').value.trim(),
       plan: document.getElementById('accept-plan').value.trim(),
-      sessions_per_week: parseInt(document.getElementById('accept-sessions').value) || 1
+      sessions_per_week: parseInt(document.getElementById('accept-sessions').value) || 1,
+      slot_ids: slotIds
     });
-    showToast('Member created successfully', 'success');
+
+    var assigned = (resp && resp.assigned_slots) ? resp.assigned_slots.length : 0;
+    var errs = (resp && resp.slot_errors) ? resp.slot_errors : [];
+    var msg = 'Member created' + (assigned > 0 ? ' · ' + assigned + ' slot' + (assigned === 1 ? '' : 's') + ' assigned' : '');
+    if (errs.length) {
+      var fullCount = errs.filter(function(e) { return e.error === 'full'; }).length;
+      if (fullCount > 0) msg += ' (' + fullCount + ' slot' + (fullCount === 1 ? '' : 's') + ' were full — skipped)';
+    }
+    showToast(msg, errs.length ? 'error' : 'success');
     closeAcceptModal();
     loadMembershipRequests();
   } catch (err) {
@@ -2457,6 +2573,7 @@ window.updateMembershipStatus = updateMembershipStatus;
 window.openAcceptModal = openAcceptModal;
 window.closeAcceptModal = closeAcceptModal;
 window.acceptMembership = acceptMembership;
+window.eschedAcceptToggle = eschedAcceptToggle;
 window.deleteMembershipRequest = deleteMembershipRequest;
 window.loadEnquirySchedule = loadEnquirySchedule;
 window.eschedShow = eschedShow;
