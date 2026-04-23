@@ -837,25 +837,13 @@ async function handleSendWelcome(body) {
   }
 
   const { sendWelcomeEmail } = require('./utils/email');
-  const { sendSMS } = require('./utils/sms');
-
   await sendWelcomeEmail(member.email, member.name, member.plan, slotLines, agreementUrl, OWNER_PHONE_DISPLAY);
-
-  let smsAttempted = false;
-  if (member.phone) {
-    const firstName = (member.name || 'there').split(' ')[0];
-    const smsBody = `Hi ${firstName}, it's Georgie from VFIT. Your sessions are confirmed — check your email for the welcome & to confirm your agreement. Reply or call ${OWNER_PHONE_DISPLAY} any time. — G`;
-    await sendSMS(member.phone, smsBody);
-    smsAttempted = true;
-  }
 
   await supabase.from('members').update({ welcome_sent_at: new Date().toISOString() }).eq('id', member_id);
 
   return respond(200, {
     success: true,
     email_configured: !!process.env.RESEND_API_KEY,
-    sms_configured: !!process.env.TWILIO_SID,
-    sms_attempted: smsAttempted,
     agreement_url: agreementUrl,
   });
 }
@@ -905,10 +893,9 @@ async function handleConfirmAgreement(body) {
     .eq('id', existing.id);
   if (updErr) throw updErr;
 
-  // Notify Georgie
+  // Notify Georgie (email only)
   try {
     const { sendOwnerAlert } = require('./utils/email');
-    const { sendOwnerSMS } = require('./utils/sms');
     const when = new Date(now).toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' });
     await sendOwnerAlert(
       `VFIT — ${existing.name} confirmed their agreement`,
@@ -916,7 +903,6 @@ async function handleConfirmAgreement(body) {
        <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 14px;"><strong>${existing.name}</strong> (${existing.plan}) confirmed their liability waiver and cancellation policy.</p>
        <p style="font-size:13px;color:#8c7660;margin:0;">${when}</p>`
     );
-    await sendOwnerSMS(`VFIT: ${existing.name} (${existing.plan}) confirmed their agreement.`);
   } catch (e) { console.error('Owner notify error:', e); }
 
   return respond(200, { success: true, agreed_at: now });

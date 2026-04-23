@@ -341,18 +341,16 @@ function renderMemberListCards(members) {
 
 async function sendWelcome(memberId, isResend) {
   var prompt = isResend
-    ? 'Resend the welcome email + SMS to this member?'
-    : 'Send the welcome email + SMS with the agreement link now?';
+    ? 'Resend the welcome email to this member?'
+    : 'Send the welcome email with the agreement link now?';
   if (!confirm(prompt)) return;
   try {
     var resp = await apiPost({ action: 'send_welcome', member_id: memberId });
-    var bits = [];
-    if (resp.email_configured) bits.push('email sent'); else bits.push('email SKIPPED (Resend not configured)');
-    if (resp.sms_attempted) {
-      if (resp.sms_configured) bits.push('SMS sent');
-      else bits.push('SMS SKIPPED (Twilio not configured)');
+    if (resp.email_configured) {
+      showToast('Welcome email sent', 'success');
+    } else {
+      showToast('Email SKIPPED — Resend not configured on Netlify', 'error');
     }
-    showToast('Welcome: ' + bits.join(', '), 'success');
     loadMemberList();
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
