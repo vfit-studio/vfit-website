@@ -1070,7 +1070,7 @@ body.cookie-shown footer{padding-bottom:calc(100px + env(safe-area-inset-bottom)
   .about-img{min-height:50vw}
   .about-content{padding:60px 36px}
   .contact-info,.contact-form-wrap{padding:60px 36px}
-  .page-hero,.cinematic-hero{padding:0 36px 60px;min-height:auto}
+  .page-hero,.cinematic-hero{padding:120px 36px 60px;min-height:auto}
   .pillars-grid,.expect-grid{grid-template-columns:1fr}
   footer{grid-template-columns:1fr;padding:48px 28px 28px;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
   .modal{padding:36px 28px}
@@ -1086,7 +1086,7 @@ body.cookie-shown footer{padding-bottom:calc(100px + env(safe-area-inset-bottom)
   .offering-panel-content{padding:64px 24px 32px}
   .offering-panel-visual{padding:0 24px 48px}
   .georgie-editorial-content{padding:48px 24px}
-  .page-hero,.cinematic-hero{padding:80px 24px 48px;min-height:auto}
+  .page-hero,.cinematic-hero{padding:140px 24px 48px;min-height:auto}
   .compact-header{padding:100px 24px 40px}
   .section{padding:80px 16px}
   .contact-info,.contact-form-wrap{padding:40px 24px}
