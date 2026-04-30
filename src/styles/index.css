@@ -1079,7 +1079,7 @@ body.cookie-shown footer{padding-bottom:calc(100px + env(safe-area-inset-bottom)
 }
 
 @media(max-width:480px){
-  .home-hero-left{padding:120px 24px 48px}
+  .home-hero-left{bottom:24px;left:20px;max-width:92%}
   .offering-section{padding:64px 24px}
   .panel-content{padding:80px 24px 60px}
   .offering-panel-content{padding:64px 24px 32px}
