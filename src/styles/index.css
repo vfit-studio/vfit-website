@@ -677,7 +677,7 @@ nav.scrolled{
 .compact-header .page-hero-eyebrow::before{background:var(--clay)}
 
 .ss-info-card{
-  background:rgba(254,252,248,0.82);
+  background:rgba(254,252,248,0.7);
   -webkit-backdrop-filter:blur(8px);
   backdrop-filter:blur(8px);
   border:1px solid rgba(232,224,212,0.6);
