@@ -217,9 +217,9 @@ nav.scrolled{
 .home-hero-eyebrow::before{content:'';width:40px;height:1px;background:var(--clay);display:inline-block}
 .home-hero h1{
   font-family:'Cormorant Garamond',serif;
-  font-size:clamp(56px,7.5vw,110px);font-weight:300;
-  line-height:.9;letter-spacing:-.02em;
-  color:var(--warm-white);margin-bottom:36px;
+  font-size:clamp(42px,5.5vw,80px);font-weight:300;
+  line-height:.95;letter-spacing:-.02em;
+  color:var(--warm-white);margin-bottom:0;
   opacity:0;animation:fadeUp .9s ease .5s forwards;
 }
 .home-hero h1 em{font-style:italic;color:var(--clay)}
