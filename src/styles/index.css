@@ -217,7 +217,7 @@ nav.scrolled{
 .home-hero-eyebrow::before{content:'';width:40px;height:1px;background:var(--clay);display:inline-block}
 .home-hero h1{
   font-family:'Cormorant Garamond',serif;
-  font-size:clamp(42px,5.5vw,80px);font-weight:300;
+  font-size:clamp(28px,4vw,56px);font-weight:300;
   line-height:.95;letter-spacing:-.02em;
   color:var(--warm-white);margin-bottom:0;
   opacity:0;animation:fadeUp .9s ease .5s forwards;
