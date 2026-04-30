@@ -381,7 +381,7 @@ nav.scrolled{
 .panel-countdown .countdown-num{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;line-height:1;color:var(--deep)}
 .panel-countdown .countdown-txt{font-size:9px;letter-spacing:.25em;text-transform:uppercase;margin-top:4px;color:var(--bark)}
 .panel-countdown .countdown-sep{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1;padding-top:4px;color:var(--clay)}
-.panel-countdown .countdown-session-date{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;margin-bottom:16px;color:var(--bark)}
+.panel-countdown .countdown-session-date{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:26px;margin-bottom:18px;color:var(--deep);letter-spacing:-.01em}
 .panel-countdown .countdown-follow-text{font-size:11px;margin-top:10px;color:var(--bark)}
 .panel-countdown .countdown-follow-text a{font-weight:400;text-decoration:underline;color:var(--bark)}
 
@@ -614,7 +614,7 @@ nav.scrolled{
 .countdown-num{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;color:var(--deep);line-height:1}
 .countdown-txt{font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--bark);margin-top:4px}
 .countdown-sep{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--clay);line-height:1;padding-top:4px}
-.countdown-session-date{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:15px;color:var(--clay);margin-bottom:16px}
+.countdown-session-date{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:26px;color:var(--deep);margin-bottom:18px;letter-spacing:-.01em}
 .countdown-follow-text{font-size:11px;color:var(--bark);margin-top:10px}
 .countdown-follow-text a{color:var(--bark);font-weight:400;text-decoration:underline}
 
