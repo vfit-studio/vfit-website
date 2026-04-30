@@ -204,7 +204,7 @@ nav.scrolled{
 }
 .home-hero-left{
   display:flex;flex-direction:column;justify-content:flex-end;
-  padding:60px 80px 80px;
+  padding:48px 40px 40px;
   position:relative;z-index:2;
   width:100%;
 }
@@ -1053,7 +1053,7 @@ body.cookie-shown footer{padding-bottom:calc(100px + env(safe-area-inset-bottom)
   nav{padding:20px 24px}
   nav.scrolled{padding:14px 24px}
   .home-hero{grid-template-columns:1fr;min-height:auto}
-  .home-hero-left{padding:140px 36px 60px}
+  .home-hero-left{padding:140px 24px 32px}
   .home-hero-right{min-height:50vw}
   .offering-panel{min-height:auto}
   .offering-section{padding:80px 36px}
