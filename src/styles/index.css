@@ -203,10 +203,10 @@ nav.scrolled{
   background:linear-gradient(to top, rgba(61,53,48,0.8) 0%, rgba(61,53,48,0.2) 50%, rgba(61,53,48,0.1) 100%);
 }
 .home-hero-left{
-  display:flex;flex-direction:column;justify-content:flex-end;
-  padding:48px 40px 40px;
-  position:relative;z-index:2;
-  width:100%;
+  position:absolute;
+  bottom:48px;left:48px;
+  z-index:2;
+  max-width:88%;
 }
 .home-hero-eyebrow{
   font-size:10px;letter-spacing:.45em;text-transform:uppercase;
@@ -1053,7 +1053,7 @@ body.cookie-shown footer{padding-bottom:calc(100px + env(safe-area-inset-bottom)
   nav{padding:20px 24px}
   nav.scrolled{padding:14px 24px}
   .home-hero{grid-template-columns:1fr;min-height:auto}
-  .home-hero-left{padding:140px 24px 32px}
+  .home-hero-left{bottom:32px;left:24px;max-width:90%}
   .home-hero-right{min-height:50vw}
   .offering-panel{min-height:auto}
   .offering-section{padding:80px 36px}
