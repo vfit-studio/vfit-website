@@ -676,6 +676,32 @@ nav.scrolled{
 .compact-header .page-hero-eyebrow{position:relative;z-index:2;color:var(--bark)}
 .compact-header .page-hero-eyebrow::before{background:var(--clay)}
 
+.ss-info-card{
+  background:var(--warm-white);
+  border:1px solid var(--stone);
+  border-left:3px solid var(--clay);
+  padding:22px 28px;
+  margin-top:22px;
+  max-width:560px;
+  border-radius:3px;
+  box-shadow:0 6px 32px rgba(0,0,0,0.08);
+}
+.ss-info-card .ss-info-line{
+  font-size:15px;line-height:1.7;color:var(--deep);margin:0 0 10px;
+}
+.ss-info-card .ss-info-line:nth-of-type(2){margin-bottom:14px}
+.ss-info-card .ss-info-services{
+  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+  font-family:'Jost',sans-serif;font-weight:500;
+  color:var(--bark);margin:0;padding-top:14px;
+  border-top:1px solid var(--stone);
+}
+@media (max-width: 560px){
+  .ss-info-card{padding:18px 20px;margin-top:18px}
+  .ss-info-card .ss-info-line{font-size:14px}
+  .ss-info-card .ss-info-services{font-size:10px;letter-spacing:0.14em}
+}
+
 /* ============================================
    MEMBERSHIP CARDS — LIGHT ELEGANT
    ============================================ */
