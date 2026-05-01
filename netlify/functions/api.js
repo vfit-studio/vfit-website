@@ -249,44 +249,20 @@ async function handleNotifications() {
 }
 
 async function handleDashboard() {
-  // Total bookings (confirmed)
-  const { count: totalBookings } = await supabase
-    .from('bookings')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'confirmed');
-
-  // Total revenue
-  const { data: revenueRows } = await supabase
-    .from('bookings')
-    .select('amount_cents')
-    .eq('status', 'confirmed');
-  const totalRevenue = (revenueRows || []).reduce((sum, r) => sum + (r.amount_cents || 0), 0);
-
-  // Upcoming events
-  const { data: upcoming } = await supabase
-    .from('events')
-    .select('*')
-    .eq('status', 'active')
-    .gte('session_date', new Date().toISOString())
-    .order('session_date', { ascending: true });
-
-  // Membership enquiries
-  const { count: totalMemberships } = await supabase
-    .from('memberships')
-    .select('*', { count: 'exact', head: true });
-
-  // Active members count
-  const { count: totalMembers } = await supabase
-    .from('members')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active');
+  const [upcomingRes, memberCount, enquiryCount] = await Promise.all([
+    supabase.from('events').select('*').eq('status', 'active')
+      .gte('session_date', new Date().toISOString())
+      .order('session_date', { ascending: true }),
+    supabase.from('members').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('memberships').select('*', { count: 'exact', head: true }),
+  ]);
 
   return respond(200, {
     success: true,
     dashboard: {
-      upcoming_events: upcoming || [],
-      total_memberships: totalMemberships || 0,
-      total_members: totalMembers || 0,
+      upcoming_events: upcomingRes.data || [],
+      total_memberships: enquiryCount.count || 0,
+      total_members: memberCount.count || 0,
     },
   });
 }
