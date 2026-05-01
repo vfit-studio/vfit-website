@@ -651,12 +651,27 @@ async function handleGetMembers() {
 }
 
 async function handleGetSchedule() {
-  const { data: slots, error } = await supabase
+  const { data: slotsRaw, error } = await supabase
     .from('schedule_slots')
     .select('*')
-    .eq('status', 'active')
-    .order('time', { ascending: true });
+    .eq('status', 'active');
   if (error) throw error;
+
+  // Sort by chronological time, not alphabetical (so 5:15 AM comes before 10:15 AM)
+  const timeToMinutes = (t) => {
+    const m = String(t || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!m) return 99999;
+    let h = parseInt(m[1], 10);
+    const mn = parseInt(m[2], 10);
+    const ampm = m[3].toUpperCase();
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return h * 60 + mn;
+  };
+  const slots = (slotsRaw || []).slice().sort((a, b) => {
+    if (a.day_of_week !== b.day_of_week) return a.day_of_week - b.day_of_week;
+    return timeToMinutes(a.time) - timeToMinutes(b.time);
+  });
 
   const slotIds = (slots || []).map((s) => s.id);
   let assignmentMap = {};
