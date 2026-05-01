@@ -921,7 +921,13 @@ async function loadMembershipRequests() {
 
   try {
     var resp = await apiGet({ action: 'memberships' });
-    var members = resp.data || [];
+    var allMembers = resp.data || [];
+
+    // Hide accepted (status='active') and inactive enquiries — they're now in Member List
+    var members = allMembers.filter(function(m) {
+      var s = (m.status || 'new').toLowerCase();
+      return s !== 'active' && s !== 'inactive';
+    });
 
     _loadedMembershipRequests = members;
 
