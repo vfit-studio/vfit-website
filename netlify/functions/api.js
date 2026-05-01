@@ -97,6 +97,12 @@ const {
   pauseDaysInRange,
   PAUSE_CAP_DAYS_PER_YEAR,
 } = require('./utils/lounge-policy');
+const {
+  isStripeConfigured,
+  getPlanForMember,
+  estimateSessionFeeCents,
+  buildPortalSession,
+} = require('./utils/lounge-billing');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
@@ -1784,6 +1790,16 @@ async function handleLoungeMe(event) {
   }
   const { user, member } = ctx;
 
+  // Audit: log a "viewed lounge" entry — used by the privacy log in the
+  // profile drawer ("who has accessed my data"). Throttled by app code
+  // (the lounge calls lounge_me on load, so once per session is fine).
+  supabase.from('lounge_audit_log').insert({
+    member_id: member.id,
+    actor_user_id: user.id,
+    actor_role: 'member',
+    action: 'view_lounge',
+  }).then(() => {}, () => {});
+
   // Preferences (lazily creates a default row on first read)
   let { data: prefs } = await supabase
     .from('member_preferences')
@@ -1872,6 +1888,16 @@ async function handleLoungeMe(event) {
     .eq('direction', 'out')
     .is('read_at', null);
 
+  // Billing-status helper for the UI
+  const planRecord = await getPlanForMember(member).catch(() => null);
+  const billing = {
+    stripe_configured: isStripeConfigured(),
+    customer_linked: !!member.stripe_customer_id,
+    plan_price_cents: planRecord?.price_cents ?? null,
+    plan_period: planRecord?.period_label ?? null,
+    estimated_session_fee_cents: estimateSessionFeeCents(planRecord, member),
+  };
+
   return respond(200, {
     success: true,
     user: { id: user.id, email: user.email },
@@ -1884,11 +1910,13 @@ async function handleLoungeMe(event) {
       sessions_per_week: member.sessions_per_week,
       start_date: member.start_date,
       agreed_at: member.agreed_at,
+      ical_url: member.ical_token ? `${SITE_URL}/.netlify/functions/api?action=lounge_ical&token=${member.ical_token}` : null,
     },
     preferences: prefs,
     upcoming_sessions: upcoming,
     travel_holds: holds || [],
     unread_messages: unread || 0,
+    billing,
   });
 }
 
@@ -1927,6 +1955,17 @@ async function handleLoungeCancelSession(event, body) {
 
   const state = policy.chargeRequired ? 'cancelled_late' : 'cancelled_in_time';
 
+  // Calculate the late-cancel fee from the member's plan, if charge required.
+  // (Stripe never gets called here — we only record the amount so admin can
+  // see/charge it now or later when Stripe is wired up.)
+  let chargeAmountCents = null;
+  if (policy.chargeRequired) {
+    try {
+      const plan = await getPlanForMember(member);
+      chargeAmountCents = estimateSessionFeeCents(plan, member);
+    } catch (e) { console.error('fee calc failed', e); }
+  }
+
   // Upsert into member_session_log (unique on member_id+slot_id+session_date)
   const { error: logErr } = await supabase
     .from('member_session_log')
@@ -1937,6 +1976,7 @@ async function handleLoungeCancelSession(event, body) {
       session_time: slotTime,
       state,
       charge_required: policy.chargeRequired,
+      charge_amount_cents: chargeAmountCents,
       notice_hours: Math.round(policy.noticeHours * 10) / 10,
       reason: reason || null,
       updated_at: new Date().toISOString(),
@@ -2130,6 +2170,498 @@ async function markSessionsPaused(memberId, startDate, endDate) {
   }
 }
 
+// ─── Lounge: audit log (member-readable subset) ───
+async function handleLoungeAuditLog(event) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const { data: entries } = await supabase
+    .from('lounge_audit_log')
+    .select('id, actor_role, action, resource, occurred_at')
+    .eq('member_id', member.id)
+    .order('occurred_at', { ascending: false })
+    .limit(80);
+  return respond(200, { success: true, entries: entries || [] });
+}
+
+// ─── Lounge: concierge request (rides on lounge_messages) ───
+async function handleLoungeConcierge(event, body) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const { request_type, details } = body || {};
+  if (!request_type) return respond(400, { success: false, error: 'request_type required' });
+  const labelMap = {
+    at_home: 'At-home session',
+    travel: 'Travel program',
+    nutrition: 'Nutrition consult',
+    other: 'Custom request',
+  };
+  const label = labelMap[request_type] || 'Concierge request';
+  const composedBody =
+    `[Concierge · ${label}]\n\n${(details || '').trim() || '(no details)'}\n\n— Sent from the Lounge`;
+
+  const { data: row, error } = await supabase
+    .from('lounge_messages')
+    .insert({ member_id: member.id, direction: 'in', body: composedBody })
+    .select('*')
+    .single();
+  if (error) return respond(500, { success: false, error: 'failed' });
+
+  try {
+    await sendOwnerAlert(
+      `Concierge request from ${member.name}: ${label}`,
+      `<p><strong>${member.name}</strong> (${member.plan || '—'}) submitted a concierge request.</p>` +
+      `<p style="font-weight:500;">Type: ${escapeHtmlPlain(label)}</p>` +
+      (details ? `<blockquote style="border-left:3px solid #c9b99a;padding:8px 16px;color:#3d3530;">${escapeHtmlPlain(details)}</blockquote>` : '') +
+      `<p style="margin-top:16px;"><a href="${SITE_URL}/admin.html" style="color:#3d3530;">Open in admin →</a></p>`
+    );
+  } catch (e) { console.error('owner alert failed', e); }
+
+  return respond(200, { success: true, message: row });
+}
+
+// ─── Lounge: per-member iCal feed ───
+async function handleLoungeIcal(params) {
+  const token = params.token;
+  if (!token) {
+    return { statusCode: 400, headers: { 'Content-Type': 'text/plain' }, body: 'token required' };
+  }
+  const { data: member } = await supabase
+    .from('members')
+    .select('id, name, plan')
+    .eq('ical_token', token)
+    .maybeSingle();
+  if (!member) {
+    return { statusCode: 404, headers: { 'Content-Type': 'text/plain' }, body: 'not found' };
+  }
+
+  const { data: assignments } = await supabase
+    .from('member_slots')
+    .select('slot_id, schedule_slots(id, day_of_week, time)')
+    .eq('member_id', member.id)
+    .eq('status', 'active');
+  const slots = (assignments || []).map((a) => a.schedule_slots).filter(Boolean);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const horizon = new Date(today); horizon.setDate(horizon.getDate() + 90);
+
+  const { data: overrides } = await supabase
+    .from('member_session_log')
+    .select('slot_id, session_date, state')
+    .eq('member_id', member.id)
+    .gte('session_date', today.toISOString().slice(0, 10))
+    .lte('session_date', horizon.toISOString().slice(0, 10));
+  const skip = new Set();
+  for (const o of (overrides || [])) {
+    if (['cancelled_in_time', 'cancelled_late', 'paused', 'rescheduled'].includes(o.state)) {
+      skip.add(`${o.slot_id}|${o.session_date}`);
+    }
+  }
+
+  const events = [];
+  for (let d = new Date(today); d <= horizon; d.setDate(d.getDate() + 1)) {
+    const dow = d.getDay();
+    for (const s of slots) {
+      if (s.day_of_week === dow) {
+        const dateKey = d.toISOString().slice(0, 10);
+        if (skip.has(`${s.id}|${dateKey}`)) continue;
+        events.push(buildIcalEvent(member, s, dateKey));
+      }
+    }
+  }
+
+  const ical = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//VFIT Studio//Lounge//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:VFIT — ${escapeIcalText(member.name)}`,
+    'X-WR-TIMEZONE:Australia/Brisbane',
+    ...events,
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Cache-Control': 'private, max-age=300',
+    },
+    body: ical,
+  };
+}
+
+function buildIcalEvent(member, slot, dateKey) {
+  const m = String(slot.time || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  let h = 6, mn = 0;
+  if (m) {
+    h = parseInt(m[1], 10);
+    mn = parseInt(m[2], 10);
+    if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+    if (m[3].toUpperCase() === 'AM' && h === 12) h = 0;
+  }
+  const startLocal = `${dateKey.replace(/-/g, '')}T${String(h).padStart(2, '0')}${String(mn).padStart(2, '0')}00`;
+  const endH = (h + 1) % 24;
+  const endLocal = `${dateKey.replace(/-/g, '')}T${String(endH).padStart(2, '0')}${String(mn).padStart(2, '0')}00`;
+  const uid = `${slot.id}-${dateKey}@vfit.studio`;
+  const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  return [
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dtstamp}`,
+    `DTSTART;TZID=Australia/Brisbane:${startLocal}`,
+    `DTEND;TZID=Australia/Brisbane:${endLocal}`,
+    `SUMMARY:VFIT Studio Session`,
+    `DESCRIPTION:Studio session at VFIT. Manage in the Lounge.`,
+    `LOCATION:VFIT Studio · Shop 8/203 Margaret St, Toowoomba`,
+    'END:VEVENT',
+  ].join('\r\n');
+}
+
+function escapeIcalText(s) {
+  return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
+// ─── Lounge: challenges (member side) ───
+async function handleLoungeChallenges(event) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: challenges } = await supabase
+    .from('challenges')
+    .select('id, title, description, challenge_type, metric, start_date, end_date, visibility, status, created_at')
+    .in('status', ['active', 'finished'])
+    .gte('end_date', new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10))
+    .order('start_date', { ascending: false });
+
+  const challengeIds = (challenges || []).map((c) => c.id);
+  let myParticipationMap = {};
+  if (challengeIds.length) {
+    const { data: parts } = await supabase
+      .from('challenge_participants')
+      .select('challenge_id, joined_at, use_stealth_handle')
+      .eq('member_id', member.id)
+      .in('challenge_id', challengeIds);
+    for (const p of (parts || [])) myParticipationMap[p.challenge_id] = p;
+  }
+
+  return respond(200, {
+    success: true,
+    challenges: (challenges || []).map((c) => ({
+      ...c,
+      joined: !!myParticipationMap[c.id],
+      use_stealth_handle: myParticipationMap[c.id]?.use_stealth_handle || false,
+    })),
+  });
+}
+
+async function handleLoungeChallengeJoin(event, body) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const { challenge_id, use_stealth_handle } = body || {};
+  if (!challenge_id) return respond(400, { success: false, error: 'challenge_id required' });
+  const { error } = await supabase
+    .from('challenge_participants')
+    .upsert({
+      challenge_id,
+      member_id: member.id,
+      use_stealth_handle: !!use_stealth_handle,
+    }, { onConflict: 'challenge_id,member_id' });
+  if (error) return respond(500, { success: false, error: 'failed' });
+  return respond(200, { success: true });
+}
+
+async function handleLoungeChallengeLeave(event, body) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const { challenge_id } = body || {};
+  if (!challenge_id) return respond(400, { success: false, error: 'challenge_id required' });
+  await supabase
+    .from('challenge_participants')
+    .delete()
+    .eq('challenge_id', challenge_id)
+    .eq('member_id', member.id);
+  return respond(200, { success: true });
+}
+
+async function handleLoungeChallengeLog(event, body) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const { challenge_id, value, note, entry_date } = body || {};
+  if (!challenge_id) return respond(400, { success: false, error: 'challenge_id required' });
+  const date = entry_date || new Date().toISOString().slice(0, 10);
+  const { error } = await supabase
+    .from('challenge_entries')
+    .upsert({
+      challenge_id,
+      member_id: member.id,
+      entry_date: date,
+      value: value ?? null,
+      note: note ?? null,
+    }, { onConflict: 'challenge_id,member_id,entry_date' });
+  if (error) return respond(500, { success: false, error: 'failed' });
+  return respond(200, { success: true });
+}
+
+async function handleLoungeChallengeLeaderboard(event, params) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const challengeId = params.challenge_id;
+  if (!challengeId) return respond(400, { success: false, error: 'challenge_id required' });
+
+  // Pull challenge meta
+  const { data: ch } = await supabase
+    .from('challenges')
+    .select('id, title, metric, challenge_type, start_date, end_date, status')
+    .eq('id', challengeId)
+    .single();
+  if (!ch) return respond(404, { success: false, error: 'not found' });
+
+  // Pull participants and their entries
+  const { data: parts } = await supabase
+    .from('challenge_participants')
+    .select('member_id, use_stealth_handle, members(id, name)')
+    .eq('challenge_id', challengeId);
+  const memberIds = (parts || []).map((p) => p.member_id);
+
+  let entriesByMember = {};
+  if (memberIds.length) {
+    const { data: entries } = await supabase
+      .from('challenge_entries')
+      .select('member_id, entry_date, value')
+      .eq('challenge_id', challengeId)
+      .in('member_id', memberIds);
+    for (const e of (entries || [])) {
+      if (!entriesByMember[e.member_id]) entriesByMember[e.member_id] = [];
+      entriesByMember[e.member_id].push(e);
+    }
+  }
+
+  // Build per-participant scores. Score is sum(value) for value-based metrics
+  // (PBs, lifts, etc.) and entry count for attendance/streak.
+  const valueMetrics = ['pb_lift', 'volume', 'distance'];
+  const isCount = !valueMetrics.includes(ch.metric);
+
+  const board = (parts || []).map((p) => {
+    const myEntries = entriesByMember[p.member_id] || [];
+    const score = isCount
+      ? myEntries.length
+      : myEntries.reduce((s, e) => s + (Number(e.value) || 0), 0);
+    const handle = p.use_stealth_handle
+      ? `Member ${(p.member_id || '').slice(0, 4).toUpperCase()}`
+      : (p.members?.name || '—');
+    const isMe = p.member_id === member.id;
+    return { handle, score, isMe };
+  }).sort((a, b) => b.score - a.score);
+
+  return respond(200, { success: true, challenge: ch, leaderboard: board, is_count_metric: isCount });
+}
+
+// ─── Lounge: challenges (admin side) ───
+async function handleAdminCreateChallenge(body) {
+  requireAdmin(body.admin_key);
+  const { title, description, challenge_type, metric, start_date, end_date, visibility } = body;
+  if (!title || !challenge_type || !metric || !start_date || !end_date) {
+    return respond(400, { success: false, error: 'title, challenge_type, metric, start_date, end_date required' });
+  }
+  const { data, error } = await supabase
+    .from('challenges')
+    .insert({
+      title, description: description || null,
+      challenge_type, metric, start_date, end_date,
+      visibility: visibility || 'opt_in',
+    })
+    .select('*')
+    .single();
+  if (error) return respond(500, { success: false, error: error.message });
+  return respond(200, { success: true, challenge: data });
+}
+
+async function handleAdminListChallenges() {
+  const { data: challenges } = await supabase
+    .from('challenges')
+    .select('id, title, description, challenge_type, metric, start_date, end_date, visibility, status, created_at')
+    .order('start_date', { ascending: false })
+    .limit(50);
+
+  const ids = (challenges || []).map((c) => c.id);
+  let countsByChallenge = {};
+  if (ids.length) {
+    const { data: parts } = await supabase
+      .from('challenge_participants')
+      .select('challenge_id')
+      .in('challenge_id', ids);
+    for (const p of (parts || [])) {
+      countsByChallenge[p.challenge_id] = (countsByChallenge[p.challenge_id] || 0) + 1;
+    }
+  }
+  return respond(200, {
+    success: true,
+    challenges: (challenges || []).map((c) => ({ ...c, participants: countsByChallenge[c.id] || 0 })),
+  });
+}
+
+async function handleAdminFinishChallenge(body) {
+  requireAdmin(body.admin_key);
+  const { challenge_id } = body;
+  if (!challenge_id) return respond(400, { success: false, error: 'challenge_id required' });
+  await supabase.from('challenges').update({ status: 'finished' }).eq('id', challenge_id);
+  return respond(200, { success: true });
+}
+
+// ─── Lounge: billing portal (Stripe) ───
+async function handleLoungeBillingPortal(event) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const result = await buildPortalSession(member, `${SITE_URL}/lounge#/payments`);
+  return respond(200, { success: true, ...result });
+}
+
+// ─── Lounge: messaging (member side) ───
+async function handleLoungeMessagesList(event) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+
+  const { data: messages } = await supabase
+    .from('lounge_messages')
+    .select('id, direction, body, read_at, sent_at')
+    .eq('member_id', member.id)
+    .order('sent_at', { ascending: true })
+    .limit(200);
+
+  // Mark inbound (out = trainer→member) messages as read
+  await supabase
+    .from('lounge_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('member_id', member.id)
+    .eq('direction', 'out')
+    .is('read_at', null);
+
+  return respond(200, { success: true, messages: messages || [] });
+}
+
+async function handleLoungeSendMessage(event, body) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member } = ctx;
+  const text = String(body?.body || '').trim();
+  if (!text) return respond(400, { success: false, error: 'empty' });
+  if (text.length > 4000) return respond(400, { success: false, error: 'too_long' });
+
+  const { data: row, error } = await supabase
+    .from('lounge_messages')
+    .insert({ member_id: member.id, direction: 'in', body: text })
+    .select('*')
+    .single();
+  if (error) {
+    console.error('send msg error:', error);
+    return respond(500, { success: false, error: 'failed to send' });
+  }
+
+  // Notify Georgie (single email per send is noisy; you can mute later)
+  try {
+    await sendOwnerAlert(
+      `Lounge message from ${member.name}`,
+      `<p><strong>${member.name}</strong> (${member.plan || '—'}) sent you a message in the Lounge:</p>` +
+      `<blockquote style="border-left:3px solid #c9b99a;padding:8px 16px;color:#3d3530;">${escapeHtmlPlain(text)}</blockquote>` +
+      `<p style="margin-top:16px;"><a href="${SITE_URL}/admin.html" style="color:#3d3530;">Reply in admin →</a></p>`
+    );
+  } catch (e) { console.error('owner alert failed', e); }
+
+  return respond(200, { success: true, message: row });
+}
+
+// ─── Lounge: messaging (admin side) ───
+async function handleLoungeAdminInbox() {
+  // Latest message per member, with unread count, ordered by activity
+  const { data: messages } = await supabase
+    .from('lounge_messages')
+    .select('id, member_id, direction, body, read_at, sent_at, members(id, name, email, plan)')
+    .order('sent_at', { ascending: false })
+    .limit(500);
+
+  const threadMap = {};
+  for (const m of (messages || [])) {
+    const mid = m.member_id;
+    if (!threadMap[mid]) {
+      threadMap[mid] = {
+        member_id: mid,
+        member_name: m.members?.name || '—',
+        member_plan: m.members?.plan || '—',
+        last_message: m.body,
+        last_direction: m.direction,
+        last_sent_at: m.sent_at,
+        unread_count: 0,
+      };
+    }
+    if (m.direction === 'in' && !m.read_at) threadMap[mid].unread_count += 1;
+  }
+  const threads = Object.values(threadMap).sort(
+    (a, b) => new Date(b.last_sent_at) - new Date(a.last_sent_at)
+  );
+  return respond(200, { success: true, threads });
+}
+
+async function handleLoungeAdminThread(event, params) {
+  const memberId = params.member_id;
+  if (!memberId) return respond(400, { success: false, error: 'member_id required' });
+
+  const { data: messages } = await supabase
+    .from('lounge_messages')
+    .select('id, direction, body, read_at, sent_at')
+    .eq('member_id', memberId)
+    .order('sent_at', { ascending: true })
+    .limit(500);
+
+  const { data: member } = await supabase
+    .from('members').select('id, name, email, plan').eq('id', memberId).single();
+
+  // Mark inbound (member→trainer) as read
+  await supabase
+    .from('lounge_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('member_id', memberId)
+    .eq('direction', 'in')
+    .is('read_at', null);
+
+  return respond(200, { success: true, member, messages: messages || [] });
+}
+
+async function handleLoungeAdminSendMessage(body) {
+  requireAdmin(body.admin_key);
+  const { member_id, body: text } = body;
+  if (!member_id || !text || !String(text).trim()) {
+    return respond(400, { success: false, error: 'member_id and body required' });
+  }
+  const { data: row, error } = await supabase
+    .from('lounge_messages')
+    .insert({ member_id, direction: 'out', body: String(text).trim() })
+    .select('*')
+    .single();
+  if (error) return respond(500, { success: false, error: 'failed to send' });
+  return respond(200, { success: true, message: row });
+}
+
 // ─── Lounge: admin-side activity feed (cancellations + holds) ───
 async function handleLoungeAdminActivity() {
   // Recent cancellations (last 60 days)
@@ -2139,7 +2671,7 @@ async function handleLoungeAdminActivity() {
 
   const { data: logs } = await supabase
     .from('member_session_log')
-    .select('id, member_id, slot_id, session_date, session_time, state, charge_required, notice_hours, reason, created_at, members(id, name, email, plan)')
+    .select('id, member_id, slot_id, session_date, session_time, state, charge_required, charge_amount_cents, notice_hours, reason, created_at, members(id, name, email, plan, stripe_customer_id)')
     .in('state', ['cancelled_late', 'cancelled_in_time', 'paused'])
     .gte('session_date', cutoffStr)
     .order('created_at', { ascending: false })
@@ -2159,10 +2691,12 @@ async function handleLoungeAdminActivity() {
       member_id: l.member_id,
       member_name: l.members?.name || '—',
       member_plan: l.members?.plan || '—',
+      stripe_customer_id: l.members?.stripe_customer_id || null,
       session_date: l.session_date,
       session_time: l.session_time,
       state: l.state,
       charge_required: l.charge_required,
+      charge_amount_cents: l.charge_amount_cents,
       notice_hours: l.notice_hours,
       reason: l.reason,
       created_at: l.created_at,
@@ -2283,6 +2817,24 @@ exports.handler = async (event) => {
           return await handleLoungeMe(event);
         case 'lounge_admin_activity':
           return await handleLoungeAdminActivity();
+        case 'lounge_messages':
+          return await handleLoungeMessagesList(event);
+        case 'lounge_billing_portal':
+          return await handleLoungeBillingPortal(event);
+        case 'lounge_challenges':
+          return await handleLoungeChallenges(event);
+        case 'lounge_challenge_leaderboard':
+          return await handleLoungeChallengeLeaderboard(event, params);
+        case 'lounge_admin_challenges':
+          return await handleAdminListChallenges();
+        case 'lounge_ical':
+          return await handleLoungeIcal(params);
+        case 'lounge_audit_log':
+          return await handleLoungeAuditLog(event);
+        case 'lounge_admin_inbox':
+          return await handleLoungeAdminInbox();
+        case 'lounge_admin_thread':
+          return await handleLoungeAdminThread(event, params);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -2426,6 +2978,22 @@ exports.handler = async (event) => {
           return await handleLoungeCancelTravelHold(event, body);
         case 'lounge_save_preferences':
           return await handleLoungeSavePreferences(event, body);
+        case 'lounge_send_message':
+          return await handleLoungeSendMessage(event, body);
+        case 'lounge_admin_send_message':
+          return await handleLoungeAdminSendMessage(body);
+        case 'lounge_challenge_join':
+          return await handleLoungeChallengeJoin(event, body);
+        case 'lounge_challenge_leave':
+          return await handleLoungeChallengeLeave(event, body);
+        case 'lounge_challenge_log':
+          return await handleLoungeChallengeLog(event, body);
+        case 'admin_create_challenge':
+          return await handleAdminCreateChallenge(body);
+        case 'admin_finish_challenge':
+          return await handleAdminFinishChallenge(body);
+        case 'lounge_concierge':
+          return await handleLoungeConcierge(event, body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }

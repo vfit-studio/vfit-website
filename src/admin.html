@@ -51,6 +51,8 @@
       <li><button onclick="showPage('followups')" data-page="followups"><span class="nav-icon">&#9744;</span> Follow-ups <span id="fu-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('lounge-activity')" data-page="lounge-activity"><span class="nav-icon">&#9671;</span> Lounge Activity <span id="lng-badge" style="display:none;background:#b85c5c;color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('lounge-inbox')" data-page="lounge-inbox"><span class="nav-icon">&#9993;</span> Lounge Inbox <span id="lng-inbox-badge" style="display:none;background:#7a8c6e;color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('lounge-challenges')" data-page="lounge-challenges"><span class="nav-icon">&#9826;</span> Challenges</button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
       <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
@@ -315,6 +317,38 @@
 
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin:24px 0 12px;">Past holds</h3>
         <div id="lng-act-pastholds"></div>
+      </div>
+    </div>
+
+    <!-- LOUNGE INBOX -->
+    <div class="admin-page" id="page-lounge-inbox">
+      <div class="page-header">
+        <h1 class="page-title"><em>Lounge Inbox</em></h1>
+      </div>
+      <div id="lng-inbox-loading" class="loading">Loading messages...</div>
+      <div id="lng-inbox-content" style="display:none;">
+        <div id="lng-inbox-threads" style="margin-bottom:24px;"></div>
+        <div id="lng-inbox-thread" style="display:none;">
+          <button class="btn-outline" id="lng-inbox-back" style="margin-bottom:16px;">&larr; Back to inbox</button>
+          <div id="lng-inbox-thread-head" style="margin-bottom:18px;"></div>
+          <div id="lng-inbox-thread-body" style="background:#faf7f2;border:1px solid #e8e0d4;border-radius:4px;padding:16px;max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+          <form id="lng-inbox-reply-form" style="display:flex;gap:8px;">
+            <textarea id="lng-inbox-reply" rows="2" style="flex:1;padding:12px 14px;background:#faf7f2;border:1px solid #e8e0d4;border-radius:3px;font-family:inherit;font-size:14px;outline:none;resize:none;"></textarea>
+            <button type="submit" class="btn-primary">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOUNGE CHALLENGES -->
+    <div class="admin-page" id="page-lounge-challenges">
+      <div class="page-header">
+        <h1 class="page-title"><em>Lounge Challenges</em></h1>
+        <button class="btn-primary" onclick="openCreateChallengeModal()">+ New Challenge</button>
+      </div>
+      <div id="lng-ch-loading" class="loading">Loading...</div>
+      <div id="lng-ch-content" style="display:none;">
+        <div id="lng-ch-list"></div>
       </div>
     </div>
 

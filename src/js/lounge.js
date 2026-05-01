@@ -159,6 +159,20 @@ function bindShell() {
   // Travel hold
   $('#bill-add-hold').addEventListener('click', openTravelHoldModal);
 
+  // Concierge buttons
+  $('#conc-at-home').addEventListener('click', () => openConciergeModal('at_home', 'At-home session'));
+  $('#conc-travel').addEventListener('click', () => openConciergeModal('travel', 'Travel program'));
+  $('#conc-nutrition').addEventListener('click', () => openConciergeModal('nutrition', 'Nutrition consult'));
+
+  // iCal copy
+  $('#ical-copy').addEventListener('click', copyIcalLink);
+
+  // Family / partner access (sends as a concierge-style message)
+  $('#family-request').addEventListener('click', () => openConciergeModal('other', 'Family / partner access'));
+
+  // Audit log
+  $('#audit-open').addEventListener('click', openAuditLog);
+
   // Pref toggles
   $('#pref-stealth').addEventListener('change', onStealthToggle);
   $('#pref-receipts').addEventListener('change', () => savePref({ read_receipts: $('#pref-receipts').checked }));
@@ -178,6 +192,9 @@ function navigate(route) {
   }
   if (route === 'schedule') renderSchedule();
   if (route === 'payments') renderBilling();
+  if (route === 'challenges') loadChallenges();
+  if (route === 'messages') openMessagesTab();
+  else stopMessagePolling();
 }
 
 function readHashRoute() {
@@ -324,9 +341,38 @@ function renderSchedule() {
 
 function renderBilling() {
   const m = state.me.member;
+  const b = state.me.billing || {};
   $('#bill-plan').textContent = m.plan || '—';
-  $('#bill-card').textContent = '— (set up in next phase)';
-  $('#bill-next').textContent = '— (set up in next phase)';
+
+  // Card on file / next charge — depends on Stripe state
+  let cardLine = '—';
+  let nextLine = '—';
+  if (!b.stripe_configured) {
+    cardLine = 'Billed manually by Georgie';
+    nextLine = 'Outside the app for now';
+  } else if (!b.customer_linked) {
+    cardLine = 'Not yet set up';
+    nextLine = 'Georgie will send you a link';
+  } else {
+    cardLine = 'Tap "Manage card" to view';
+    nextLine = 'Tap "Manage card" to view';
+  }
+  $('#bill-card').textContent = cardLine;
+  $('#bill-next').textContent = nextLine;
+
+  // Wire / re-label the Manage Card button based on Stripe state
+  const portalBtn = $('#bill-portal-btn');
+  if (portalBtn && !portalBtn._bound) {
+    portalBtn._bound = true;
+    portalBtn.addEventListener('click', openBillingPortal);
+  }
+  if (portalBtn) {
+    if (!b.stripe_configured || !b.customer_linked) {
+      portalBtn.textContent = 'Set up payment with Georgie';
+    } else {
+      portalBtn.textContent = 'Manage card & invoices';
+    }
+  }
 
   // Holds list
   const root = $('#bill-holds');
@@ -539,6 +585,27 @@ function openTravelHoldModal() {
   });
 }
 
+async function openBillingPortal() {
+  const b = state.me.billing || {};
+  if (!b.stripe_configured || !b.customer_linked) {
+    // Fall back to opening a message thread with Georgie, pre-filled
+    showToast('Send Georgie a message and she’ll get you set up.');
+    navigate('messages');
+    setTimeout(() => {
+      const inp = $('#msg-input');
+      if (inp && !inp.value) inp.value = 'Hi Georgie — can you set me up for billing through the lounge?';
+    }, 300);
+    return;
+  }
+  try {
+    const res = await api('lounge_billing_portal', { auth: true });
+    if (res.url) window.location.href = res.url;
+    else showToast('Couldn’t open the billing portal — try again later.', true);
+  } catch (err) {
+    showToast('Couldn’t open the billing portal.', true);
+  }
+}
+
 async function cancelTravelHold(holdId) {
   try {
     await api('lounge_cancel_travel_hold', {
@@ -594,6 +661,396 @@ function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[c]);
+}
+
+// ─── Concierge requests ────────────────────────
+function openConciergeModal(type, label) {
+  const sheet = document.createElement('div');
+  sheet.className = 'lng-sheet';
+  const placeholders = {
+    at_home: 'When and where would suit? Any preferred days/times?',
+    travel: 'Where will you be, for how long, and what gear/space do you have?',
+    nutrition: 'What would you like to focus on? (recovery, body comp, performance…)',
+  };
+  sheet.innerHTML = `
+    <div class="lng-sheet-overlay" data-sheet-close></div>
+    <div class="lng-sheet-card">
+      <p class="lng-eyebrow" style="margin:0 0 8px;">Concierge</p>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;margin:0 0 14px;color:var(--deep);">${escapeHtml(label)}</h2>
+      <p style="font-size:13px;line-height:1.6;color:var(--body);margin:0 0 14px;">Send Georgie the details and she'll be in touch within a day. No commitment.</p>
+      <textarea class="lng-sheet-note" id="conc-details" rows="4" placeholder="${escapeHtml(placeholders[type] || 'Anything she should know?')}"></textarea>
+      <button class="lng-btn-primary" style="width:100%;margin-top:14px;" id="conc-send">Send request</button>
+      <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Cancel</button>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+  sheet.querySelectorAll('[data-sheet-close]').forEach((el) =>
+    el.addEventListener('click', () => closeSheet(sheet))
+  );
+  sheet.querySelector('#conc-send').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    e.target.textContent = 'Sending…';
+    try {
+      const details = sheet.querySelector('#conc-details').value.trim();
+      await api('lounge_concierge', {
+        method: 'POST', auth: true,
+        body: { request_type: type, details },
+      });
+      closeSheet(sheet);
+      showToast('Sent. Georgie has been notified.');
+    } catch (err) {
+      e.target.disabled = false;
+      e.target.textContent = 'Send request';
+      showToast('Couldn’t send.', true);
+    }
+  });
+}
+
+// ─── Audit log ─────────────────────────────────
+const AUDIT_LABEL = {
+  view_lounge:        ['You',     'opened the Lounge'],
+  cancel_session:     ['You',     'cancelled a session'],
+  create_travel_hold: ['You',     'added a travel hold'],
+  cancel_travel_hold: ['You',     'removed a travel hold'],
+};
+
+async function openAuditLog() {
+  const sheet = document.createElement('div');
+  sheet.className = 'lng-sheet';
+  sheet.innerHTML = `
+    <div class="lng-sheet-overlay" data-sheet-close></div>
+    <div class="lng-sheet-card">
+      <p class="lng-eyebrow" style="margin:0 0 8px;">Access log</p>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;margin:0 0 6px;color:var(--deep);">Who has seen <em>your data</em></h2>
+      <p style="font-size:12px;color:var(--bark);margin:0 0 14px;">Most recent first. Goes back 90 days.</p>
+      <div id="audit-body" style="max-height:55vh;overflow-y:auto;"></div>
+      <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Close</button>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+  sheet.querySelectorAll('[data-sheet-close]').forEach((el) =>
+    el.addEventListener('click', () => closeSheet(sheet))
+  );
+  try {
+    const res = await api('lounge_audit_log', { auth: true });
+    const body = sheet.querySelector('#audit-body');
+    if (!res.entries.length) {
+      body.innerHTML = `<div class="lng-empty-soft">No activity yet.</div>`;
+    } else {
+      body.innerHTML = res.entries.map((e) => {
+        const t = new Date(e.occurred_at);
+        const ago = relativeTimeStr(t);
+        const label = AUDIT_LABEL[e.action];
+        const who = e.actor_role === 'member' ? (label?.[0] || 'You') : (e.actor_role === 'trainer' ? 'Georgie' : 'System');
+        const what = label?.[1] || e.action.replace(/_/g, ' ');
+        return `
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--stone);">
+            <div>
+              <div style="font-size:14px;color:var(--deep);"><strong>${escapeHtml(who)}</strong> ${escapeHtml(what)}</div>
+            </div>
+            <div style="font-size:11px;color:var(--clay);white-space:nowrap;">${escapeHtml(ago)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (err) {
+    sheet.querySelector('#audit-body').innerHTML = `<div class="lng-empty-soft">Couldn’t load access log.</div>`;
+  }
+}
+
+function relativeTimeStr(d) {
+  const diff = Date.now() - d.getTime();
+  const s = Math.round(diff / 1000);
+  if (s < 60) return 'just now';
+  const m = Math.round(s / 60); if (m < 60) return m + 'm ago';
+  const h = Math.round(m / 60); if (h < 24) return h + 'h ago';
+  const days = Math.round(h / 24); if (days < 7) return days + 'd ago';
+  return d.toLocaleDateString();
+}
+
+// ─── iCal copy ─────────────────────────────────
+async function copyIcalLink() {
+  const url = state.me?.member?.ical_url;
+  if (!url) { showToast('No calendar link available yet.'); return; }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Calendar link copied. Paste into Apple Calendar or Google Calendar.');
+  } catch (err) {
+    // Fallback — show in a prompt
+    window.prompt('Copy this URL into your calendar app:', url);
+  }
+}
+
+// ─── Challenges ────────────────────────────────
+let challengesCache = null;
+async function loadChallenges() {
+  const root = $('#challenges-list');
+  root.innerHTML = '<div class="lng-loading">Loading…</div>';
+  try {
+    const res = await api('lounge_challenges', { auth: true });
+    challengesCache = res.challenges || [];
+    renderChallenges();
+  } catch (err) {
+    root.innerHTML = `<div class="lng-empty-soft">Couldn’t load challenges.</div>`;
+  }
+}
+
+function renderChallenges() {
+  const root = $('#challenges-list');
+  const list = challengesCache || [];
+  if (!list.length) {
+    root.innerHTML = `<div class="lng-empty-soft">No active challenges. Georgie will post when one opens.</div>`;
+    return;
+  }
+  root.innerHTML = list.map(challengeCardHtml).join('');
+  root.querySelectorAll('[data-challenge-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.challengeId;
+      const action = btn.dataset.challengeAction;
+      if (action === 'join') joinChallenge(id, btn.dataset.stealth === '1');
+      else if (action === 'leave') leaveChallenge(id);
+      else if (action === 'log') openLogEntryModal(id);
+      else if (action === 'leaderboard') openLeaderboard(id);
+    });
+  });
+}
+
+function challengeCardHtml(c) {
+  const d1 = formatDate(c.start_date);
+  const d2 = formatDate(c.end_date);
+  const isActive = c.status === 'active';
+  const stealthDefault = state.me?.preferences?.stealth_handle ? '1' : '0';
+  const typeLabel = { solo: 'Solo', squad: 'Squad', studio: 'Studio' }[c.challenge_type] || c.challenge_type;
+
+  return `
+    <div class="lng-card" style="border-left:3px solid var(--sage);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+        <div>
+          <p class="lng-eyebrow" style="margin:0 0 4px;">${escapeHtml(typeLabel)}${isActive ? '' : ' · finished'}</p>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:22px;margin:0 0 4px;color:var(--deep);">${escapeHtml(c.title)}</h3>
+          <p style="font-size:12px;color:var(--bark);margin:0;">${d1} → ${d2}</p>
+        </div>
+      </div>
+      ${c.description ? `<p style="font-size:13px;line-height:1.6;color:var(--body);margin:12px 0 0;">${escapeHtml(c.description)}</p>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+        ${c.joined
+          ? `<button class="lng-btn-secondary" style="margin:0;flex:1;min-width:140px;" data-challenge-action="log" data-challenge-id="${escapeHtml(c.id)}">Log progress</button>
+             <button class="lng-btn-secondary" style="margin:0;flex:1;min-width:140px;" data-challenge-action="leaderboard" data-challenge-id="${escapeHtml(c.id)}">Leaderboard</button>
+             ${isActive ? `<button class="lng-link-btn" style="color:var(--bark);" data-challenge-action="leave" data-challenge-id="${escapeHtml(c.id)}">Leave</button>` : ''}`
+          : `${isActive ? `<button class="lng-btn-secondary" style="margin:0;flex:1;" data-challenge-action="join" data-challenge-id="${escapeHtml(c.id)}" data-stealth="${stealthDefault}">Join</button>` : ''}`
+        }
+      </div>
+    </div>
+  `;
+}
+
+async function joinChallenge(id, useStealthHandle) {
+  try {
+    await api('lounge_challenge_join', {
+      method: 'POST', auth: true,
+      body: { challenge_id: id, use_stealth_handle: useStealthHandle },
+    });
+    await loadChallenges();
+    showToast('You’re in.');
+  } catch (err) {
+    showToast('Couldn’t join.', true);
+  }
+}
+
+async function leaveChallenge(id) {
+  try {
+    await api('lounge_challenge_leave', {
+      method: 'POST', auth: true,
+      body: { challenge_id: id },
+    });
+    await loadChallenges();
+  } catch (err) {
+    showToast('Couldn’t leave.', true);
+  }
+}
+
+function openLogEntryModal(challengeId) {
+  const sheet = document.createElement('div');
+  sheet.className = 'lng-sheet';
+  sheet.innerHTML = `
+    <div class="lng-sheet-overlay" data-sheet-close></div>
+    <div class="lng-sheet-card">
+      <p class="lng-eyebrow" style="margin:0 0 8px;">Log progress</p>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;margin:0 0 18px;color:var(--deep);">Today's <em>entry</em></h2>
+      <label class="lng-label">Value (optional — for lifts/distances)</label>
+      <input type="number" inputmode="decimal" id="entry-value" class="lng-input" placeholder="e.g. 80">
+      <label class="lng-label" style="margin-top:12px;">Note</label>
+      <input type="text" id="entry-note" class="lng-input" placeholder="How did it feel?">
+      <button class="lng-btn-primary" style="width:100%;margin-top:18px;" id="entry-save">Log entry</button>
+      <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Cancel</button>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+  sheet.querySelectorAll('[data-sheet-close]').forEach((el) =>
+    el.addEventListener('click', () => closeSheet(sheet))
+  );
+  sheet.querySelector('#entry-save').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    e.target.textContent = 'Saving…';
+    try {
+      const val = sheet.querySelector('#entry-value').value;
+      const note = sheet.querySelector('#entry-note').value.trim();
+      await api('lounge_challenge_log', {
+        method: 'POST', auth: true,
+        body: { challenge_id: challengeId, value: val ? Number(val) : null, note: note || null },
+      });
+      closeSheet(sheet);
+      showToast('Logged.');
+    } catch (err) {
+      e.target.disabled = false;
+      e.target.textContent = 'Log entry';
+      showToast('Couldn’t log.', true);
+    }
+  });
+}
+
+async function openLeaderboard(challengeId) {
+  const sheet = document.createElement('div');
+  sheet.className = 'lng-sheet';
+  sheet.innerHTML = `
+    <div class="lng-sheet-overlay" data-sheet-close></div>
+    <div class="lng-sheet-card">
+      <p class="lng-eyebrow" style="margin:0 0 8px;">Leaderboard</p>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;margin:0 0 18px;color:var(--deep);" id="lb-title">Loading…</h2>
+      <div id="lb-body" style="max-height:55vh;overflow-y:auto;"></div>
+      <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Close</button>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+  sheet.querySelectorAll('[data-sheet-close]').forEach((el) =>
+    el.addEventListener('click', () => closeSheet(sheet))
+  );
+
+  try {
+    const data = await fetch(API + '?action=lounge_challenge_leaderboard&challenge_id=' + encodeURIComponent(challengeId), {
+      headers: { Authorization: 'Bearer ' + state.token },
+    }).then((r) => r.json());
+    if (!data.success) throw new Error(data.error || 'failed');
+    sheet.querySelector('#lb-title').innerHTML = escapeHtml(data.challenge.title);
+    const body = sheet.querySelector('#lb-body');
+    if (!data.leaderboard.length) {
+      body.innerHTML = `<div class="lng-empty-soft">No entries yet.</div>`;
+    } else {
+      body.innerHTML = data.leaderboard.map((row, i) => `
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--stone);${row.isMe ? 'background:var(--sand);margin:0 -16px;padding-left:16px;padding-right:16px;' : ''}">
+          <div style="display:flex;gap:12px;align-items:baseline;">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--clay);">${i + 1}</span>
+            <span style="color:var(--deep);font-size:14px;">${escapeHtml(row.handle)}${row.isMe ? ' <em style="color:var(--bark);">(you)</em>' : ''}</span>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--bark);">${data.is_count_metric ? row.score : (row.score % 1 === 0 ? row.score : row.score.toFixed(1))}</div>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    sheet.querySelector('#lb-title').textContent = 'Couldn’t load.';
+  }
+}
+
+// ─── Messages ────────────────────────────────────
+let msgPollTimer = null;
+let lastMsgCount = 0;
+
+async function openMessagesTab() {
+  await refreshMessages();
+  startMessagePolling();
+  // Wire send form (idempotent — bind once)
+  const form = $('#msg-form');
+  if (form && !form._bound) {
+    form._bound = true;
+    form.addEventListener('submit', sendMessage);
+    $('#msg-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendMessage(e);
+      }
+    });
+  }
+}
+
+function startMessagePolling() {
+  stopMessagePolling();
+  msgPollTimer = setInterval(refreshMessages, 6000);
+}
+function stopMessagePolling() {
+  if (msgPollTimer) clearInterval(msgPollTimer);
+  msgPollTimer = null;
+}
+
+async function refreshMessages() {
+  if (state.route !== 'messages') return;
+  try {
+    const res = await api('lounge_messages', { auth: true });
+    renderMessages(res.messages || []);
+    // Refresh dot if any unread (but messages page reads-on-fetch, so dot will clear)
+    state.me.unread_messages = 0;
+    renderMsgDot();
+  } catch (err) {
+    if (err.status === 401) { clearTokens(); location.reload(); }
+  }
+}
+
+function renderMessages(messages) {
+  const root = $('#msg-thread');
+  if (!messages.length) {
+    root.innerHTML = `<div class="lng-empty-soft">No messages yet. Say hello.</div>`;
+    return;
+  }
+  // Group by day
+  const days = {};
+  for (const m of messages) {
+    const day = m.sent_at.slice(0, 10);
+    if (!days[day]) days[day] = [];
+    days[day].push(m);
+  }
+  const html = Object.keys(days).map((day) => {
+    const d = new Date(day + 'T00:00:00');
+    const lbl = `${DAY_NAMES[d.getDay()].slice(0, 3)} ${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3)}`;
+    const bubbles = days[day].map(msgBubbleHtml).join('');
+    return `<div style="text-align:center;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--clay);margin:8px 0 4px;">${lbl}</div>${bubbles}`;
+  }).join('');
+  root.innerHTML = html;
+  // Scroll to bottom on new messages
+  if (messages.length !== lastMsgCount) {
+    requestAnimationFrame(() => { root.scrollTop = root.scrollHeight; });
+    lastMsgCount = messages.length;
+  }
+}
+
+function msgBubbleHtml(m) {
+  const time = new Date(m.sent_at);
+  const hh = time.getHours();
+  const mm = String(time.getMinutes()).padStart(2, '0');
+  const ampm = hh >= 12 ? 'pm' : 'am';
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  const timeLbl = `${h12}:${mm}${ampm}`;
+  const cls = m.direction === 'in' ? 'is-mine' : 'is-theirs';
+  return `<div class="lng-msg-bubble ${cls}">${escapeHtml(m.body)}</div><div class="lng-msg-meta" style="text-align:${m.direction === 'in' ? 'right' : 'left'};">${timeLbl}</div>`;
+}
+
+async function sendMessage(e) {
+  e.preventDefault();
+  const input = $('#msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  try {
+    await api('lounge_send_message', {
+      method: 'POST', auth: true, body: { body: text },
+    });
+    await refreshMessages();
+  } catch (err) {
+    showToast('Couldn’t send message — try again.', true);
+    input.value = text;
+  }
 }
 
 // ═══════════════════════════════════════════════

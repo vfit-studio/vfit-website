@@ -210,7 +210,7 @@ function showPage(page) {
     var pageLabels = {
       'overview': 'Dashboard', 'runclub': 'Run Club', 'pilattes': "Pi'lattes",
       'membership-requests': 'Requests', 'enquiry-schedule': 'Enquiry Schedule', 'member-list': 'Members', 'followups': 'Follow-ups',
-      'general-messages': 'Messages', 'lounge-activity': 'Lounge Activity', 'plan-config': 'Plans',
+      'general-messages': 'Messages', 'lounge-activity': 'Lounge Activity', 'lounge-inbox': 'Lounge Inbox', 'lounge-challenges': 'Challenges', 'plan-config': 'Plans',
       'testimonials': 'Testimonials', 'media-library': 'Media', 'calendar': 'Calendar'
     };
     labelEl.textContent = pageLabels[page] || page;
@@ -233,6 +233,8 @@ function showPage(page) {
     case 'calendar': loadCalendar(); break;
     case 'general-messages': loadGeneralMessages(); break;
     case 'lounge-activity': loadLoungeActivity(); break;
+    case 'lounge-inbox': loadLoungeInbox(); break;
+    case 'lounge-challenges': loadAdminChallenges(); break;
     case 'contacts': loadContacts(); break;
     case 'plan-config': loadPlanConfig(); break;
     case 'testimonials': loadTestimonials(); break;
@@ -2985,9 +2987,18 @@ function renderLoungeCancellations(rows, late) {
     var notice = (c.notice_hours == null) ? '' : Math.round(c.notice_hours) + 'h notice';
     var planTag = c.member_plan ? '<span class="badge badge-held" style="margin-left:6px;font-size:9px;">' + esc(c.member_plan) + '</span>' : '';
     var chargeTag = late ? '<span class="badge" style="margin-left:6px;font-size:9px;background:#b85c5c;color:#fff;">Charge required</span>' : '';
+    var feeStr = (late && c.charge_amount_cents != null)
+      ? ' · <strong>$' + (c.charge_amount_cents / 100).toFixed(2) + '</strong>'
+      : '';
+    var stripeNote = late
+      ? (c.stripe_customer_id
+          ? '<div class="data-card-meta" style="color:var(--moss);font-size:11px;">Stripe customer linked — charge can be processed.</div>'
+          : '<div class="data-card-meta" style="color:var(--bark);font-size:11px;font-style:italic;">No Stripe customer yet — invoice manually for now.</div>')
+      : '';
     return '<div class="data-card">' +
       '<div class="data-card-header"><div class="data-card-name"><strong>' + esc(c.member_name) + '</strong>' + planTag + chargeTag + '</div></div>' +
-      '<div class="data-card-meta">' + esc(dateLbl) + (c.session_time ? ' · ' + esc(c.session_time) : '') + (notice ? ' · ' + esc(notice) : '') + '</div>' +
+      '<div class="data-card-meta">' + esc(dateLbl) + (c.session_time ? ' · ' + esc(c.session_time) : '') + (notice ? ' · ' + esc(notice) : '') + feeStr + '</div>' +
+      stripeNote +
       (c.reason ? '<div class="data-card-body">' + esc(c.reason) + '</div>' : '') +
     '</div>';
   }).join('') + '</div>';
@@ -3009,3 +3020,231 @@ function renderLoungeHolds(rows) {
     '</div>';
   }).join('') + '</div>';
 }
+
+// ─── Lounge Inbox ───────────────────────────────
+var inboxState = { activeMemberId: null, pollTimer: null };
+
+async function loadLoungeInbox() {
+  document.getElementById('lng-inbox-loading').style.display = 'block';
+  document.getElementById('lng-inbox-content').style.display = 'none';
+  try {
+    var data = await apiGet({ action: 'lounge_admin_inbox' });
+    var threads = data.threads || [];
+    renderInboxThreads(threads);
+    var unread = threads.reduce(function(s, t) { return s + (t.unread_count || 0); }, 0);
+    var badge = document.getElementById('lng-inbox-badge');
+    if (badge) {
+      if (unread > 0) { badge.style.display = ''; badge.textContent = String(unread); }
+      else            { badge.style.display = 'none'; }
+    }
+    document.getElementById('lng-inbox-loading').style.display = 'none';
+    document.getElementById('lng-inbox-content').style.display = 'block';
+  } catch (err) {
+    document.getElementById('lng-inbox-loading').textContent = 'Failed: ' + err.message;
+  }
+}
+
+function renderInboxThreads(threads) {
+  var root = document.getElementById('lng-inbox-threads');
+  document.getElementById('lng-inbox-thread').style.display = 'none';
+  if (!threads.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:14px;">No conversations yet.</div>';
+    root.style.display = 'block';
+    return;
+  }
+  root.innerHTML = '<div class="card-list">' + threads.map(function(t) {
+    var sentAt = new Date(t.last_sent_at);
+    var ago = relativeTime(sentAt);
+    var preview = (t.last_message || '').slice(0, 80);
+    var unread = t.unread_count > 0
+      ? '<span class="badge" style="margin-left:6px;font-size:9px;background:#7a8c6e;color:#fff;">' + t.unread_count + ' new</span>'
+      : '';
+    var planTag = t.member_plan ? '<span class="badge badge-held" style="margin-left:6px;font-size:9px;">' + esc(t.member_plan) + '</span>' : '';
+    var dirArrow = t.last_direction === 'out' ? '&rsaquo;' : '&lsaquo;';
+    return '<div class="data-card" style="cursor:pointer;" onclick="openInboxThread(\'' + esc(t.member_id) + '\')">' +
+      '<div class="data-card-header"><div class="data-card-name"><strong>' + esc(t.member_name) + '</strong>' + planTag + unread + '</div>' +
+        '<span style="font-size:11px;color:var(--clay);">' + esc(ago) + '</span>' +
+      '</div>' +
+      '<div class="data-card-meta">' + dirArrow + ' ' + esc(preview) + (t.last_message && t.last_message.length > 80 ? '…' : '') + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+  root.style.display = 'block';
+}
+
+async function openInboxThread(memberId) {
+  inboxState.activeMemberId = memberId;
+  document.getElementById('lng-inbox-threads').style.display = 'none';
+  document.getElementById('lng-inbox-thread').style.display = 'block';
+  await refreshInboxThread();
+  // Poll every 8 seconds
+  if (inboxState.pollTimer) clearInterval(inboxState.pollTimer);
+  inboxState.pollTimer = setInterval(refreshInboxThread, 8000);
+  // Wire form (idempotent)
+  var form = document.getElementById('lng-inbox-reply-form');
+  if (!form._bound) {
+    form._bound = true;
+    form.addEventListener('submit', sendInboxReply);
+  }
+  // Wire back button
+  var back = document.getElementById('lng-inbox-back');
+  if (!back._bound) {
+    back._bound = true;
+    back.addEventListener('click', function() {
+      if (inboxState.pollTimer) clearInterval(inboxState.pollTimer);
+      inboxState.pollTimer = null;
+      inboxState.activeMemberId = null;
+      loadLoungeInbox();
+    });
+  }
+}
+
+async function refreshInboxThread() {
+  if (!inboxState.activeMemberId) return;
+  try {
+    var data = await apiGet({ action: 'lounge_admin_thread', member_id: inboxState.activeMemberId });
+    var head = document.getElementById('lng-inbox-thread-head');
+    head.innerHTML = '<div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;color:var(--deep);">' +
+      esc(data.member?.name || '—') + '</div>' +
+      '<div style="font-size:12px;color:var(--bark);">' + esc(data.member?.email || '') +
+      (data.member?.plan ? ' · ' + esc(data.member.plan) : '') + '</div>';
+    var body = document.getElementById('lng-inbox-thread-body');
+    var msgs = data.messages || [];
+    if (!msgs.length) {
+      body.innerHTML = '<div class="empty-state" style="padding:14px;">No messages yet.</div>';
+    } else {
+      body.innerHTML = msgs.map(function(m) {
+        var t = new Date(m.sent_at);
+        var hh = t.getHours(); var mm = String(t.getMinutes()).padStart(2,'0');
+        var ampm = hh >= 12 ? 'pm' : 'am'; var h12 = hh % 12 === 0 ? 12 : hh % 12;
+        var timeLbl = h12 + ':' + mm + ampm;
+        var dateLbl = t.toLocaleDateString();
+        var bubbleStyle = m.direction === 'out'
+          ? 'align-self:flex-end;background:#3d3530;color:#fefcf8;border-bottom-right-radius:4px;'
+          : 'align-self:flex-start;background:#fefcf8;color:#3d3530;border:1px solid #e8e0d4;border-bottom-left-radius:4px;';
+        return '<div style="max-width:78%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.55;' + bubbleStyle + '">' + esc(m.body) + '</div>' +
+          '<div style="font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--clay);align-self:' + (m.direction === 'out' ? 'flex-end' : 'flex-start') + ';">' + dateLbl + ' · ' + timeLbl + '</div>';
+      }).join('');
+      body.scrollTop = body.scrollHeight;
+    }
+  } catch (err) { /* silent on poll */ }
+}
+
+async function sendInboxReply(e) {
+  e.preventDefault();
+  var input = document.getElementById('lng-inbox-reply');
+  var text = input.value.trim();
+  if (!text || !inboxState.activeMemberId) return;
+  input.value = '';
+  try {
+    await apiPost({
+      action: 'lounge_admin_send_message',
+      member_id: inboxState.activeMemberId,
+      body: text,
+    });
+    refreshInboxThread();
+  } catch (err) {
+    showToast('Send failed: ' + err.message, 'error');
+    input.value = text;
+  }
+}
+
+function relativeTime(d) {
+  var diff = Date.now() - d.getTime();
+  var s = Math.round(diff / 1000);
+  if (s < 60) return 'just now';
+  var m = Math.round(s / 60); if (m < 60) return m + 'm ago';
+  var h = Math.round(m / 60); if (h < 24) return h + 'h ago';
+  var dys = Math.round(h / 24); if (dys < 7) return dys + 'd ago';
+  return d.toLocaleDateString();
+}
+
+window.openInboxThread = openInboxThread;
+
+// ─── Lounge Challenges (admin) ──────────────────
+async function loadAdminChallenges() {
+  document.getElementById('lng-ch-loading').style.display = 'block';
+  document.getElementById('lng-ch-content').style.display = 'none';
+  try {
+    var data = await apiGet({ action: 'lounge_admin_challenges' });
+    document.getElementById('lng-ch-list').innerHTML = renderAdminChallengeList(data.challenges || []);
+    document.getElementById('lng-ch-loading').style.display = 'none';
+    document.getElementById('lng-ch-content').style.display = 'block';
+  } catch (err) {
+    document.getElementById('lng-ch-loading').textContent = 'Failed: ' + err.message;
+  }
+}
+
+function renderAdminChallengeList(rows) {
+  if (!rows.length) return '<div class="empty-state" style="padding:14px;">No challenges yet.</div>';
+  return '<div class="card-list">' + rows.map(function(c){
+    var typeLabel = { solo: 'Solo', squad: 'Squad', studio: 'Studio' }[c.challenge_type] || c.challenge_type;
+    var statusCls = c.status === 'active' ? 'badge-active' : c.status === 'finished' ? 'badge-held' : 'badge-cancelled';
+    var finishBtn = c.status === 'active'
+      ? '<button class="btn-outline" onclick="finishChallenge(\'' + esc(c.id) + '\')">Mark finished</button>'
+      : '';
+    return '<div class="data-card">' +
+      '<div class="data-card-header"><div class="data-card-name"><strong>' + esc(c.title) + '</strong>' +
+        '<span class="badge badge-held" style="margin-left:6px;font-size:9px;">' + esc(typeLabel) + '</span>' +
+        '<span class="badge badge-held" style="margin-left:4px;font-size:9px;">' + esc(c.metric) + '</span>' +
+      '</div><span class="badge ' + statusCls + '">' + esc(c.status) + '</span></div>' +
+      '<div class="data-card-meta">' + esc(c.start_date) + ' &mdash; ' + esc(c.end_date) + ' · ' + (c.participants || 0) + ' participant' + (c.participants === 1 ? '' : 's') + '</div>' +
+      (c.description ? '<div class="data-card-body">' + esc(c.description) + '</div>' : '') +
+      (finishBtn ? '<div class="data-card-actions">' + finishBtn + '</div>' : '') +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function openCreateChallengeModal() {
+  var existing = document.getElementById('admin-ch-modal');
+  if (existing) existing.remove();
+  var today = new Date().toISOString().slice(0, 10);
+  var inAMonth = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  var html = '<div id="admin-ch-modal" class="modal-overlay" style="display:flex;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(61,53,48,0.5);z-index:1000;">' +
+    '<div style="background:#fefcf8;border-radius:8px;padding:32px;max-width:480px;width:92vw;max-height:90vh;overflow-y:auto;">' +
+      '<h2 style="font-family:Cormorant Garamond,serif;font-weight:300;font-size:26px;margin:0 0 18px;color:#3d3530;">New <em>Challenge</em></h2>' +
+      '<label class="form-label">Title</label><input class="form-input" id="ch-title" placeholder="e.g. 30-day consistency"/>' +
+      '<label class="form-label">Description (optional)</label><textarea class="form-input" id="ch-desc" rows="3"></textarea>' +
+      '<label class="form-label">Type</label><select class="form-input" id="ch-type"><option value="studio">Studio (everyone, anonymous handles by default)</option><option value="squad">Squad (chosen members)</option><option value="solo">Solo (vs your past self)</option></select>' +
+      '<label class="form-label">Metric</label><select class="form-input" id="ch-metric"><option value="attendance">Attendance (count of check-ins)</option><option value="streak">Streak (consecutive days)</option><option value="pb_lift">PB / lift (max value)</option><option value="volume">Volume (sum of values)</option><option value="distance">Distance (sum of values)</option></select>' +
+      '<label class="form-label">Start date</label><input class="form-input" type="date" id="ch-start" value="' + today + '"/>' +
+      '<label class="form-label">End date</label><input class="form-input" type="date" id="ch-end" value="' + inAMonth + '"/>' +
+      '<div class="modal-actions" style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;">' +
+        '<button class="btn-outline" onclick="document.getElementById(\'admin-ch-modal\').remove()">Cancel</button>' +
+        '<button class="btn-primary" onclick="saveChallenge()">Create</button>' +
+      '</div>' +
+    '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function saveChallenge() {
+  var title = document.getElementById('ch-title').value.trim();
+  if (!title) { showToast('Title required', 'error'); return; }
+  try {
+    await apiPost({
+      action: 'admin_create_challenge',
+      title: title,
+      description: document.getElementById('ch-desc').value.trim(),
+      challenge_type: document.getElementById('ch-type').value,
+      metric: document.getElementById('ch-metric').value,
+      start_date: document.getElementById('ch-start').value,
+      end_date: document.getElementById('ch-end').value,
+    });
+    document.getElementById('admin-ch-modal').remove();
+    showToast('Challenge created', 'success');
+    loadAdminChallenges();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function finishChallenge(id) {
+  if (!confirm('Mark this challenge as finished?')) return;
+  try {
+    await apiPost({ action: 'admin_finish_challenge', challenge_id: id });
+    loadAdminChallenges();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+window.openCreateChallengeModal = openCreateChallengeModal;
+window.saveChallenge = saveChallenge;
+window.finishChallenge = finishChallenge;
