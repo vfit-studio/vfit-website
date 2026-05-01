@@ -6,11 +6,16 @@
 [functions]
   node_bundler = "esbuild"
 
+[[redirects]]
+  from = "/lounge"
+  to = "/lounge.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
 
 [[headers]]

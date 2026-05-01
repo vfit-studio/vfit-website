@@ -90,6 +90,7 @@ const { supabase } = require('./utils/supabase');
 const Stripe = require('stripe');
 const { sendNotifyConfirmation, sendBookingsOpenEmail, sendBookingConfirmation, sendMembershipConfirmation, sendOwnerAlert, sendWaitlistSpotEmail, sendReviewRequestEmail } = require('./utils/email');
 const { sendOwnerSMS } = require('./utils/sms');
+const { requireMember, sendMagicLink } = require('./utils/lounge-auth');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
@@ -99,7 +100,7 @@ const HOLD_EXPIRY_MINUTES = 10;
 // ─── CORS headers applied to every response ───
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
@@ -611,6 +612,15 @@ async function handleGetMembers() {
 
   // Fetch all slot assignments with slot details
   const memberIds = (members || []).map((m) => m.id);
+  // Lounge auth links — present iff the member has signed in to the lounge
+  let loungeMap = {};
+  if (memberIds.length > 0) {
+    const { data: links } = await supabase
+      .from('member_auth')
+      .select('member_id, last_login_at')
+      .in('member_id', memberIds);
+    for (const l of (links || [])) loungeMap[l.member_id] = l.last_login_at;
+  }
   let slotMap = {};
   if (memberIds.length > 0) {
     const { data: assignments, error: slotErr } = await supabase
@@ -644,6 +654,8 @@ async function handleGetMembers() {
     notes: m.notes,
     welcome_sent_at: m.welcome_sent_at,
     agreed_at: m.agreed_at,
+    lounge_active: !!loungeMap[m.id],
+    lounge_last_login_at: loungeMap[m.id] || null,
     slots: slotMap[m.id] || [],
   }));
 
@@ -1746,6 +1758,135 @@ async function handleUpdateEnquiryNotes(body) {
 }
 
 // ═══════════════════════════════════════════════
+// Member Lounge handlers
+// ═══════════════════════════════════════════════
+
+async function handleLoungeAuthSend(body) {
+  const { email } = body || {};
+  await sendMagicLink(email);
+  // Always return success — silent on missing-member so the response
+  // can't be used to enumerate accounts.
+  return respond(200, { success: true });
+}
+
+async function handleLoungeMe(event) {
+  let ctx;
+  try {
+    ctx = await requireMember(event);
+  } catch (err) {
+    return respond(err.statusCode || 401, { success: false, error: err.message });
+  }
+  const { user, member } = ctx;
+
+  // Preferences (lazily creates a default row on first read)
+  let { data: prefs } = await supabase
+    .from('member_preferences')
+    .select('*')
+    .eq('member_id', member.id)
+    .maybeSingle();
+  if (!prefs) {
+    const insert = {
+      member_id: member.id,
+      display_name: member.name,
+      notify_email: true,
+      challenges_opted_in: false,
+      read_receipts: true,
+    };
+    const { data: created } = await supabase
+      .from('member_preferences')
+      .insert(insert)
+      .select('*')
+      .single();
+    prefs = created || insert;
+  }
+
+  // Active recurring slots → upcoming sessions for the next 28 days
+  const { data: assignments } = await supabase
+    .from('member_slots')
+    .select('slot_id, schedule_slots(id, day_of_week, time)')
+    .eq('member_id', member.id)
+    .eq('status', 'active');
+
+  const slots = (assignments || [])
+    .map((a) => a.schedule_slots)
+    .filter(Boolean);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const horizon = new Date(today);
+  horizon.setDate(horizon.getDate() + 28);
+
+  // Existing per-occurrence overrides (cancellations, holds, attended)
+  const { data: overrides } = await supabase
+    .from('member_session_log')
+    .select('slot_id, session_date, state, charge_required, reason')
+    .eq('member_id', member.id)
+    .gte('session_date', today.toISOString().slice(0, 10))
+    .lte('session_date', horizon.toISOString().slice(0, 10));
+
+  const overrideMap = {};
+  for (const o of (overrides || [])) {
+    overrideMap[`${o.slot_id}|${o.session_date}`] = o;
+  }
+
+  const upcoming = [];
+  for (let d = new Date(today); d <= horizon; d.setDate(d.getDate() + 1)) {
+    const dow = d.getDay();
+    for (const s of slots) {
+      if (s.day_of_week === dow) {
+        const dateKey = d.toISOString().slice(0, 10);
+        const override = overrideMap[`${s.id}|${dateKey}`];
+        upcoming.push({
+          slot_id: s.id,
+          date: dateKey,
+          time: s.time,
+          day_of_week: dow,
+          state: override?.state || 'scheduled',
+          charge_required: override?.charge_required || false,
+          reason: override?.reason || null,
+        });
+      }
+    }
+  }
+  upcoming.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  // Active travel holds
+  const { data: holds } = await supabase
+    .from('travel_holds')
+    .select('id, start_date, end_date, status, reason')
+    .eq('member_id', member.id)
+    .in('status', ['active'])
+    .order('start_date', { ascending: true });
+
+  // Unread message count
+  const { count: unread } = await supabase
+    .from('lounge_messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('member_id', member.id)
+    .eq('direction', 'out')
+    .is('read_at', null);
+
+  return respond(200, {
+    success: true,
+    user: { id: user.id, email: user.email },
+    member: {
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      plan: member.plan,
+      sessions_per_week: member.sessions_per_week,
+      start_date: member.start_date,
+      agreed_at: member.agreed_at,
+    },
+    preferences: prefs,
+    upcoming_sessions: upcoming,
+    travel_holds: holds || [],
+    unread_messages: unread || 0,
+  });
+}
+
+// ═══════════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════════
 
@@ -1806,6 +1947,8 @@ exports.handler = async (event) => {
           return await handleGetAppointments(params);
         case 'agreement':
           return await handleGetAgreement(params.token);
+        case 'lounge_me':
+          return await handleLoungeMe(event);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -1939,6 +2082,8 @@ exports.handler = async (event) => {
           return await handleUpdateMemberNotes(body);
         case 'update_enquiry_notes':
           return await handleUpdateEnquiryNotes(body);
+        case 'lounge_auth_send':
+          return await handleLoungeAuthSend(body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }

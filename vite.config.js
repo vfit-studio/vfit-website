@@ -12,6 +12,7 @@ export default defineConfig({
         admin:     resolve(__dirname, 'src/admin.html'),
         crm:       resolve(__dirname, 'src/crm.html'),
         agreement: resolve(__dirname, 'src/agreement.html'),
+        lounge:    resolve(__dirname, 'src/lounge.html'),
       },
     },
   },

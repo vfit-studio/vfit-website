@@ -352,10 +352,11 @@ function renderMemberListCards(members) {
     }).join(', ') || 'No slots assigned';
 
     var agreedTag = m.agreed_at ? '<span class="badge badge-active" style="margin-left:6px;font-size:9px;">Agreed &#x2713;</span>' : '';
+    var loungeTag = m.lounge_active ? '<span class="badge" style="margin-left:6px;font-size:9px;background:#3d3530;color:#fefcf8;letter-spacing:0.12em;">Lounge</span>' : '';
 
     return '<div class="data-card">' +
       '<div class="data-card-header">' +
-        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong>' + agreedTag + '</div>' +
+        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong>' + agreedTag + loungeTag + '</div>' +
         '<span class="badge ' + statusCls + '">' + esc(status) + '</span>' +
       '</div>' +
       '<div class="data-card-meta">' + esc(m.email || '') + (m.phone && m.phone !== '--' ? ' · ' + esc(m.phone) : '') + '</div>' +
