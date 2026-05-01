@@ -280,6 +280,40 @@ function renderEventCards(events) {
   }).join('') + '</div>';
 }
 
+function planKey(plan) {
+  var p = String(plan || '').toLowerCase();
+  if (p.indexOf('vip') >= 0) return 'vip';
+  if (p.indexOf('flex') >= 0) return 'flexible';
+  if (p.indexOf('signature') >= 0) return 'signature';
+  return 'other';
+}
+
+function renderMembershipRequestColumns(members) {
+  if (!members.length) return '<div class="empty-state">No enquiries yet.</div>';
+
+  var groups = { signature: [], flexible: [], vip: [], other: [] };
+  members.forEach(function(m) { (groups[planKey(m.plan)] || groups.other).push(m); });
+
+  var columnDefs = [
+    { key: 'signature', label: 'Signature' },
+    { key: 'flexible',  label: 'Flexible'  },
+    { key: 'vip',       label: 'VIP'       }
+  ];
+  // Show 'other' column only if there's anything in it
+  if (groups.other.length) columnDefs.push({ key: 'other', label: 'Other' });
+
+  var html = '<div class="mreq-columns">';
+  columnDefs.forEach(function(col) {
+    var rows = groups[col.key];
+    html += '<div class="mreq-col">' +
+      '<div class="mreq-col-head"><span class="mreq-col-title">' + esc(col.label) + '</span><span class="mreq-col-count">' + rows.length + '</span></div>' +
+      (rows.length ? renderMembershipRequestCards(rows) : '<div class="mreq-col-empty">No ' + esc(col.label) + ' enquiries</div>') +
+    '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 function renderMembershipRequestCards(members) {
   if (!members.length) return '<div class="empty-state">No enquiries yet.</div>';
   return '<div class="card-list">' + members.map(function(m) {
@@ -897,7 +931,7 @@ async function loadMembershipRequests() {
     if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
     else { badge.style.display = 'none'; }
 
-    content.innerHTML = renderMembershipRequestCards(members);
+    content.innerHTML = renderMembershipRequestColumns(members);
     loading.style.display = 'none';
     content.style.display = 'block';
   } catch (err) {

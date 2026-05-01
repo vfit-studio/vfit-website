@@ -892,3 +892,56 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
   .esched-grid thead th { font-size: 10px; padding: 4px 2px 8px; }
   .esched-grid tbody th.esched-row-th { font-size: 10px; padding: 0 8px 0 2px; }
 }
+
+/* ─── MEMBERSHIP REQUESTS — 3 COLUMNS BY PLAN ─── */
+.mreq-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.mreq-col {
+  background: var(--cream);
+  border: 1px solid var(--stone);
+  border-radius: 4px;
+  padding: 14px 14px 16px;
+}
+.mreq-col-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--stone);
+}
+.mreq-col-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--deep);
+  font-style: italic;
+}
+.mreq-col-count {
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clay);
+  background: var(--sand);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+.mreq-col-empty {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--clay);
+  padding: 18px 8px;
+  text-align: center;
+}
+.mreq-col .data-card {
+  background: var(--warm-white);
+}
+@media (max-width: 900px) {
+  .mreq-columns { grid-template-columns: 1fr; gap: 14px; }
+}
