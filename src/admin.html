@@ -175,15 +175,12 @@
       <div class="page-header">
         <h1 class="page-title"><em>Membership Requests</em></h1>
       </div>
-      <div id="mreq-loading" class="loading">Loading requests...</div>
-      <div id="mreq-content" style="display:none;">
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Days</th><th>Times</th><th>Notes</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody id="mreq-tbody"></tbody>
-          </table>
-        </div>
+      <div class="esched-tabs">
+        <button class="esched-tab active" data-mreqtab="new" onclick="mreqSetTab('new')">New <span id="mreq-tab-new-count" class="mreq-tab-count"></span></button>
+        <button class="esched-tab" data-mreqtab="contacted" onclick="mreqSetTab('contacted')">Contacted <span id="mreq-tab-contacted-count" class="mreq-tab-count"></span></button>
       </div>
+      <div id="mreq-loading" class="loading">Loading requests...</div>
+      <div id="mreq-content" style="display:none;"></div>
     </div>
 
     <!-- ENQUIRY SCHEDULE -->

@@ -893,6 +893,24 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
   .esched-grid tbody th.esched-row-th { font-size: 10px; padding: 0 8px 0 2px; }
 }
 
+.mreq-tab-count {
+  display: inline-block;
+  margin-left: 6px;
+  background: var(--clay);
+  color: var(--warm-white);
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  vertical-align: middle;
+  font-family: 'Jost', sans-serif;
+  letter-spacing: 0;
+}
+.esched-tab.active .mreq-tab-count {
+  background: var(--moss);
+}
+.esched-tab .mreq-tab-count:empty {
+  display: none;
+}
 /* ─── MEMBERSHIP REQUESTS — 3 COLUMNS BY PLAN ─── */
 .mreq-columns {
   display: grid;

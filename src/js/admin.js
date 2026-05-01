@@ -331,6 +331,8 @@ function renderMembershipRequestCards(members) {
       '<div class="data-card-meta" style="font-size:11px;color:var(--clay);">' + formatDate(m.created_at) + '</div>' +
       '<div class="data-card-actions">' +
         (showAccept ? '<button class="btn-outline" onclick="openAcceptModal(\'' + esc(m.id) + '\')">Accept</button>' : '') +
+        (status === 'new' ? '<button class="btn-outline" onclick="markContacted(\'' + esc(m.id) + '\')">Contacted</button>' : '') +
+        (status === 'contacted' ? '<button class="btn-outline" onclick="markNew(\'' + esc(m.id) + '\')">Back to New</button>' : '') +
         '<button class="btn-outline btn-danger" onclick="deleteMembershipRequest(\'' + esc(m.id) + '\')">Delete</button>' +
       '</div>' +
     '</div>';
@@ -912,6 +914,36 @@ async function updateMembershipStatus(id, status) {
 
 var _loadedMembershipRequests = [];
 var _loadedMembers = [];
+var _mreqTab = 'new';
+
+function mreqSetTab(tab) {
+  _mreqTab = tab;
+  var tabs = document.querySelectorAll('.esched-tab[data-mreqtab]');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', tabs[i].dataset.mreqtab === tab);
+  }
+  loadMembershipRequests();
+}
+
+async function markContacted(id) {
+  try {
+    await apiPost({ action: 'update_membership', id: id, status: 'contacted' });
+    showToast('Marked as contacted', 'success');
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+async function markNew(id) {
+  try {
+    await apiPost({ action: 'update_membership', id: id, status: 'new' });
+    showToast('Moved back to New', 'success');
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
 
 async function loadMembershipRequests() {
   var loading = document.getElementById('mreq-loading');
@@ -923,18 +955,21 @@ async function loadMembershipRequests() {
     var resp = await apiGet({ action: 'memberships' });
     var allMembers = resp.data || [];
 
-    // Hide accepted (status='active') and inactive enquiries — they're now in Member List
-    var members = allMembers.filter(function(m) {
-      var s = (m.status || 'new').toLowerCase();
-      return s !== 'active' && s !== 'inactive';
-    });
+    var newOnes = allMembers.filter(function(m) { return (m.status || 'new').toLowerCase() === 'new'; });
+    var contactedOnes = allMembers.filter(function(m) { return (m.status || '').toLowerCase() === 'contacted'; });
 
+    // Update tab count badges
+    var newCountEl = document.getElementById('mreq-tab-new-count');
+    var contactedCountEl = document.getElementById('mreq-tab-contacted-count');
+    if (newCountEl) newCountEl.textContent = newOnes.length ? newOnes.length : '';
+    if (contactedCountEl) contactedCountEl.textContent = contactedOnes.length ? contactedOnes.length : '';
+
+    var members = (_mreqTab === 'contacted') ? contactedOnes : newOnes;
     _loadedMembershipRequests = members;
 
-    // Update nav badge with unread (new) count
-    var newCount = members.filter(function(m) { return (m.status || 'new') === 'new'; }).length;
+    // Update sidebar nav badge with unread (new) count
     var badge = document.getElementById('mreq-badge');
-    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
+    if (newOnes.length > 0) { badge.textContent = newOnes.length; badge.style.display = 'inline'; }
     else { badge.style.display = 'none'; }
 
     content.innerHTML = renderMembershipRequestColumns(members);
@@ -2615,6 +2650,9 @@ window.closeAcceptModal = closeAcceptModal;
 window.acceptMembership = acceptMembership;
 window.eschedAcceptToggle = eschedAcceptToggle;
 window.deleteMembershipRequest = deleteMembershipRequest;
+window.mreqSetTab = mreqSetTab;
+window.markContacted = markContacted;
+window.markNew = markNew;
 window.loadEnquirySchedule = loadEnquirySchedule;
 window.eschedShow = eschedShow;
 window.eschedClose = eschedClose;
