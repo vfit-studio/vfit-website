@@ -350,25 +350,19 @@ function renderMemberListCards(members) {
       return (dayNames[s.day_of_week] || '?') + ' ' + esc(s.time || '');
     }).join(', ') || 'No slots assigned';
 
-    var welcomeBtn;
-    if (m.agreed_at) {
-      welcomeBtn = '<button class="btn-outline" disabled title="Agreement confirmed ' + esc(formatDate(m.agreed_at)) + '" style="opacity:0.7;">Agreed &#x2713;</button>';
-    } else if (m.welcome_sent_at) {
-      welcomeBtn = '<button class="btn-outline" onclick="sendWelcome(\'' + esc(m.id) + '\', true)" title="Welcome sent ' + esc(formatDate(m.welcome_sent_at)) + ' &mdash; waiting on confirmation">Resend Welcome</button>';
-    } else {
-      welcomeBtn = '<button class="btn-outline" onclick="sendWelcome(\'' + esc(m.id) + '\', false)">Send Welcome</button>';
-    }
+    var agreedTag = m.agreed_at ? '<span class="badge badge-active" style="margin-left:6px;font-size:9px;">Agreed &#x2713;</span>' : '';
 
     return '<div class="data-card">' +
       '<div class="data-card-header">' +
-        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong></div>' +
+        '<div class="data-card-name"><strong>' + esc(m.name || '') + '</strong>' + agreedTag + '</div>' +
         '<span class="badge ' + statusCls + '">' + esc(status) + '</span>' +
       '</div>' +
       '<div class="data-card-meta">' + esc(m.email || '') + (m.phone && m.phone !== '--' ? ' · ' + esc(m.phone) : '') + '</div>' +
       (m.plan ? '<div class="data-card-meta">Plan: ' + esc(m.plan) + ' · ' + (m.sessions_per_week || 1) + 'x/wk</div>' : '') +
       '<div class="data-card-meta">Slots: ' + slots + '</div>' +
+      (m.notes ? '<div class="data-card-body">' + esc(truncate(m.notes, 140)) + '</div>' : '') +
       '<div class="data-card-actions">' +
-        welcomeBtn +
+        '<button class="btn-outline" onclick="openNotesModal(\'' + esc(m.id) + '\', \'member\')">' + (m.notes ? 'Edit Notes' : 'Add Notes') + '</button>' +
         '<button class="btn-outline" onclick="openEditMemberModal(\'' + esc(m.id) + '\')">Edit</button>' +
         '<button class="btn-outline btn-danger" onclick="deleteMember(\'' + esc(m.id) + '\')">Delete</button>' +
       '</div>' +
@@ -946,11 +940,19 @@ async function markNew(id) {
   }
 }
 
-function openNotesModal(id) {
-  var m = _loadedMembershipRequests.find(function(r) { return r.id === id; }) || {};
+var _notesEntityType = 'enquiry'; // 'enquiry' or 'member'
+
+function openNotesModal(id, type) {
+  _notesEntityType = type === 'member' ? 'member' : 'enquiry';
+  var record;
+  if (_notesEntityType === 'member') {
+    record = (_loadedMembers || []).find(function(r) { return r.id === id; }) || {};
+  } else {
+    record = (_loadedMembershipRequests || []).find(function(r) { return r.id === id; }) || {};
+  }
   document.getElementById('mreq-notes-id').value = id;
-  document.getElementById('mreq-notes-name').textContent = m.name || 'enquiry';
-  document.getElementById('mreq-notes-text').value = m.notes || '';
+  document.getElementById('mreq-notes-name').textContent = record.name || (_notesEntityType === 'member' ? 'member' : 'enquiry');
+  document.getElementById('mreq-notes-text').value = record.notes || '';
   document.getElementById('mreq-notes-modal').classList.add('open');
   setTimeout(function() { document.getElementById('mreq-notes-text').focus(); }, 100);
 }
@@ -963,10 +965,17 @@ async function saveNotes() {
   var id = document.getElementById('mreq-notes-id').value;
   var notes = document.getElementById('mreq-notes-text').value;
   try {
-    await apiPost({ action: 'update_membership', id: id, notes: notes });
-    showToast('Notes saved', 'success');
-    closeNotesModal();
-    loadMembershipRequests();
+    if (_notesEntityType === 'member') {
+      await apiPost({ action: 'update_member', member_id: id, notes: notes });
+      showToast('Notes saved', 'success');
+      closeNotesModal();
+      loadMemberList();
+    } else {
+      await apiPost({ action: 'update_membership', id: id, notes: notes });
+      showToast('Notes saved', 'success');
+      closeNotesModal();
+      loadMembershipRequests();
+    }
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
   }
