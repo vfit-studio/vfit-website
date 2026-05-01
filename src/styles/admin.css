@@ -893,6 +893,121 @@ body.body-no-scroll { overflow: hidden; position: fixed; width: 100%; }
   .esched-grid tbody th.esched-row-th { font-size: 10px; padding: 0 8px 0 2px; }
 }
 
+/* ─── FOLLOW-UPS CALENDAR ─── */
+.fu-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.fu-summary-item {
+  background: var(--cream);
+  border: 1px solid var(--stone);
+  border-radius: 4px;
+  padding: 18px 20px;
+  text-align: center;
+}
+.fu-summary-item.urgent { border-color: #b85c5c; background: rgba(184, 92, 92, 0.06); }
+.fu-summary-item.active { border-color: var(--moss); background: rgba(168, 184, 154, 0.08); }
+.fu-summary-num {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  color: var(--deep);
+  line-height: 1;
+}
+.fu-summary-item.urgent .fu-summary-num { color: #b85c5c; }
+.fu-summary-item.active .fu-summary-num { color: var(--moss); }
+.fu-summary-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bark);
+}
+.fu-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  background: var(--stone);
+  border: 1px solid var(--stone);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fu-grid-head {
+  background: var(--cream);
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bark);
+  font-weight: 500;
+}
+.fu-grid-cell {
+  background: var(--warm-white);
+  min-height: 78px;
+  padding: 8px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  transition: background 0.15s;
+}
+.fu-grid-cell.out { background: var(--cream); opacity: 0.5; }
+.fu-grid-cell.today { background: rgba(168, 184, 154, 0.18); }
+.fu-grid-cell.has-items { cursor: pointer; }
+.fu-grid-cell.has-items:hover { background: var(--sand); }
+.fu-grid-cell.overdue { background: rgba(184, 92, 92, 0.1); }
+.fu-grid-cell.overdue.has-items:hover { background: rgba(184, 92, 92, 0.2); }
+.fu-grid-cell.selected { outline: 2px solid var(--moss); outline-offset: -2px; }
+.fu-day-num {
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  color: var(--deep);
+}
+.fu-grid-cell.today .fu-day-num { font-weight: 600; color: var(--moss); }
+.fu-day-count {
+  margin-top: auto;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--deep);
+  align-self: center;
+}
+.fu-grid-cell.overdue .fu-day-count { color: #b85c5c; }
+.fu-detail-card {
+  background: var(--cream);
+  border: 1px solid var(--stone);
+  border-radius: 4px;
+  padding: 20px;
+  margin-top: 24px;
+}
+.fu-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.fu-detail-head h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--deep);
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .fu-grid-cell { min-height: 56px; padding: 6px 4px 4px; }
+  .fu-day-num { font-size: 11px; }
+  .fu-day-count { font-size: 16px; }
+  .fu-grid-head { font-size: 9px; padding: 8px 2px; }
+  .fu-summary-num { font-size: 28px; }
+  .fu-summary-item { padding: 14px 10px; }
+  .fu-summary-label { font-size: 10px; letter-spacing: 0.1em; }
+}
+
 .mreq-tab-count {
   display: inline-block;
   margin-left: 6px;

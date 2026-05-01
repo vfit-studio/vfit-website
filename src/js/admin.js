@@ -209,7 +209,7 @@ function showPage(page) {
   if (labelEl) {
     var pageLabels = {
       'overview': 'Dashboard', 'runclub': 'Run Club', 'pilattes': "Pi'lattes",
-      'membership-requests': 'Requests', 'enquiry-schedule': 'Enquiry Schedule', 'member-list': 'Members',
+      'membership-requests': 'Requests', 'enquiry-schedule': 'Enquiry Schedule', 'member-list': 'Members', 'followups': 'Follow-ups',
       'general-messages': 'Messages', 'plan-config': 'Plans',
       'testimonials': 'Testimonials', 'media-library': 'Media', 'calendar': 'Calendar'
     };
@@ -229,6 +229,7 @@ function showPage(page) {
     case 'membership-requests': loadMembershipRequests(); break;
     case 'enquiry-schedule': loadEnquirySchedule(); break;
     case 'member-list': loadMemberList(); break;
+    case 'followups': loadFollowUps(); break;
     case 'calendar': loadCalendar(); break;
     case 'general-messages': loadGeneralMessages(); break;
     case 'contacts': loadContacts(); break;
@@ -953,6 +954,10 @@ function openNotesModal(id, type) {
   document.getElementById('mreq-notes-id').value = id;
   document.getElementById('mreq-notes-name').textContent = record.name || (_notesEntityType === 'member' ? 'member' : 'enquiry');
   document.getElementById('mreq-notes-text').value = record.notes || '';
+  // Date input expects YYYY-MM-DD
+  var fu = record.follow_up_at || '';
+  if (fu && fu.length > 10) fu = fu.substring(0, 10);
+  document.getElementById('mreq-notes-followup').value = fu;
   document.getElementById('mreq-notes-modal').classList.add('open');
   setTimeout(function() { document.getElementById('mreq-notes-text').focus(); }, 100);
 }
@@ -964,15 +969,16 @@ function closeNotesModal() {
 async function saveNotes() {
   var id = document.getElementById('mreq-notes-id').value;
   var notes = document.getElementById('mreq-notes-text').value;
+  var followUp = document.getElementById('mreq-notes-followup').value || null;
   try {
     if (_notesEntityType === 'member') {
-      await apiPost({ action: 'update_member', member_id: id, notes: notes });
-      showToast('Notes saved', 'success');
+      await apiPost({ action: 'update_member', member_id: id, notes: notes, follow_up_at: followUp });
+      showToast('Saved', 'success');
       closeNotesModal();
       loadMemberList();
     } else {
-      await apiPost({ action: 'update_membership', id: id, notes: notes });
-      showToast('Notes saved', 'success');
+      await apiPost({ action: 'update_membership', id: id, notes: notes, follow_up_at: followUp });
+      showToast('Saved', 'success');
       closeNotesModal();
       loadMembershipRequests();
     }
@@ -2667,6 +2673,173 @@ function deleteMediaFile(path) {
   });
 }
 
+// ─── FOLLOW-UPS CALENDAR ───
+
+var _fuMonth = new Date(); // current viewed month
+var _fuItems = [];          // all follow-ups loaded
+var _fuSelectedDay = null;  // YYYY-MM-DD
+
+function fuToday() {
+  _fuMonth = new Date();
+  _fuSelectedDay = ymdLocal(new Date());
+  loadFollowUps();
+}
+
+function fuNav(delta) {
+  var d = new Date(_fuMonth);
+  d.setMonth(d.getMonth() + delta);
+  _fuMonth = d;
+  renderFollowUps();
+}
+
+function ymdLocal(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+async function loadFollowUps() {
+  var loading = document.getElementById('fu-loading');
+  var content = document.getElementById('fu-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+
+  try {
+    var rEnq = await apiGet({ action: 'memberships' });
+    var rMem = await apiGet({ action: 'members' });
+    var enqs = (rEnq.data || []).filter(function(m) { return m.follow_up_at; }).map(function(m) {
+      return { id: m.id, name: m.name, type: 'enquiry', status: m.status || 'new', plan: m.plan, notes: m.notes, follow_up_at: m.follow_up_at };
+    });
+    var mems = (rMem.members || []).filter(function(m) { return m.follow_up_at; }).map(function(m) {
+      return { id: m.id, name: m.name, type: 'member', status: m.status || 'active', plan: m.plan, notes: m.notes, follow_up_at: m.follow_up_at };
+    });
+    _fuItems = enqs.concat(mems);
+
+    // Update sidebar badge with overdue + today count
+    var todayKey = ymdLocal(new Date());
+    var dueCount = _fuItems.filter(function(it) { return it.follow_up_at <= todayKey; }).length;
+    var badge = document.getElementById('fu-badge');
+    if (dueCount > 0) { badge.textContent = dueCount; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+    renderFollowUps();
+  } catch (err) {
+    loading.innerHTML = '<div class="empty-state">Could not load follow-ups. ' + esc(err.message) + '</div>';
+  }
+}
+
+function renderFollowUps() {
+  // Month label
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('fu-month-label').textContent = monthNames[_fuMonth.getMonth()] + ' ' + _fuMonth.getFullYear();
+
+  // Bucket items by date string
+  var byDate = {};
+  _fuItems.forEach(function(it) { (byDate[it.follow_up_at] = byDate[it.follow_up_at] || []).push(it); });
+
+  // Compute overdue + today + week summary
+  var todayKey = ymdLocal(new Date());
+  var weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+  var weekEndKey = ymdLocal(weekEnd);
+  var overdue = _fuItems.filter(function(it) { return it.follow_up_at < todayKey; }).length;
+  var today = _fuItems.filter(function(it) { return it.follow_up_at === todayKey; }).length;
+  var thisWeek = _fuItems.filter(function(it) { return it.follow_up_at > todayKey && it.follow_up_at <= weekEndKey; }).length;
+
+  var summary = '';
+  summary += '<div class="fu-summary-item' + (overdue ? ' urgent' : '') + '"><span class="fu-summary-num">' + overdue + '</span><span class="fu-summary-label">Overdue</span></div>';
+  summary += '<div class="fu-summary-item' + (today ? ' active' : '') + '"><span class="fu-summary-num">' + today + '</span><span class="fu-summary-label">Today</span></div>';
+  summary += '<div class="fu-summary-item"><span class="fu-summary-num">' + thisWeek + '</span><span class="fu-summary-label">Next 7 days</span></div>';
+  document.getElementById('fu-summary').innerHTML = summary;
+
+  // Build calendar grid
+  var year = _fuMonth.getFullYear();
+  var month = _fuMonth.getMonth();
+  var firstDay = new Date(year, month, 1);
+  var lastDay = new Date(year, month + 1, 0);
+  var startOffset = (firstDay.getDay() + 6) % 7; // Mon=0, Sun=6
+  var totalCells = Math.ceil((startOffset + lastDay.getDate()) / 7) * 7;
+
+  var grid = '<div class="fu-grid">';
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(d) {
+    grid += '<div class="fu-grid-head">' + d + '</div>';
+  });
+  for (var i = 0; i < totalCells; i++) {
+    var dayNum = i - startOffset + 1;
+    var inMonth = dayNum >= 1 && dayNum <= lastDay.getDate();
+    if (!inMonth) {
+      grid += '<div class="fu-grid-cell out"></div>';
+      continue;
+    }
+    var d = new Date(year, month, dayNum);
+    var key = ymdLocal(d);
+    var items = byDate[key] || [];
+    var cls = 'fu-grid-cell';
+    if (key === todayKey) cls += ' today';
+    if (key < todayKey && items.length) cls += ' overdue';
+    if (key === _fuSelectedDay) cls += ' selected';
+    if (items.length) cls += ' has-items';
+    var handler = items.length ? ' onclick="fuSelectDay(\'' + key + '\')"' : '';
+    grid += '<div class="' + cls + '"' + handler + '>' +
+      '<span class="fu-day-num">' + dayNum + '</span>' +
+      (items.length ? '<span class="fu-day-count">' + items.length + '</span>' : '') +
+    '</div>';
+  }
+  grid += '</div>';
+  document.getElementById('fu-calendar').innerHTML = grid;
+
+  // If a day was previously selected and still in view, render its list
+  if (_fuSelectedDay && byDate[_fuSelectedDay]) {
+    renderFollowUpDay(_fuSelectedDay);
+  } else {
+    document.getElementById('fu-day-detail').innerHTML = '';
+  }
+}
+
+function fuSelectDay(key) {
+  _fuSelectedDay = key;
+  renderFollowUps();
+  renderFollowUpDay(key);
+  var detail = document.getElementById('fu-day-detail');
+  if (detail && detail.scrollIntoView) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderFollowUpDay(key) {
+  var items = _fuItems.filter(function(it) { return it.follow_up_at === key; });
+  var dateLabel = new Date(key + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  var html = '<div class="fu-detail-card">' +
+    '<div class="fu-detail-head"><h3>' + esc(dateLabel) + ' &middot; ' + items.length + ' follow-up' + (items.length === 1 ? '' : 's') + '</h3>' +
+    '<button class="btn-outline" onclick="fuCloseDay()">Close</button></div>';
+  if (items.length === 0) {
+    html += '<div class="empty-state">No follow-ups on this day.</div>';
+  } else {
+    html += '<div class="card-list">' + items.map(function(it) {
+      var typeBadge = it.type === 'member' ? 'Member' : 'Enquiry';
+      return '<div class="data-card">' +
+        '<div class="data-card-header">' +
+          '<div class="data-card-name"><strong>' + esc(it.name || '') + '</strong> <span class="badge" style="margin-left:6px;">' + typeBadge + '</span></div>' +
+          statusBadge(it.status) +
+        '</div>' +
+        (it.plan ? '<div class="data-card-meta">' + esc(it.plan) + '</div>' : '') +
+        (it.notes ? '<div class="data-card-body">' + esc(truncate(it.notes, 200)) + '</div>' : '<div class="data-card-meta" style="font-style:italic;color:var(--clay);">No notes yet</div>') +
+        '<div class="data-card-actions">' +
+          '<button class="btn-outline" onclick="openNotesModal(\'' + esc(it.id) + '\', \'' + (it.type === 'member' ? 'member' : 'enquiry') + '\')">Open / Edit</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
+  html += '</div>';
+  document.getElementById('fu-day-detail').innerHTML = html;
+}
+
+function fuCloseDay() {
+  _fuSelectedDay = null;
+  document.getElementById('fu-day-detail').innerHTML = '';
+  renderFollowUps();
+}
+
 // ─── WINDOW EXPORTS for inline event handlers ───
 window.handleLogin = handleLogin;
 window.toggleMobileSidebar = toggleMobileSidebar;
@@ -2692,6 +2865,11 @@ window.markNew = markNew;
 window.openNotesModal = openNotesModal;
 window.closeNotesModal = closeNotesModal;
 window.saveNotes = saveNotes;
+window.fuToday = fuToday;
+window.fuNav = fuNav;
+window.fuSelectDay = fuSelectDay;
+window.fuCloseDay = fuCloseDay;
+window.loadFollowUps = loadFollowUps;
 window.loadEnquirySchedule = loadEnquirySchedule;
 window.eschedShow = eschedShow;
 window.eschedClose = eschedClose;

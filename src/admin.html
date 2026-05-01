@@ -48,6 +48,7 @@
       <li><button onclick="showPage('membership-requests')" data-page="membership-requests"><span class="nav-icon">&#9826;</span> Requests <span id="mreq-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('enquiry-schedule')" data-page="enquiry-schedule"><span class="nav-icon">&#9635;</span> Enquiry Schedule</button></li>
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
+      <li><button onclick="showPage('followups')" data-page="followups"><span class="nav-icon">&#9744;</span> Follow-ups <span id="fu-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
@@ -181,6 +182,25 @@
       </div>
       <div id="mreq-loading" class="loading">Loading requests...</div>
       <div id="mreq-content" style="display:none;"></div>
+    </div>
+
+    <!-- FOLLOW-UPS -->
+    <div class="admin-page" id="page-followups">
+      <div class="page-header">
+        <h1 class="page-title"><em>Follow-ups</em></h1>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-outline" onclick="fuNav(-1)">&lsaquo;</button>
+          <span id="fu-month-label" style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--deep);min-width:200px;text-align:center;"></span>
+          <button class="btn-outline" onclick="fuNav(1)">&rsaquo;</button>
+          <button class="btn-outline" onclick="fuToday()" style="margin-left:8px;">Today</button>
+        </div>
+      </div>
+      <div id="fu-loading" class="loading">Loading follow-ups...</div>
+      <div id="fu-content" style="display:none;">
+        <div id="fu-summary" class="fu-summary"></div>
+        <div id="fu-calendar" class="fu-calendar"></div>
+        <div id="fu-day-detail"></div>
+      </div>
     </div>
 
     <!-- ENQUIRY SCHEDULE -->
@@ -406,11 +426,15 @@
     <button class="modal-close" onclick="closeNotesModal()">&times;</button>
     <h2 class="modal-title">Notes for <em id="mreq-notes-name"></em></h2>
     <input type="hidden" id="mreq-notes-id">
-    <p style="font-size:13px;color:var(--bark);margin:0 0 14px;line-height:1.5;">Add any notes from your conversation — what they're after, follow-up dates, sessions assigned, anything worth remembering.</p>
     <div class="form-group">
+      <label class="form-label">Follow up on (optional)</label>
+      <input type="date" class="form-input" id="mreq-notes-followup">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
       <textarea class="form-input" id="mreq-notes-text" rows="8" placeholder="What did you discuss? Any follow-ups?" style="resize:vertical;"></textarea>
     </div>
-    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="saveNotes()">Save Notes</button>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="saveNotes()">Save</button>
   </div>
 </div>
 
