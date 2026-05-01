@@ -91,6 +91,12 @@ const Stripe = require('stripe');
 const { sendNotifyConfirmation, sendBookingsOpenEmail, sendBookingConfirmation, sendMembershipConfirmation, sendOwnerAlert, sendWaitlistSpotEmail, sendReviewRequestEmail } = require('./utils/email');
 const { sendOwnerSMS } = require('./utils/sms');
 const { requireMember, sendMagicLink } = require('./utils/lounge-auth');
+const {
+  evaluateCancellation,
+  pauseDaysUsed,
+  pauseDaysInRange,
+  PAUSE_CAP_DAYS_PER_YEAR,
+} = require('./utils/lounge-policy');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
@@ -1886,6 +1892,332 @@ async function handleLoungeMe(event) {
   });
 }
 
+// ─── Lounge: cancel a single session ───
+async function handleLoungeCancelSession(event, body) {
+  let ctx;
+  try {
+    ctx = await requireMember(event);
+  } catch (err) {
+    return respond(err.statusCode || 401, { success: false, error: err.message });
+  }
+  const { member } = ctx;
+  const { slot_id, session_date, reason } = body || {};
+  if (!slot_id || !session_date) {
+    return respond(400, { success: false, error: 'slot_id and session_date required' });
+  }
+
+  // Confirm the slot is one this member is actually assigned to
+  const { data: assignment } = await supabase
+    .from('member_slots')
+    .select('slot_id, schedule_slots(id, day_of_week, time)')
+    .eq('member_id', member.id)
+    .eq('slot_id', slot_id)
+    .eq('status', 'active')
+    .maybeSingle();
+  if (!assignment || !assignment.schedule_slots) {
+    return respond(403, { success: false, error: 'not your slot' });
+  }
+  const slotTime = assignment.schedule_slots.time;
+
+  const policy = evaluateCancellation({
+    plan: member.plan,
+    sessionDate: session_date,
+    sessionTime: slotTime,
+  });
+
+  const state = policy.chargeRequired ? 'cancelled_late' : 'cancelled_in_time';
+
+  // Upsert into member_session_log (unique on member_id+slot_id+session_date)
+  const { error: logErr } = await supabase
+    .from('member_session_log')
+    .upsert({
+      member_id: member.id,
+      slot_id,
+      session_date,
+      session_time: slotTime,
+      state,
+      charge_required: policy.chargeRequired,
+      notice_hours: Math.round(policy.noticeHours * 10) / 10,
+      reason: reason || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'member_id,slot_id,session_date' });
+  if (logErr) {
+    console.error('cancel log error:', logErr);
+    return respond(500, { success: false, error: 'failed to record cancellation' });
+  }
+
+  // Audit
+  await supabase.from('lounge_audit_log').insert({
+    member_id: member.id,
+    actor_user_id: ctx.user.id,
+    actor_role: 'member',
+    action: 'cancel_session',
+    resource: `${slot_id}|${session_date}`,
+  });
+
+  // Notify Georgie
+  try {
+    await sendOwnerAlert(
+      `Lounge: ${member.name} cancelled ${session_date} ${slotTime}`,
+      `<p><strong>${member.name}</strong> (${member.plan || '—'}) cancelled their ${session_date} ${slotTime} session.</p>` +
+      `<p>Notice: ${Math.round(policy.noticeHours)}h (required ${policy.requiredHours}h). ` +
+      `${policy.chargeRequired ? '<strong style="color:#b85c5c;">Charge required (late cancellation).</strong>' : 'Within policy — no charge.'}</p>` +
+      (reason ? `<p>Member note: ${escapeHtmlPlain(reason)}</p>` : '')
+    );
+  } catch (e) { console.error('owner alert failed', e); }
+
+  return respond(200, {
+    success: true,
+    state,
+    charge_required: policy.chargeRequired,
+    notice_hours: policy.noticeHours,
+    required_hours: policy.requiredHours,
+  });
+}
+
+// ─── Lounge: create a travel hold ───
+async function handleLoungeCreateTravelHold(event, body) {
+  let ctx;
+  try {
+    ctx = await requireMember(event);
+  } catch (err) {
+    return respond(err.statusCode || 401, { success: false, error: err.message });
+  }
+  const { member } = ctx;
+  const { start_date, end_date, reason } = body || {};
+  if (!start_date || !end_date) {
+    return respond(400, { success: false, error: 'start_date and end_date required' });
+  }
+  if (end_date < start_date) {
+    return respond(400, { success: false, error: 'end_date must be on or after start_date' });
+  }
+
+  // Cap check — sum existing holds in the rolling year + this new one
+  const { data: existing } = await supabase
+    .from('travel_holds')
+    .select('start_date, end_date, status')
+    .eq('member_id', member.id);
+
+  const usedDays = pauseDaysUsed(existing || []);
+  const requestDays = pauseDaysInRange(start_date, end_date);
+  if (usedDays + requestDays > PAUSE_CAP_DAYS_PER_YEAR) {
+    return respond(400, {
+      success: false,
+      error: 'pause_cap_exceeded',
+      message: `Your plan allows up to ${PAUSE_CAP_DAYS_PER_YEAR} pause days per year. You'd be at ${usedDays + requestDays}.`,
+      used_days: usedDays,
+      requested_days: requestDays,
+      cap_days: PAUSE_CAP_DAYS_PER_YEAR,
+    });
+  }
+
+  // Insert the hold
+  const { data: hold, error: holdErr } = await supabase
+    .from('travel_holds')
+    .insert({ member_id: member.id, start_date, end_date, reason: reason || null })
+    .select('*')
+    .single();
+  if (holdErr) {
+    console.error('travel_hold insert error:', holdErr);
+    return respond(500, { success: false, error: 'failed to create hold' });
+  }
+
+  // Mark all of this member's recurring sessions in the range as paused
+  // (so they show greyed-out on the lounge calendar and don't trigger charges)
+  await markSessionsPaused(member.id, start_date, end_date);
+
+  // Audit
+  await supabase.from('lounge_audit_log').insert({
+    member_id: member.id,
+    actor_user_id: ctx.user.id,
+    actor_role: 'member',
+    action: 'create_travel_hold',
+    resource: hold.id,
+  });
+
+  // Notify Georgie
+  try {
+    await sendOwnerAlert(
+      `Lounge: ${member.name} added a travel hold`,
+      `<p><strong>${member.name}</strong> (${member.plan || '—'}) is on hold from <strong>${start_date}</strong> to <strong>${end_date}</strong>.</p>` +
+      (reason ? `<p>Note: ${escapeHtmlPlain(reason)}</p>` : '') +
+      `<p>Pause days used in last 12 months: ${usedDays + requestDays} of ${PAUSE_CAP_DAYS_PER_YEAR}.</p>`
+    );
+  } catch (e) { console.error('owner alert failed', e); }
+
+  return respond(200, { success: true, hold, used_days: usedDays + requestDays, cap_days: PAUSE_CAP_DAYS_PER_YEAR });
+}
+
+// ─── Lounge: cancel a travel hold ───
+async function handleLoungeCancelTravelHold(event, body) {
+  let ctx;
+  try {
+    ctx = await requireMember(event);
+  } catch (err) {
+    return respond(err.statusCode || 401, { success: false, error: err.message });
+  }
+  const { member } = ctx;
+  const { hold_id } = body || {};
+  if (!hold_id) return respond(400, { success: false, error: 'hold_id required' });
+
+  const { data: hold } = await supabase
+    .from('travel_holds')
+    .select('*')
+    .eq('id', hold_id)
+    .eq('member_id', member.id)
+    .maybeSingle();
+  if (!hold) return respond(404, { success: false, error: 'not found' });
+
+  await supabase
+    .from('travel_holds')
+    .update({ status: 'cancelled' })
+    .eq('id', hold_id);
+
+  // Reverse the per-session log: drop any 'paused' rows in this range
+  await supabase
+    .from('member_session_log')
+    .delete()
+    .eq('member_id', member.id)
+    .eq('state', 'paused')
+    .gte('session_date', hold.start_date)
+    .lte('session_date', hold.end_date);
+
+  await supabase.from('lounge_audit_log').insert({
+    member_id: member.id,
+    actor_user_id: ctx.user.id,
+    actor_role: 'member',
+    action: 'cancel_travel_hold',
+    resource: hold_id,
+  });
+
+  return respond(200, { success: true });
+}
+
+// Mark every scheduled occurrence in a date range as 'paused' for a member.
+// Idempotent — uses upsert.
+async function markSessionsPaused(memberId, startDate, endDate) {
+  const { data: assignments } = await supabase
+    .from('member_slots')
+    .select('slot_id, schedule_slots(id, day_of_week, time)')
+    .eq('member_id', memberId)
+    .eq('status', 'active');
+  const slots = (assignments || []).map((a) => a.schedule_slots).filter(Boolean);
+  if (!slots.length) return;
+
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  const rows = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dow = d.getDay();
+    for (const s of slots) {
+      if (s.day_of_week === dow) {
+        rows.push({
+          member_id: memberId,
+          slot_id: s.id,
+          session_date: d.toISOString().slice(0, 10),
+          session_time: s.time,
+          state: 'paused',
+          charge_required: false,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+  }
+  if (rows.length) {
+    await supabase.from('member_session_log').upsert(rows, {
+      onConflict: 'member_id,slot_id,session_date',
+    });
+  }
+}
+
+// ─── Lounge: admin-side activity feed (cancellations + holds) ───
+async function handleLoungeAdminActivity() {
+  // Recent cancellations (last 60 days)
+  const sixtyDaysAgo = new Date();
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const cutoffStr = sixtyDaysAgo.toISOString().slice(0, 10);
+
+  const { data: logs } = await supabase
+    .from('member_session_log')
+    .select('id, member_id, slot_id, session_date, session_time, state, charge_required, notice_hours, reason, created_at, members(id, name, email, plan)')
+    .in('state', ['cancelled_late', 'cancelled_in_time', 'paused'])
+    .gte('session_date', cutoffStr)
+    .order('created_at', { ascending: false })
+    .limit(120);
+
+  const { data: holds } = await supabase
+    .from('travel_holds')
+    .select('id, member_id, start_date, end_date, status, reason, created_at, members(id, name, email, plan)')
+    .in('status', ['active', 'completed', 'cancelled'])
+    .order('start_date', { ascending: false })
+    .limit(100);
+
+  return respond(200, {
+    success: true,
+    cancellations: (logs || []).map((l) => ({
+      id: l.id,
+      member_id: l.member_id,
+      member_name: l.members?.name || '—',
+      member_plan: l.members?.plan || '—',
+      session_date: l.session_date,
+      session_time: l.session_time,
+      state: l.state,
+      charge_required: l.charge_required,
+      notice_hours: l.notice_hours,
+      reason: l.reason,
+      created_at: l.created_at,
+    })),
+    travel_holds: (holds || []).map((h) => ({
+      id: h.id,
+      member_id: h.member_id,
+      member_name: h.members?.name || '—',
+      member_plan: h.members?.plan || '—',
+      start_date: h.start_date,
+      end_date: h.end_date,
+      status: h.status,
+      reason: h.reason,
+      created_at: h.created_at,
+    })),
+  });
+}
+
+// ─── Lounge: save member preferences ───
+async function handleLoungeSavePreferences(event, body) {
+  let ctx;
+  try {
+    ctx = await requireMember(event);
+  } catch (err) {
+    return respond(err.statusCode || 401, { success: false, error: err.message });
+  }
+  const { member } = ctx;
+  const allowed = ['display_name', 'stealth_handle', 'notify_email', 'challenges_opted_in', 'read_receipts'];
+  const patch = { updated_at: new Date().toISOString() };
+  for (const k of allowed) {
+    if (k in (body || {})) patch[k] = body[k];
+  }
+  if (Object.keys(patch).length === 1) {
+    return respond(400, { success: false, error: 'no fields to update' });
+  }
+
+  // Upsert (preferences row may not exist yet)
+  const { data, error } = await supabase
+    .from('member_preferences')
+    .upsert({ member_id: member.id, ...patch }, { onConflict: 'member_id' })
+    .select('*')
+    .single();
+  if (error) {
+    console.error('save prefs error:', error);
+    return respond(500, { success: false, error: 'failed to save' });
+  }
+  return respond(200, { success: true, preferences: data });
+}
+
+function escapeHtmlPlain(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
 // ═══════════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════════
@@ -1949,6 +2281,8 @@ exports.handler = async (event) => {
           return await handleGetAgreement(params.token);
         case 'lounge_me':
           return await handleLoungeMe(event);
+        case 'lounge_admin_activity':
+          return await handleLoungeAdminActivity();
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -2084,6 +2418,14 @@ exports.handler = async (event) => {
           return await handleUpdateEnquiryNotes(body);
         case 'lounge_auth_send':
           return await handleLoungeAuthSend(body);
+        case 'lounge_cancel_session':
+          return await handleLoungeCancelSession(event, body);
+        case 'lounge_create_travel_hold':
+          return await handleLoungeCreateTravelHold(event, body);
+        case 'lounge_cancel_travel_hold':
+          return await handleLoungeCancelTravelHold(event, body);
+        case 'lounge_save_preferences':
+          return await handleLoungeSavePreferences(event, body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }

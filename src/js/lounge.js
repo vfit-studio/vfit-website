@@ -49,6 +49,7 @@ async function api(action, { method = 'GET', body, auth = false } = {}) {
   if (!res.ok) {
     const err = new Error(data.error || `HTTP ${res.status}`);
     err.status = res.status;
+    err.data = data;
     throw err;
   }
   return data;
@@ -155,11 +156,14 @@ function bindShell() {
     location.reload();
   });
 
+  // Travel hold
+  $('#bill-add-hold').addEventListener('click', openTravelHoldModal);
+
   // Pref toggles
   $('#pref-stealth').addEventListener('change', onStealthToggle);
   $('#pref-receipts').addEventListener('change', () => savePref({ read_receipts: $('#pref-receipts').checked }));
   $('#pref-email').addEventListener('change', () => savePref({ notify_email: $('#pref-email').checked }));
-  $('#pref-handle').addEventListener('change', () => savePref({ stealth_handle: $('#pref-handle').value.trim() }));
+  $('#pref-handle').addEventListener('change', () => savePref({ stealth_handle: $('#pref-handle').value.trim() || null }));
 
   // Hash routing — if URL has e.g. #/messages we honor it
   window.addEventListener('hashchange', readHashRoute);
@@ -331,6 +335,9 @@ function renderBilling() {
     root.innerHTML = `<div class="lng-empty-soft">No holds set.</div>`;
   } else {
     root.innerHTML = holds.map(holdRowHtml).join('');
+    root.querySelectorAll('[data-cancel-hold]').forEach((btn) => {
+      btn.addEventListener('click', () => cancelTravelHold(btn.dataset.cancelHold));
+    });
   }
 }
 
@@ -346,6 +353,9 @@ function holdRowHtml(h) {
         <div class="lng-card-val">${formatDate(h.end_date)}</div>
       </div>
       ${h.reason ? `<div class="lng-card-row"><div class="lng-card-lbl">Note</div><div class="lng-card-val">${escapeHtml(h.reason)}</div></div>` : ''}
+      <div style="text-align:right;margin-top:6px;">
+        <button class="lng-link-btn" data-cancel-hold="${escapeHtml(h.id)}" style="color:var(--error);">Remove hold</button>
+      </div>
     </div>
   `;
 }
@@ -374,9 +384,175 @@ function renderMsgDot() {
   $('#lng-msg-dot').hidden = !(state.me.unread_messages > 0);
 }
 
-// Placeholder for Phase 2 — for now, just toast.
+// ─── Session-action sheet ──────────────────────
+const NOTICE_HOURS = { signature: 48, flexible: 168, vip: 48 };
+function planKey(p) {
+  const s = String(p || '').toLowerCase();
+  if (s.indexOf('vip') >= 0) return 'vip';
+  if (s.indexOf('flex') >= 0) return 'flexible';
+  return 'signature';
+}
+
 function openSessionAction(item) {
-  showToast('Session controls arrive in the next phase.');
+  if (item.state !== 'scheduled') {
+    showToast('This session is already ' + item.state.replace('_', ' ') + '.');
+    return;
+  }
+  const plan = state.me.member.plan;
+  const tier = planKey(plan);
+  const required = NOTICE_HOURS[tier];
+  const start = parseSessionStart(item.date, item.time);
+  const noticeHours = (start.getTime() - Date.now()) / (1000 * 60 * 60);
+  const inTime = noticeHours >= required;
+  const niceDate = formatDate(item.date) + ' · ' + (item.time || '');
+
+  const sheet = document.createElement('div');
+  sheet.className = 'lng-sheet';
+  sheet.innerHTML = `
+    <div class="lng-sheet-overlay" data-sheet-close></div>
+    <div class="lng-sheet-card">
+      <p class="lng-eyebrow" style="margin:0 0 8px;">Session</p>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;margin:0 0 4px;color:var(--deep);">${escapeHtml(niceDate)}</h2>
+      <p style="font-size:13px;color:var(--body);margin:0 0 22px;">
+        ${inTime
+          ? `Cancelling now is <strong>within policy</strong> (${required}hr notice). No charge.`
+          : `Cancelling now is <strong style="color:var(--error);">late</strong>. Required notice is ${required}hr — full session fee applies.`}
+      </p>
+      <textarea class="lng-sheet-note" id="sheet-note" rows="2" placeholder="Add a note for Georgie (optional)"></textarea>
+      <button class="lng-btn-primary" style="width:100%;margin-top:12px;${inTime ? '' : 'background:var(--error);'}" id="sheet-cancel">Confirm cancellation</button>
+      <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Keep this session</button>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+
+  sheet.querySelectorAll('[data-sheet-close]').forEach((el) => {
+    el.addEventListener('click', () => closeSheet(sheet));
+  });
+  sheet.querySelector('#sheet-cancel').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    e.target.textContent = 'Cancelling…';
+    const reason = sheet.querySelector('#sheet-note').value.trim();
+    try {
+      const res = await api('lounge_cancel_session', {
+        method: 'POST',
+        auth: true,
+        body: { slot_id: item.slot_id, session_date: item.date, reason },
+      });
+      const target = state.me.upcoming_sessions.find((s) => s.slot_id === item.slot_id && s.date === item.date);
+      if (target) {
+        target.state = res.state;
+        target.charge_required = res.charge_required;
+      }
+      closeSheet(sheet);
+      renderAll();
+      showToast(res.charge_required ? 'Cancelled — Georgie will be in touch about the late fee.' : 'Cancelled. No charge.');
+    } catch (err) {
+      e.target.disabled = false;
+      e.target.textContent = 'Confirm cancellation';
+      showToast('Couldn’t cancel — try again or message Georgie.', true);
+    }
+  });
+}
+
+function closeSheet(sheet) {
+  sheet.classList.remove('is-open');
+  setTimeout(() => sheet.remove(), 220);
+}
+
+function parseSessionStart(dateStr, timeStr) {
+  if (!timeStr) return new Date(dateStr + 'T00:00:00');
+  const m = String(timeStr).match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!m) return new Date(dateStr + 'T00:00:00');
+  let h = parseInt(m[1], 10);
+  const mn = parseInt(m[2], 10);
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0;
+  return new Date(dateStr + 'T' + String(h).padStart(2, '0') + ':' + String(mn).padStart(2, '0') + ':00');
+}
+
+// ─── Travel hold modal ─────────────────────────
+function openTravelHoldModal() {
+  const today = new Date().toISOString().slice(0, 10);
+  const sheet = document.createElement('div');
+  sheet.className = 'lng-sheet';
+  sheet.innerHTML = `
+    <div class="lng-sheet-overlay" data-sheet-close></div>
+    <div class="lng-sheet-card">
+      <p class="lng-eyebrow" style="margin:0 0 8px;">Travel hold</p>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;margin:0 0 4px;color:var(--deep);">When are you <em>away</em>?</h2>
+      <p style="font-size:13px;color:var(--body);margin:0 0 22px;">Sessions in this range will be paused. Up to one month of holds per year is included.</p>
+
+      <label class="lng-label">From</label>
+      <input type="date" id="hold-from" class="lng-input" min="${today}" value="${today}">
+      <label class="lng-label" style="margin-top:12px;">To</label>
+      <input type="date" id="hold-to"   class="lng-input" min="${today}" value="${today}">
+      <label class="lng-label" style="margin-top:12px;">Note (optional)</label>
+      <input type="text" id="hold-reason" class="lng-input" placeholder="e.g. Aspen 14–28">
+
+      <div class="lng-sheet-err" id="hold-err" hidden></div>
+      <button class="lng-btn-primary" style="width:100%;margin-top:18px;" id="hold-save">Save hold</button>
+      <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Cancel</button>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+
+  sheet.querySelectorAll('[data-sheet-close]').forEach((el) =>
+    el.addEventListener('click', () => closeSheet(sheet))
+  );
+  sheet.querySelector('#hold-save').addEventListener('click', async (e) => {
+    const start = sheet.querySelector('#hold-from').value;
+    const end = sheet.querySelector('#hold-to').value;
+    const reason = sheet.querySelector('#hold-reason').value.trim();
+    const errEl = sheet.querySelector('#hold-err');
+    errEl.hidden = true;
+    if (!start || !end || end < start) {
+      errEl.textContent = 'Pick a valid date range.';
+      errEl.hidden = false;
+      return;
+    }
+    e.target.disabled = true;
+    e.target.textContent = 'Saving…';
+    try {
+      const res = await api('lounge_create_travel_hold', {
+        method: 'POST',
+        auth: true,
+        body: { start_date: start, end_date: end, reason },
+      });
+      // Refresh
+      await loadMe();
+      renderAll();
+      if (state.route === 'payments') renderBilling();
+      closeSheet(sheet);
+      showToast('Hold saved. Georgie has been notified.');
+    } catch (err) {
+      e.target.disabled = false;
+      e.target.textContent = 'Save hold';
+      let msg = 'Couldn’t save the hold.';
+      if (err.status === 400 && err.data?.error === 'pause_cap_exceeded') {
+        msg = err.data.message;
+      }
+      errEl.textContent = msg;
+      errEl.hidden = false;
+    }
+  });
+}
+
+async function cancelTravelHold(holdId) {
+  try {
+    await api('lounge_cancel_travel_hold', {
+      method: 'POST',
+      auth: true,
+      body: { hold_id: holdId },
+    });
+    await loadMe();
+    renderAll();
+    if (state.route === 'payments') renderBilling();
+    showToast('Hold cancelled.');
+  } catch (err) {
+    showToast('Couldn’t cancel hold.', true);
+  }
 }
 
 function onStealthToggle() {
@@ -390,9 +566,28 @@ function onStealthToggle() {
   }
 }
 
-async function savePref(_patch) {
-  // Wire to server in Phase 2 alongside session actions.
-  showToast('Preferences saved locally — server sync arrives next phase.');
+let savePrefTimer = null;
+async function savePref(patch) {
+  if (!state.me) return;
+  // Optimistic local update so the UI feels instant
+  state.me.preferences = { ...(state.me.preferences || {}), ...patch };
+  // Debounce text changes (handle), but fire toggles immediately
+  clearTimeout(savePrefTimer);
+  const fire = async () => {
+    try {
+      const res = await api('lounge_save_preferences', {
+        method: 'POST', auth: true, body: patch,
+      });
+      state.me.preferences = res.preferences;
+    } catch (err) {
+      showToast('Couldn’t save preference.', true);
+    }
+  };
+  if ('stealth_handle' in patch) {
+    savePrefTimer = setTimeout(fire, 400);
+  } else {
+    fire();
+  }
 }
 
 function escapeHtml(s) {

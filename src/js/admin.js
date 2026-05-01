@@ -210,7 +210,7 @@ function showPage(page) {
     var pageLabels = {
       'overview': 'Dashboard', 'runclub': 'Run Club', 'pilattes': "Pi'lattes",
       'membership-requests': 'Requests', 'enquiry-schedule': 'Enquiry Schedule', 'member-list': 'Members', 'followups': 'Follow-ups',
-      'general-messages': 'Messages', 'plan-config': 'Plans',
+      'general-messages': 'Messages', 'lounge-activity': 'Lounge Activity', 'plan-config': 'Plans',
       'testimonials': 'Testimonials', 'media-library': 'Media', 'calendar': 'Calendar'
     };
     labelEl.textContent = pageLabels[page] || page;
@@ -232,6 +232,7 @@ function showPage(page) {
     case 'followups': loadFollowUps(); break;
     case 'calendar': loadCalendar(); break;
     case 'general-messages': loadGeneralMessages(); break;
+    case 'lounge-activity': loadLoungeActivity(); break;
     case 'contacts': loadContacts(); break;
     case 'plan-config': loadPlanConfig(); break;
     case 'testimonials': loadTestimonials(); break;
@@ -2942,3 +2943,69 @@ window.calUnassign = calUnassign;
 window.openAddSlotModal = openAddSlotModal;
 window.closeAddSlotModal = closeAddSlotModal;
 window.createSlot = createSlot;
+
+// ─── Lounge Activity ────────────────────────────
+async function loadLoungeActivity() {
+  var loading = document.getElementById('lng-act-loading');
+  var content = document.getElementById('lng-act-content');
+  loading.style.display = 'block';
+  content.style.display = 'none';
+  try {
+    var data = await apiGet({ action: 'lounge_admin_activity' });
+    var late = (data.cancellations || []).filter(function(c){ return c.state === 'cancelled_late'; });
+    var inTime = (data.cancellations || []).filter(function(c){ return c.state === 'cancelled_in_time'; });
+    var holds = data.travel_holds || [];
+    var activeHolds = holds.filter(function(h){ return h.status === 'active'; });
+    var pastHolds = holds.filter(function(h){ return h.status !== 'active'; });
+
+    document.getElementById('lng-act-late').innerHTML       = renderLoungeCancellations(late, true);
+    document.getElementById('lng-act-intime').innerHTML     = renderLoungeCancellations(inTime, false);
+    document.getElementById('lng-act-holds').innerHTML      = renderLoungeHolds(activeHolds);
+    document.getElementById('lng-act-pastholds').innerHTML  = renderLoungeHolds(pastHolds);
+
+    // Sidebar badge — count of late cancellations needing attention
+    var badge = document.getElementById('lng-badge');
+    if (badge) {
+      if (late.length > 0) { badge.style.display = ''; badge.textContent = String(late.length); }
+      else                 { badge.style.display = 'none'; }
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch (err) {
+    loading.textContent = 'Failed to load: ' + err.message;
+  }
+}
+
+function renderLoungeCancellations(rows, late) {
+  if (!rows.length) return '<div class="empty-state" style="padding:14px;">None.</div>';
+  return '<div class="card-list">' + rows.map(function(c){
+    var d = new Date(c.session_date + 'T00:00:00');
+    var dateLbl = d.toDateString();
+    var notice = (c.notice_hours == null) ? '' : Math.round(c.notice_hours) + 'h notice';
+    var planTag = c.member_plan ? '<span class="badge badge-held" style="margin-left:6px;font-size:9px;">' + esc(c.member_plan) + '</span>' : '';
+    var chargeTag = late ? '<span class="badge" style="margin-left:6px;font-size:9px;background:#b85c5c;color:#fff;">Charge required</span>' : '';
+    return '<div class="data-card">' +
+      '<div class="data-card-header"><div class="data-card-name"><strong>' + esc(c.member_name) + '</strong>' + planTag + chargeTag + '</div></div>' +
+      '<div class="data-card-meta">' + esc(dateLbl) + (c.session_time ? ' · ' + esc(c.session_time) : '') + (notice ? ' · ' + esc(notice) : '') + '</div>' +
+      (c.reason ? '<div class="data-card-body">' + esc(c.reason) + '</div>' : '') +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function renderLoungeHolds(rows) {
+  if (!rows.length) return '<div class="empty-state" style="padding:14px;">None.</div>';
+  return '<div class="card-list">' + rows.map(function(h){
+    var s = new Date(h.start_date + 'T00:00:00');
+    var e = new Date(h.end_date + 'T00:00:00');
+    var planTag = h.member_plan ? '<span class="badge badge-held" style="margin-left:6px;font-size:9px;">' + esc(h.member_plan) + '</span>' : '';
+    var statusCls = h.status === 'active' ? 'badge-active' : h.status === 'cancelled' ? 'badge-cancelled' : 'badge-held';
+    return '<div class="data-card">' +
+      '<div class="data-card-header"><div class="data-card-name"><strong>' + esc(h.member_name) + '</strong>' + planTag + '</div>' +
+        '<span class="badge ' + statusCls + '">' + esc(h.status) + '</span>' +
+      '</div>' +
+      '<div class="data-card-meta">' + esc(s.toDateString()) + ' &mdash; ' + esc(e.toDateString()) + '</div>' +
+      (h.reason ? '<div class="data-card-body">' + esc(h.reason) + '</div>' : '') +
+    '</div>';
+  }).join('') + '</div>';
+}

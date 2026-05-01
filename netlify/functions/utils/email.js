@@ -35,7 +35,7 @@ async function sendNotifyConfirmation(to, name, interest) {
   const eventName = interest ? interest.replace(' — Notify Me', '').replace(' — Waitlist', '') : 'upcoming sessions';
 
   await resend.emails.send({
-    from: 'VFIT Studio <notifications@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <notifications@valdalfit.com.au>',
     to: [to],
     subject: "You're on the list ✓",
     html: wrap(`
@@ -56,7 +56,7 @@ async function sendBookingsOpenEmail(to, name, eventName, siteUrl) {
   const firstName = (name || 'there').split(' ')[0];
 
   await resend.emails.send({
-    from: 'VFIT Studio <notifications@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <notifications@valdalfit.com.au>',
     to: [to],
     subject: `${eventName} — Bookings Now Open!`,
     html: wrap(`
@@ -77,7 +77,7 @@ async function sendBookingConfirmation(to, name, eventName, sessionInfo) {
   const firstName = (name || 'there').split(' ')[0];
 
   await resend.emails.send({
-    from: 'VFIT Studio <bookings@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <bookings@valdalfit.com.au>',
     to: [to],
     subject: `Booking Confirmed — ${eventName} ✓`,
     html: wrap(`
@@ -99,7 +99,7 @@ async function sendMembershipConfirmation(to, name, plan) {
   const firstName = (name || 'there').split(' ')[0];
 
   await resend.emails.send({
-    from: 'VFIT Studio <memberships@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <memberships@valdalfit.com.au>',
     to: [to],
     subject: 'VFIT Membership Enquiry Received ✓',
     html: wrap(`
@@ -121,7 +121,7 @@ async function sendWaitlistSpotEmail(to, name, eventName, siteUrl) {
   const firstName = (name || 'there').split(' ')[0];
 
   await resend.emails.send({
-    from: 'VFIT Studio <notifications@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <notifications@valdalfit.com.au>',
     to: [to],
     subject: `A spot just opened up — ${eventName}!`,
     html: wrap(`
@@ -148,7 +148,7 @@ async function sendReviewRequestEmail(to, name, eventName, reviewBaseUrl) {
   }).join('');
 
   await resend.emails.send({
-    from: 'VFIT Studio <feedback@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <feedback@valdalfit.com.au>',
     to: [to],
     subject: `How was ${eventName}?`,
     html: wrap(`
@@ -175,7 +175,7 @@ async function sendWelcomeEmail(to, name, plan, slotLines, agreementUrl, ownerPh
     : `<p style="font-size:13px;color:#8c7660;margin:0;font-style:italic;">I'll confirm your exact weekly slots shortly.</p>`;
 
   await resend.emails.send({
-    from: 'VFIT Studio <memberships@vfit-studio.netlify.app>',
+    from: 'VFIT Studio <memberships@valdalfit.com.au>',
     to: [to],
     subject: `Welcome to VFIT, ${firstName} ✦`,
     html: wrap(`
@@ -200,7 +200,7 @@ async function sendOwnerAlert(subject, bodyHtml) {
   if (!resend || !process.env.OWNER_EMAIL) return;
 
   await resend.emails.send({
-    from: 'VFIT System <alerts@vfit-studio.netlify.app>',
+    from: 'VFIT System <alerts@valdalfit.com.au>',
     to: [process.env.OWNER_EMAIL],
     subject: subject,
     html: wrap(bodyHtml)

@@ -50,6 +50,7 @@
       <li><button onclick="showPage('member-list')" data-page="member-list"><span class="nav-icon">&#9632;</span> Member List</button></li>
       <li><button onclick="showPage('followups')" data-page="followups"><span class="nav-icon">&#9744;</span> Follow-ups <span id="fu-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li><button onclick="showPage('general-messages')" data-page="general-messages"><span class="nav-icon">&#9993;</span> General Messages <span id="gmsg-badge" style="display:none;background:var(--clay);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
+      <li><button onclick="showPage('lounge-activity')" data-page="lounge-activity"><span class="nav-icon">&#9671;</span> Lounge Activity <span id="lng-badge" style="display:none;background:#b85c5c;color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;margin-left:6px;letter-spacing:0;font-family:'Jost',sans-serif;"></span></button></li>
       <li style="margin-top:12px;padding:8px 28px 4px;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--clay);pointer-events:none;">Website</li>
       <li><button onclick="showPage('plan-config')" data-page="plan-config"><span class="nav-icon">&#9830;</span> Membership Plans</button></li>
       <li><button onclick="showPage('testimonials')" data-page="testimonials"><span class="nav-icon">&#10077;</span> Testimonials</button></li>
@@ -296,7 +297,27 @@
       </div>
     </div>
 
-    <!-- BOOKING LINKS -->
+    <!-- LOUNGE ACTIVITY -->
+    <div class="admin-page" id="page-lounge-activity">
+      <div class="page-header">
+        <h1 class="page-title"><em>Lounge Activity</em></h1>
+      </div>
+      <div id="lng-act-loading" class="loading">Loading activity...</div>
+      <div id="lng-act-content" style="display:none;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin:0 0 12px;">Late cancellations <span style="font-size:12px;color:var(--bark);">(charge required)</span></h3>
+        <div id="lng-act-late"></div>
+
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin:24px 0 12px;">Cancellations within policy</h3>
+        <div id="lng-act-intime"></div>
+
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin:24px 0 12px;">Active travel holds</h3>
+        <div id="lng-act-holds"></div>
+
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--deep);margin:24px 0 12px;">Past holds</h3>
+        <div id="lng-act-pastholds"></div>
+      </div>
+    </div>
+
     <!-- TESTIMONIALS -->
     <div class="admin-page" id="page-testimonials">
       <div class="page-header">
