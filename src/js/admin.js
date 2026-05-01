@@ -1270,17 +1270,28 @@ function renderEnquiryGrid() {
     html += '<tr><th class="esched-row-th' + (t === 'any' ? ' esched-th-any' : '') + '">' + esc(eschedTimeLabel(t)) + '</th>';
     days.forEach(function(d) {
       var key = d + '|' + t;
-      var count = (buckets[key] || []).length;
+      var items = buckets[key] || [];
+      var count = items.length;
       var cls = 'esched-cell';
       if (count > 0) cls += ' has-count';
       if (_selectedSlotKey === key) cls += ' selected';
       if (d === 'any' || t === 'any') cls += ' esched-cell-any';
       var handler = count > 0 ? ' onclick="eschedShow(\'' + key.replace(/'/g, "\\'") + '\')"' : '';
-      html += '<td class="' + cls + '"' + handler + '>' +
-        (count > 0
-          ? '<span class="esched-count">' + count + '</span>'
-          : '<span class="esched-dash">—</span>') +
-      '</td>';
+
+      var cellInner;
+      if (count === 0) {
+        cellInner = '<span class="esched-dash">—</span>';
+      } else if (_eschedMode === 'members') {
+        cls += ' has-names';
+        cellInner = '<div class="esched-names">' + items.map(function(m) {
+          var first = (m.name || '').split(' ')[0] || '?';
+          return '<span class="esched-name">' + esc(first) + '</span>';
+        }).join('') + '</div>' +
+        '<span class="esched-count-mini">' + count + '/4</span>';
+      } else {
+        cellInner = '<span class="esched-count">' + count + '</span>';
+      }
+      html += '<td class="' + cls + '"' + handler + '>' + cellInner + '</td>';
     });
     html += '</tr>';
   });
