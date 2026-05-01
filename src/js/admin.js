@@ -368,12 +368,30 @@ function renderMemberListCards(members) {
       (function(){ var p = parseNotes(m.notes); var fu = p.date ? '<div class="data-card-meta" style="color:var(--moss);font-weight:600;">Follow-up: ' + esc(p.date) + '</div>' : ''; var nb = p.text ? '<div class="data-card-body">' + esc(truncate(p.text, 140)) + '</div>' : ''; return fu + nb; })() +
       '<div class="data-card-actions">' +
         '<button class="btn-outline" onclick="openNotesModal(\'' + esc(m.id) + '\', \'member\')">' + (m.notes ? 'Edit Notes' : 'Add Notes') + '</button>' +
+        '<button class="btn-outline" onclick="generateLoungeLink(\'' + esc(m.id) + '\')">Lounge link</button>' +
         '<button class="btn-outline" onclick="openEditMemberModal(\'' + esc(m.id) + '\')">Edit</button>' +
         '<button class="btn-outline btn-danger" onclick="deleteMember(\'' + esc(m.id) + '\')">Delete</button>' +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
 }
+
+async function generateLoungeLink(memberId) {
+  try {
+    const data = await apiPost({ action: 'admin_generate_lounge_link', member_id: memberId });
+    if (!data.action_link) { showToast('No link returned', 'error'); return; }
+    // Try to copy automatically — fall back to a prompt
+    try {
+      await navigator.clipboard.writeText(data.action_link);
+      showToast('Sign-in link copied for ' + (data.member?.name || 'member') + '. Paste to share.', 'success');
+    } catch (_) {
+      window.prompt('Copy this single-use sign-in link for ' + (data.member?.name || 'member') + ':', data.action_link);
+    }
+  } catch (err) {
+    showToast('Couldn’t generate link: ' + err.message, 'error');
+  }
+}
+window.generateLoungeLink = generateLoungeLink;
 
 async function sendWelcome(memberId, isResend) {
   var prompt = isResend

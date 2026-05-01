@@ -2170,6 +2170,39 @@ async function markSessionsPaused(memberId, startDate, endDate) {
   }
 }
 
+// ─── Admin: generate a magic-link for a member (dev/manual override) ───
+// Doesn't send email — returns the action_link so Georgie can text/share it
+// directly. Used for testing while Resend is verifying, or as an ongoing
+// "I never got the email" recovery path.
+async function handleAdminGenerateLoungeLink(body) {
+  requireAdmin(body.admin_key);
+  const memberId = body.member_id;
+  if (!memberId) return respond(400, { success: false, error: 'member_id required' });
+
+  const { data: member } = await supabase
+    .from('members')
+    .select('id, name, email, agreed_at')
+    .eq('id', memberId)
+    .maybeSingle();
+  if (!member) return respond(404, { success: false, error: 'member not found' });
+  if (!member.email) return respond(400, { success: false, error: 'member has no email' });
+
+  const { data: link, error } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email: member.email,
+    options: { redirectTo: `${SITE_URL}/lounge` },
+  });
+  if (error || !link?.properties?.action_link) {
+    console.error('generateLink failed:', error);
+    return respond(500, { success: false, error: 'link generation failed' });
+  }
+  return respond(200, {
+    success: true,
+    member: { id: member.id, name: member.name, email: member.email },
+    action_link: link.properties.action_link,
+  });
+}
+
 // ─── Lounge: audit log (member-readable subset) ───
 async function handleLoungeAuditLog(event) {
   let ctx;
@@ -2994,6 +3027,8 @@ exports.handler = async (event) => {
           return await handleAdminFinishChallenge(body);
         case 'lounge_concierge':
           return await handleLoungeConcierge(event, body);
+        case 'admin_generate_lounge_link':
+          return await handleAdminGenerateLoungeLink(body);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
