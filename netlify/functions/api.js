@@ -1857,9 +1857,13 @@ exports.handler = async (event) => {
           return await handleSendNotifications(body);
         case 'update_membership':
           requireAdmin(body.admin_key);
-          const { id: memId, status: memStatus } = body;
-          if (!memId || !memStatus) return respond(400, { success: false, error: 'id and status required' });
-          const { error: memErr } = await supabase.from('memberships').update({ status: memStatus }).eq('id', memId);
+          const { id: memId, status: memStatus, notes: memNotesUpd } = body;
+          if (!memId) return respond(400, { success: false, error: 'id required' });
+          const memUpdates = {};
+          if (memStatus !== undefined) memUpdates.status = memStatus;
+          if (memNotesUpd !== undefined) memUpdates.notes = memNotesUpd;
+          if (Object.keys(memUpdates).length === 0) return respond(400, { success: false, error: 'nothing to update' });
+          const { error: memErr } = await supabase.from('memberships').update(memUpdates).eq('id', memId);
           if (memErr) throw memErr;
           return respond(200, { success: true });
         case 'cleanup_holds':

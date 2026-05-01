@@ -400,6 +400,20 @@
   </div>
 </div>
 
+<!-- ─── ENQUIRY NOTES MODAL ─── -->
+<div class="modal-backdrop" id="mreq-notes-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNotesModal()">&times;</button>
+    <h2 class="modal-title">Notes for <em id="mreq-notes-name"></em></h2>
+    <input type="hidden" id="mreq-notes-id">
+    <p style="font-size:13px;color:var(--bark);margin:0 0 14px;line-height:1.5;">Add any notes from your conversation — what they're after, follow-up dates, sessions assigned, anything worth remembering.</p>
+    <div class="form-group">
+      <textarea class="form-input" id="mreq-notes-text" rows="8" placeholder="What did you discuss? Any follow-ups?" style="resize:vertical;"></textarea>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:8px;" onclick="saveNotes()">Save Notes</button>
+  </div>
+</div>
+
 <!-- ─── ACCEPT MEMBERSHIP MODAL ─── -->
 <div class="modal-backdrop" id="accept-modal">
   <div class="modal modal-wide">

@@ -333,6 +333,7 @@ function renderMembershipRequestCards(members) {
         (showAccept ? '<button class="btn-outline" onclick="openAcceptModal(\'' + esc(m.id) + '\')">Accept</button>' : '') +
         (status === 'new' ? '<button class="btn-outline" onclick="markContacted(\'' + esc(m.id) + '\')">Contacted</button>' : '') +
         (status === 'contacted' ? '<button class="btn-outline" onclick="markNew(\'' + esc(m.id) + '\')">Back to New</button>' : '') +
+        '<button class="btn-outline" onclick="openNotesModal(\'' + esc(m.id) + '\')">' + (m.notes ? 'Edit Notes' : 'Add Notes') + '</button>' +
         '<button class="btn-outline btn-danger" onclick="deleteMembershipRequest(\'' + esc(m.id) + '\')">Delete</button>' +
       '</div>' +
     '</div>';
@@ -939,6 +940,32 @@ async function markNew(id) {
   try {
     await apiPost({ action: 'update_membership', id: id, status: 'new' });
     showToast('Moved back to New', 'success');
+    loadMembershipRequests();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function openNotesModal(id) {
+  var m = _loadedMembershipRequests.find(function(r) { return r.id === id; }) || {};
+  document.getElementById('mreq-notes-id').value = id;
+  document.getElementById('mreq-notes-name').textContent = m.name || 'enquiry';
+  document.getElementById('mreq-notes-text').value = m.notes || '';
+  document.getElementById('mreq-notes-modal').classList.add('open');
+  setTimeout(function() { document.getElementById('mreq-notes-text').focus(); }, 100);
+}
+
+function closeNotesModal() {
+  document.getElementById('mreq-notes-modal').classList.remove('open');
+}
+
+async function saveNotes() {
+  var id = document.getElementById('mreq-notes-id').value;
+  var notes = document.getElementById('mreq-notes-text').value;
+  try {
+    await apiPost({ action: 'update_membership', id: id, notes: notes });
+    showToast('Notes saved', 'success');
+    closeNotesModal();
     loadMembershipRequests();
   } catch (err) {
     showToast('Error: ' + err.message, 'error');
@@ -2290,7 +2317,7 @@ document.getElementById('confirm-dialog').addEventListener('mouseup', function(e
 });
 
 // ─── NEW MODAL BACKDROP CLOSE ───
-['accept-modal','assign-modal','addslot-modal','addmember-modal','editmember-modal','cal-slot-modal'].forEach(function(id) {
+['accept-modal','assign-modal','addslot-modal','addmember-modal','editmember-modal','cal-slot-modal','mreq-notes-modal'].forEach(function(id) {
   var el = document.getElementById(id);
   if (!el) return;
   var downTarget = null;
@@ -2653,6 +2680,9 @@ window.deleteMembershipRequest = deleteMembershipRequest;
 window.mreqSetTab = mreqSetTab;
 window.markContacted = markContacted;
 window.markNew = markNew;
+window.openNotesModal = openNotesModal;
+window.closeNotesModal = closeNotesModal;
+window.saveNotes = saveNotes;
 window.loadEnquirySchedule = loadEnquirySchedule;
 window.eschedShow = eschedShow;
 window.eschedClose = eschedClose;
