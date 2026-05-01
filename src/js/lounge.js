@@ -190,11 +190,13 @@ function navigate(route) {
   if (location.hash !== `#/${route}`) {
     history.replaceState(null, '', `#/${route}`);
   }
-  if (route === 'schedule') renderSchedule();
-  if (route === 'payments') renderBilling();
-  if (route === 'challenges') loadChallenges();
-  if (route === 'messages') openMessagesTab();
-  else stopMessagePolling();
+  // Skip data-dependent renders if `state.me` hasn't loaded yet —
+  // the shell shows instantly on boot and these run again after loadMe.
+  if (route === 'schedule' && state.me) renderSchedule();
+  if (route === 'payments' && state.me) renderBilling();
+  if (route === 'challenges' && state.me) loadChallenges();
+  if (route === 'messages' && state.me) openMessagesTab();
+  else if (route !== 'messages') stopMessagePolling();
 }
 
 function readHashRoute() {
@@ -254,6 +256,13 @@ function renderAll() {
   renderThisWeek();
   renderProfile();
   renderMsgDot();
+
+  // If the user navigated to a non-Today route while data was loading,
+  // populate that route's content now.
+  if (state.route === 'schedule')   renderSchedule();
+  if (state.route === 'payments')   renderBilling();
+  if (state.route === 'challenges') loadChallenges();
+  if (state.route === 'messages')   openMessagesTab();
 }
 
 function renderTodayFeature() {
@@ -1069,6 +1078,14 @@ async function boot() {
     return;
   }
 
+  // Show the shell instantly — don't make the user stare at a blank page
+  // while the lounge_me round-trip happens. Render skeleton state, then
+  // fill in when data arrives.
+  showView('lounge-shell');
+  readHashRoute();
+  if (!state.route) navigate('today');
+  else navigate(state.route);
+
   try {
     await loadMe();
   } catch (err) {
@@ -1078,14 +1095,10 @@ async function boot() {
       return;
     }
     showToast('Couldn’t load your lounge. Please try again.', true);
-    showView('lounge-login');
     return;
   }
 
-  showView('lounge-shell');
   renderAll();
-  readHashRoute();
-  if (!state.route || state.route === 'today') navigate('today');
 }
 
 document.addEventListener('DOMContentLoaded', boot);
