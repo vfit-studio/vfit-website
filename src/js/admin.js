@@ -23,7 +23,13 @@ function apiURL(params) {
 
 async function apiGet(params) {
   try {
-    const res = await fetch(apiURL(params));
+    // Send the admin key on every GET via X-Admin-Key. The server uses
+    // an allowlist of admin actions and rejects unauthenticated calls
+    // to those (closes the public-data-dump hole).
+    const headers = {};
+    const key = getKey();
+    if (key) headers['X-Admin-Key'] = key;
+    const res = await fetch(apiURL(params), { headers });
     if (!res.ok) throw new Error('Request failed: ' + res.status);
     const data = await res.json();
     if (data.success === false) throw new Error(data.error || 'Unknown error');
@@ -37,7 +43,7 @@ async function apiPost(body) {
   body.admin_key = getKey();
   const res = await fetch(API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getKey() },
     body: JSON.stringify(body)
   });
   const data = await res.json();
@@ -196,9 +202,18 @@ if (sessionStorage.getItem('vfit_admin_key')) {
 function showPage(page) {
   currentPage = page;
   clearInterval(bookingsRefreshInterval);
+  // Stop the lounge inbox poll if we're navigating away from it.
+  // (Was firing every 8s for the rest of the session even after the
+  // admin moved to a different page.)
+  if (typeof inboxState !== 'undefined' && inboxState.pollTimer) {
+    clearInterval(inboxState.pollTimer);
+    inboxState.pollTimer = null;
+  }
 
   document.querySelectorAll('.admin-page').forEach(function(p) { p.classList.remove('active'); });
-  document.getElementById('page-' + page).classList.add('active');
+  const pg = document.getElementById('page-' + page);
+  if (!pg) return;  // B17: ignore unknown pages instead of crashing
+  pg.classList.add('active');
 
   document.querySelectorAll('.sidebar-nav button').forEach(function(b) {
     b.classList.toggle('active', b.dataset.page === page);
@@ -393,22 +408,23 @@ async function generateLoungeLink(memberId) {
 }
 window.generateLoungeLink = generateLoungeLink;
 
-async function sendWelcome(memberId, isResend) {
+function sendWelcome(memberId, isResend) {
   var prompt = isResend
     ? 'Resend the welcome email to this member?'
     : 'Send the welcome email with the agreement link now?';
-  if (!confirm(prompt)) return;
-  try {
-    var resp = await apiPost({ action: 'send_welcome', member_id: memberId });
-    if (resp.email_configured) {
-      showToast('Welcome email sent', 'success');
-    } else {
-      showToast('Email SKIPPED — Resend not configured on Netlify', 'error');
+  showConfirm(prompt, async function() {
+    try {
+      var resp = await apiPost({ action: 'send_welcome', member_id: memberId });
+      if (resp.email_configured) {
+        showToast('Welcome email sent', 'success');
+      } else {
+        showToast('Email SKIPPED — Resend not configured on Netlify', 'error');
+      }
+      loadMemberList();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
     }
-    loadMemberList();
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
+  });
 }
 
 function renderMessageCards(messages) {
@@ -978,11 +994,28 @@ function buildNotes(date, text) {
   return date ? '[FU:' + date + ']\n' + t : t;
 }
 
-function openNotesModal(id, type) {
+async function openNotesModal(id, type) {
   _notesEntityType = type === 'member' ? 'member' : 'enquiry';
   var record;
   if (_notesEntityType === 'member') {
-    record = (_loadedMembers || []).find(function(r) { return r.id === id; }) || {};
+    // Check both caches — was previously only checking _loadedMembers,
+    // which left a hole: if the admin opened the Schedule or Follow-ups
+    // page first (loading _loadedMembersForGrid only), then clicked
+    // "Add Notes" on a member card, the cache miss returned an empty
+    // record and saving overwrote the member's real notes with blank.
+    record = (_loadedMembers || []).find(function(r) { return r.id === id; })
+          || (_loadedMembersForGrid || []).find(function(r) { return r.id === id; });
+    if (!record) {
+      // Last-resort fetch — pulls the live record so we don't risk
+      // wiping anything.
+      try {
+        var resp = await apiGet({ action: 'member', id: id });
+        record = resp.member || {};
+      } catch (e) {
+        showToast('Could not load member — try Member List first', 'error');
+        return;
+      }
+    }
   } else {
     record = (_loadedMembershipRequests || []).find(function(r) { return r.id === id; }) || {};
   }
@@ -1056,21 +1089,23 @@ async function loadMembershipRequests() {
   }
 }
 
-async function deleteMembershipRequest(id) {
-  if (!confirm('Delete this request?')) return;
-  try {
-    await apiPost({ action: 'delete_membership_request', membership_id: id });
-    showToast('Request deleted', 'success');
-    loadMembershipRequests();
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
+function deleteMembershipRequest(id) {
+  showConfirm('Delete this request?', async function() {
+    try {
+      await apiPost({ action: 'delete_membership_request', membership_id: id });
+      showToast('Request deleted', 'success');
+      loadMembershipRequests();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
 }
 
 // ─── ENQUIRY SCHEDULE (day × time grid) ───
 
 var _loadedEnquiries = [];
 var _loadedMembersForGrid = [];
+var _eschedSlotCapByKey = {};
 var _selectedSlotKey = null;
 var _eschedMode = 'enquiries';
 
@@ -1175,11 +1210,23 @@ async function loadEnquirySchedule() {
 
   try {
     if (_eschedMode === 'members') {
-      var mresp = await apiGet({ action: 'members' });
+      // Pull members + schedule in parallel so we can show real
+      // max-capacity per cell instead of the old hard-coded "/4".
+      var [mresp, sresp] = await Promise.all([
+        apiGet({ action: 'members' }),
+        apiGet({ action: 'schedule' }),
+      ]);
       var all = mresp.members || [];
       var active = all.filter(function(m) { return (m.status || 'active').toLowerCase() === 'active'; });
       _loadedMembersForGrid = active;
       _selectedSlotKey = null;
+      // Build a (day-abbrev|time) → max_capacity lookup
+      _eschedSlotCapByKey = {};
+      (sresp.slots || []).forEach(function(s) {
+        var dayKey = DAY_ABBR[s.day_of_week];
+        if (!dayKey) return;
+        _eschedSlotCapByKey[dayKey + '|' + s.time] = s.max_capacity || 4;
+      });
 
       loading.style.display = 'none';
       if (all.length === 0) {
@@ -1317,11 +1364,12 @@ function renderEnquiryGrid() {
         cellInner = '<span class="esched-dash">—</span>';
       } else if (_eschedMode === 'members') {
         cls += ' has-names';
+        var maxCap = _eschedSlotCapByKey[d + '|' + t] || 4;
         cellInner = '<div class="esched-names">' + items.map(function(m) {
           var first = (m.name || '').split(' ')[0] || '?';
           return '<span class="esched-name">' + esc(first) + '</span>';
         }).join('') + '</div>' +
-        '<span class="esched-count-mini">' + count + '/4</span>';
+        '<span class="esched-count-mini">' + count + '/' + maxCap + '</span>';
       } else {
         cellInner = '<span class="esched-count">' + count + '</span>';
       }
@@ -1559,15 +1607,16 @@ async function loadMemberList() {
   }
 }
 
-async function deleteMember(id) {
-  if (!confirm('Delete this member?')) return;
-  try {
-    await apiPost({ action: 'delete_member', member_id: id });
-    showToast('Member deleted', 'success');
-    loadMemberList();
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
+function deleteMember(id) {
+  showConfirm('Delete this member? This cannot be undone.', async function() {
+    try {
+      await apiPost({ action: 'delete_member', member_id: id });
+      showToast('Member deleted', 'success');
+      loadMemberList();
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  });
 }
 
 function openEditMemberModal(id) {
@@ -1866,13 +1915,18 @@ function calToggleDemo() {
   calRender();
 }
 
-// Click empty cell — create a slot there
+// Click empty cell — create a slot there.
+// Was setting non-existent IDs (slot-day/slot-time/slot-capacity);
+// the actual modal inputs are addslot-* — opens the modal first then
+// pre-fills.
 function calClickEmpty(dayIndex, time) {
-  // Pre-fill the add slot modal with this day and time
-  document.getElementById('slot-day').value = dayIndex;
-  document.getElementById('slot-time').value = time;
-  document.getElementById('slot-capacity').value = 4;
   openAddSlotModal();
+  var day = document.getElementById('addslot-day');
+  var t = document.getElementById('addslot-time');
+  var cap = document.getElementById('addslot-capacity');
+  if (day) day.value = dayIndex;
+  if (t) t.value = time;
+  if (cap) cap.value = 4;
 }
 
 // Click an existing slot — open a manage modal showing members + assign option
@@ -3094,6 +3148,11 @@ async function openInboxThread(memberId) {
   document.getElementById('lng-inbox-threads').style.display = 'none';
   document.getElementById('lng-inbox-thread').style.display = 'block';
   await refreshInboxThread();
+  // Mark inbound (member→trainer) messages read — used to happen as a
+  // silent side-effect on the GET, which let any drive-by request
+  // destroy unread state. Now an explicit admin POST.
+  apiPost({ action: 'lounge_admin_mark_thread_read', member_id: memberId })
+    .catch(function(){ /* non-blocking */ });
   // Poll every 8 seconds
   if (inboxState.pollTimer) clearInterval(inboxState.pollTimer);
   inboxState.pollTimer = setInterval(refreshInboxThread, 8000);
@@ -3255,12 +3314,13 @@ async function saveChallenge() {
   }
 }
 
-async function finishChallenge(id) {
-  if (!confirm('Mark this challenge as finished?')) return;
-  try {
-    await apiPost({ action: 'admin_finish_challenge', challenge_id: id });
-    loadAdminChallenges();
-  } catch (err) { showToast(err.message, 'error'); }
+function finishChallenge(id) {
+  showConfirm('Mark this challenge as finished?', async function() {
+    try {
+      await apiPost({ action: 'admin_finish_challenge', challenge_id: id });
+      loadAdminChallenges();
+    } catch (err) { showToast(err.message, 'error'); }
+  });
 }
 
 window.openCreateChallengeModal = openCreateChallengeModal;

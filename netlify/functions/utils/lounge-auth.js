@@ -115,11 +115,19 @@ async function sendMagicLink(rawEmail) {
   // Only members who've agreed to the contract can sign in to the lounge.
   const { data: member } = await supabase
     .from('members')
-    .select('id, name, email')
+    .select('id, name, email, last_link_sent_at')
     .ilike('email', email)
     .not('agreed_at', 'is', null)
     .maybeSingle();
   if (!member) return { ok: true, sent: false };
+
+  // Rate limit: 60-second cooldown per member. Silent (no info leak)
+  // — we still return ok:true so anyone replaying the form can't tell
+  // a member from a non-member or a quick retry from a slow one.
+  if (member.last_link_sent_at) {
+    const last = new Date(member.last_link_sent_at).getTime();
+    if (Date.now() - last < 60_000) return { ok: true, sent: false };
+  }
 
   const { data: link, error: linkErr } = await supabase.auth.admin.generateLink({
     type: 'magiclink',
@@ -145,6 +153,11 @@ async function sendMagicLink(rawEmail) {
     subject: 'Your VFIT Lounge sign-in link',
     html: magicLinkEmailHtml(firstName, actionLink),
   }).catch((err) => console.error('Magic-link email failed:', err));
+
+  // Stamp the cooldown so the next call within 60s is a no-op.
+  await supabase.from('members')
+    .update({ last_link_sent_at: new Date().toISOString() })
+    .eq('id', member.id);
 
   return { ok: true, sent: true };
 }

@@ -499,14 +499,16 @@ em { font-style: italic; color: var(--bark); }
   accent-color: var(--moss);
 }
 
-/* Messages */
+/* Messages — thread shrinks rather than overflowing under the nav.
+   Form is sticky above the bottom-nav safe area so it stays
+   tappable when the soft keyboard is up. */
 .lng-msg-thread {
   background: var(--cream);
   border: 1px solid var(--stone);
   border-radius: 4px;
   padding: 16px;
-  min-height: 240px;
-  max-height: 60vh;
+  min-height: 200px;
+  max-height: calc(100vh - 96px - env(safe-area-inset-bottom, 0px) - 230px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -544,6 +546,11 @@ em { font-style: italic; color: var(--bark); }
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  position: sticky;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px) + 12px);
+  background: var(--sand);
+  padding: 8px 0;
+  z-index: 5;
 }
 .lng-msg-form textarea {
   flex: 1;
@@ -696,10 +703,12 @@ em { font-style: italic; color: var(--bark); }
   .lng-sheet-card { border-radius: 8px; max-width: 460px; }
 }
 
-/* Toast */
+/* Toast — sits above the bottom nav (which itself respects
+   safe-area-inset-bottom on iPhones). Was hard-coded at 110px and
+   landed on top of the nav buttons on devices with home indicators. */
 .lng-toast {
   position: fixed;
-  bottom: 110px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px) + 16px);
   left: 50%;
   transform: translateX(-50%);
   background: var(--deep);
@@ -710,6 +719,7 @@ em { font-style: italic; color: var(--bark); }
   letter-spacing: 0.04em;
   z-index: 100;
   max-width: 92vw;
+  pointer-events: none;
   box-shadow: var(--shadow-soft);
 }
 .lng-toast.is-error { background: var(--error); }

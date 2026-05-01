@@ -5,6 +5,15 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+// Escape user/admin-controlled values spliced into HTML email bodies.
+// Fixes phishing-amplifier surface where a booker's `name` could
+// include link/script HTML and render in the recipient's inbox.
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
 // Email wrapper matching VFIT brand
 function wrap(content) {
   return `
@@ -39,8 +48,8 @@ async function sendNotifyConfirmation(to, name, interest) {
     to: [to],
     subject: "You're on the list ✓",
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">You're on the list, ${firstName}.</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We'll send you an email the moment bookings open for <strong>${eventName}</strong>. Spots go fast — you'll want to be ready.</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">You're on the list, ${esc(firstName)}.</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We'll send you an email the moment bookings open for <strong>${esc(eventName)}</strong>. Spots go fast — you'll want to be ready.</p>
       <div style="background:#f5f0e8;padding:20px 28px;border-left:3px solid #c9b99a;margin:0 0 24px;">
         <p style="font-size:13px;color:#8c7660;margin:0;line-height:1.7;">Keep an eye on your inbox. When you get the email, click the link and book before spots fill up.</p>
       </div>
@@ -60,8 +69,8 @@ async function sendBookingsOpenEmail(to, name, eventName, siteUrl) {
     to: [to],
     subject: `${eventName} — Bookings Now Open!`,
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Bookings are open, ${firstName}!</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 28px;"><strong>${eventName}</strong> bookings are now live. Spots are limited and fill up fast — don't miss out.</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Bookings are open, ${esc(firstName)}!</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 28px;"><strong>${esc(eventName)}</strong> bookings are now live. Spots are limited and fill up fast — don't miss out.</p>
       <div style="text-align:center;margin:0 0 32px;">
         <a href="${siteUrl}" style="display:inline-block;padding:16px 44px;background:#3d3530;color:#fefcf8;text-decoration:none;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-family:Arial,sans-serif;">Book Now</a>
       </div>
@@ -81,10 +90,10 @@ async function sendBookingConfirmation(to, name, eventName, sessionInfo) {
     to: [to],
     subject: `Booking Confirmed — ${eventName} ✓`,
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">You're booked, ${firstName}.</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">Your spot for <strong>${eventName}</strong> is confirmed.</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">You're booked, ${esc(firstName)}.</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">Your spot for <strong>${esc(eventName)}</strong> is confirmed.</p>
       <div style="background:#f5f0e8;padding:20px 28px;border-left:3px solid #c9b99a;margin:0 0 24px;">
-        <p style="font-size:13px;color:#8c7660;margin:0;line-height:1.7;">${sessionInfo}</p>
+        <p style="font-size:13px;color:#8c7660;margin:0;line-height:1.7;">${esc(sessionInfo)}</p>
       </div>
       <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">See you there! If you need to cancel or have questions, just reply to this email.</p>
       <p style="font-size:13px;color:#8c7660;margin:0;">— <em>The VFIT Team</em></p>
@@ -103,8 +112,8 @@ async function sendMembershipConfirmation(to, name, plan) {
     to: [to],
     subject: 'VFIT Membership Enquiry Received ✓',
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Thanks, ${firstName}.</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We've received your enquiry for the <strong>${plan}</strong>.</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Thanks, ${esc(firstName)}.</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We've received your enquiry for the <strong>${esc(plan)}</strong>.</p>
       <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">Georgie will be in touch within 24 hours to discuss your placement and get you started.</p>
       <div style="background:#f5f0e8;padding:20px 28px;border-left:3px solid #c9b99a;margin:0 0 24px;">
         <p style="font-size:13px;color:#8c7660;margin:0;line-height:1.7;">VFIT Private Studio<br>Shop 8/203 Margaret St, Toowoomba City QLD 4350</p>
@@ -125,8 +134,8 @@ async function sendWaitlistSpotEmail(to, name, eventName, siteUrl) {
     to: [to],
     subject: `A spot just opened up — ${eventName}!`,
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Good news, ${firstName}!</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 28px;">A spot just opened up for <strong>${eventName}</strong>! Book now before it's gone.</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Good news, ${esc(firstName)}!</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 28px;">A spot just opened up for <strong>${esc(eventName)}</strong>! Book now before it's gone.</p>
       <div style="text-align:center;margin:0 0 32px;">
         <a href="${siteUrl}" style="display:inline-block;padding:16px 44px;background:#3d3530;color:#fefcf8;text-decoration:none;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-family:Arial,sans-serif;">Book Now</a>
       </div>
@@ -152,8 +161,8 @@ async function sendReviewRequestEmail(to, name, eventName, reviewBaseUrl) {
     to: [to],
     subject: `How was ${eventName}?`,
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">How was your session, ${firstName}?</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We'd love your feedback on <strong>${eventName}</strong>. Tap a rating below:</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">How was your session, ${esc(firstName)}?</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We'd love your feedback on <strong>${esc(eventName)}</strong>. Tap a rating below:</p>
       <div style="text-align:center;margin:0 0 32px;">
         ${starButtons}
       </div>
@@ -171,7 +180,7 @@ async function sendWelcomeEmail(to, name, plan, slotLines, agreementUrl, ownerPh
   const phoneTel = phoneDisplay.replace(/\s+/g, '');
 
   const slotsHtml = (slotLines && slotLines.length)
-    ? `<ul style="margin:0;padding-left:18px;color:#6b5e52;font-size:14px;line-height:2;">${slotLines.map((s) => `<li>${s}</li>`).join('')}</ul>`
+    ? `<ul style="margin:0;padding-left:18px;color:#6b5e52;font-size:14px;line-height:2;">${slotLines.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`
     : `<p style="font-size:13px;color:#8c7660;margin:0;font-style:italic;">I'll confirm your exact weekly slots shortly.</p>`;
 
   await resend.emails.send({
@@ -179,8 +188,8 @@ async function sendWelcomeEmail(to, name, plan, slotLines, agreementUrl, ownerPh
     to: [to],
     subject: `Welcome to VFIT, ${firstName} ✦`,
     html: wrap(`
-      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Welcome, ${firstName}.</h2>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 20px;">I'm so glad to have you joining VFIT. Your placement on the <strong>${plan}</strong> is confirmed, and here are your weekly sessions:</p>
+      <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Welcome, ${esc(firstName)}.</h2>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 20px;">I'm so glad to have you joining VFIT. Your placement on the <strong>${esc(plan)}</strong> is confirmed, and here are your weekly sessions:</p>
       <div style="background:#f5f0e8;padding:22px 28px;border-left:3px solid #c9b99a;margin:0 0 28px;">
         ${slotsHtml}
       </div>

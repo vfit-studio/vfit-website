@@ -117,10 +117,33 @@ const SITE_URL = process.env.SITE_URL || 'https://vfit-studio.netlify.app';
 const ADMIN_KEY = process.env.ADMIN_KEY;
 const HOLD_EXPIRY_MINUTES = 10;
 
-// ─── CORS headers applied to every response ───
+// ─── CORS headers applied to every response ─────────────────────────
+// Restricted to first-party origins (was '*' on every endpoint, which
+// let any third-party page mount a form against the admin handlers).
+const ALLOWED_ORIGINS = new Set([
+  'https://valdalfit.com.au',
+  'https://www.valdalfit.com.au',
+  'https://vfit-studio.netlify.app',
+  'http://localhost:5173',
+  'http://localhost:8888',
+]);
+
+function corsHeadersFor(event) {
+  const origin = event?.headers?.origin || event?.headers?.Origin || '';
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://valdalfit.com.au';
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Key',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  };
+}
+// Default headers kept for back-compat with handler internals that
+// reference CORS_HEADERS directly.
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Origin': 'https://valdalfit.com.au',
+  'Vary': 'Origin',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Key',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
@@ -132,9 +155,24 @@ function respond(statusCode, body) {
   };
 }
 
+// HTML-escape helper for any user-controlled string we splice into an
+// outbound HTML email (owner alerts, member-facing transactional mail).
+function escapeHtmlPlain(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
 // ─── Cleanup expired holds ───
+// Throttled to once per minute per Lambda instance — was running on
+// every POST, paying for a write to the bookings table even on
+// unrelated requests (and giving attackers a write-amplification surface).
+let _lastHoldCleanup = 0;
 async function cleanupExpiredHolds() {
-  const cutoff = new Date(Date.now() - HOLD_EXPIRY_MINUTES * 60 * 1000).toISOString();
+  const now = Date.now();
+  if (now - _lastHoldCleanup < 60_000) return;
+  _lastHoldCleanup = now;
+  const cutoff = new Date(now - HOLD_EXPIRY_MINUTES * 60 * 1000).toISOString();
   await supabase
     .from('bookings')
     .update({ status: 'expired' })
@@ -142,11 +180,25 @@ async function cleanupExpiredHolds() {
     .lt('held_at', cutoff);
 }
 
-// ─── Validate admin key ───
+// ─── Validate admin key (POST body) ───
+// Constant-time compare to avoid leaking length/character via timing.
 function requireAdmin(adminKey) {
-  if (!adminKey || adminKey !== ADMIN_KEY) {
-    throw new Error('unauthorized');
-  }
+  if (!adminKey || !ADMIN_KEY) throw new Error('unauthorized');
+  const a = Buffer.from(String(adminKey));
+  const b = Buffer.from(ADMIN_KEY);
+  if (a.length !== b.length) throw new Error('unauthorized');
+  const crypto = require('crypto');
+  if (!crypto.timingSafeEqual(a, b)) throw new Error('unauthorized');
+}
+
+// ─── Validate admin key for GET requests (header or query param) ───
+// GET handlers can't rely on body, so accept the key from either an
+// X-Admin-Key header (preferred) or ?admin_key=... query param.
+function requireAdminFromEvent(event) {
+  const headers = event?.headers || {};
+  const headerKey = headers['x-admin-key'] || headers['X-Admin-Key'] || headers['x-Admin-Key'];
+  const queryKey = event?.queryStringParameters?.admin_key;
+  requireAdmin(headerKey || queryKey);
 }
 
 // ─── Count taken spots for an event (confirmed + held) ───
@@ -333,7 +385,7 @@ async function handleBook(body) {
     // Alert Georgie
     await sendOwnerAlert(
       `New Booking — ${event.name} (${taken + 1}/${event.spots_total})`,
-      `<p><strong>${name}</strong> (${email}, ${phone || 'no phone'}) booked <strong>${event.name}</strong>.</p><p>Spots: ${taken + 1} / ${event.spots_total}</p>`
+      `<p><strong>${escapeHtmlPlain(name)}</strong> (${escapeHtmlPlain(email)}, ${escapeHtmlPlain(phone || 'no phone')}) booked <strong>${escapeHtmlPlain(event.name)}</strong>.</p><p>Spots: ${taken + 1} / ${event.spots_total}</p>`
     );
     // SMS alert
     await sendOwnerSMS(`VFIT: New booking — ${name} for ${event.name}. ${taken + 1}/${event.spots_total} spots taken.`);
@@ -399,7 +451,7 @@ async function handleNotify(body) {
   // Send confirmation email
   await sendNotifyConfirmation(email, name, interest);
   // Alert Georgie
-  await sendOwnerAlert('New notification signup', `<p><strong>${name || 'Unknown'}</strong> (${email}) wants to be notified about <strong>${interest || 'upcoming sessions'}</strong>.</p>`);
+  await sendOwnerAlert('New notification signup', `<p><strong>${escapeHtmlPlain(name || 'Unknown')}</strong> (${escapeHtmlPlain(email)}) wants to be notified about <strong>${escapeHtmlPlain(interest || 'upcoming sessions')}</strong>.</p>`);
 
   return respond(200, { success: true, message: "You're on the list! We'll email you when bookings open." });
 }
@@ -419,7 +471,7 @@ async function handleWaitlist(body) {
   // Send confirmation email
   await sendNotifyConfirmation(email, name, interest);
   // Alert Georgie
-  await sendOwnerAlert('New waitlist signup', `<p><strong>${name || 'Unknown'}</strong> (${email}) joined the waitlist for <strong>${interest || 'upcoming sessions'}</strong>.</p>`);
+  await sendOwnerAlert('New waitlist signup', `<p><strong>${escapeHtmlPlain(name || 'Unknown')}</strong> (${escapeHtmlPlain(email)}) joined the waitlist for <strong>${escapeHtmlPlain(interest || 'upcoming sessions')}</strong>.</p>`);
 
   return respond(200, { success: true, message: "You're on the waitlist! We'll email you if a spot opens up." });
 }
@@ -485,18 +537,20 @@ async function handleCreateEvent(body) {
 
 async function handleUpdateEvent(body) {
   requireAdmin(body.admin_key);
-  const { event_id, ...fields } = body;
+  const { event_id } = body;
   if (!event_id) return respond(400, { success: false, error: 'event_id is required' });
 
-  // Strip non-updatable fields
-  delete fields.admin_key;
-  delete fields.action;
-  delete fields.id;
-  delete fields.created_at;
+  const ALLOWED = ['name', 'type', 'tickets_open', 'session_date',
+                   'spots_total', 'price_cents', 'status', 'glofox_url'];
+  const update = {};
+  for (const k of ALLOWED) if (k in body) update[k] = body[k];
+  if (!Object.keys(update).length) {
+    return respond(400, { success: false, error: 'no fields to update' });
+  }
 
   const { data, error } = await supabase
     .from('events')
-    .update(fields)
+    .update(update)
     .eq('id', event_id)
     .select()
     .single();
@@ -577,7 +631,7 @@ async function handleSendNotifications(body) {
   // Alert Georgie
   await sendOwnerAlert(
     `Notifications sent — ${event_type}`,
-    `<p>Sent <strong>${sent}</strong> "bookings are open" emails for <strong>${event_type}</strong>.</p>`
+    `<p>Sent <strong>${sent}</strong> "bookings are open" emails for <strong>${escapeHtmlPlain(event_type)}</strong>.</p>`
   );
 
   return respond(200, { success: true, count: sent, message: `${sent} notification emails sent!` });
@@ -956,8 +1010,8 @@ async function handleConfirmAgreement(body) {
     await sendOwnerAlert(
       `VFIT — ${existing.name} confirmed their agreement`,
       `<h2 style="font-family:Georgia,serif;font-size:22px;color:#3d3530;margin:0 0 14px;">Agreement confirmed</h2>
-       <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 14px;"><strong>${existing.name}</strong> (${existing.plan}) confirmed their liability waiver and cancellation policy.</p>
-       <p style="font-size:13px;color:#8c7660;margin:0;">${when}</p>`
+       <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 14px;"><strong>${escapeHtmlPlain(existing.name)}</strong> (${escapeHtmlPlain(existing.plan)}) confirmed their liability waiver and cancellation policy.</p>
+       <p style="font-size:13px;color:#8c7660;margin:0;">${escapeHtmlPlain(when)}</p>`
     );
   } catch (e) { console.error('Owner notify error:', e); }
 
@@ -992,18 +1046,24 @@ async function handleCreateMember(body) {
 
 async function handleUpdateMember(body) {
   requireAdmin(body.admin_key);
-  const { member_id, ...fields } = body;
+  const { member_id } = body;
   if (!member_id) return respond(400, { success: false, error: 'member_id is required' });
 
-  // Strip non-updatable fields
-  delete fields.admin_key;
-  delete fields.action;
-  delete fields.id;
-  delete fields.created_at;
+  // Explicit allowlist — never let a request overwrite agreement_token,
+  // agreed_at, ical_token, stripe_customer_id or any other security-
+  // critical column via mass-assignment.
+  const ALLOWED = ['name', 'email', 'phone', 'plan', 'sessions_per_week',
+                   'status', 'start_date', 'notes', 'admin_notes',
+                   'goals', 'health_notes', 'last_contacted_at'];
+  const update = {};
+  for (const k of ALLOWED) if (k in body) update[k] = body[k];
+  if (!Object.keys(update).length) {
+    return respond(400, { success: false, error: 'no fields to update' });
+  }
 
   const { data: member, error } = await supabase
     .from('members')
-    .update(fields)
+    .update(update)
     .eq('id', member_id)
     .select()
     .single();
@@ -1036,18 +1096,19 @@ async function handleCreateSlot(body) {
 
 async function handleUpdateSlot(body) {
   requireAdmin(body.admin_key);
-  const { slot_id, ...fields } = body;
+  const { slot_id } = body;
   if (!slot_id) return respond(400, { success: false, error: 'slot_id is required' });
 
-  // Strip non-updatable fields
-  delete fields.admin_key;
-  delete fields.action;
-  delete fields.id;
-  delete fields.created_at;
+  const ALLOWED = ['day_of_week', 'time', 'max_capacity', 'status', 'session_type'];
+  const update = {};
+  for (const k of ALLOWED) if (k in body) update[k] = body[k];
+  if (!Object.keys(update).length) {
+    return respond(400, { success: false, error: 'no fields to update' });
+  }
 
   const { data: slot, error } = await supabase
     .from('schedule_slots')
-    .update(fields)
+    .update(update)
     .eq('id', slot_id)
     .select()
     .single();
@@ -1240,9 +1301,42 @@ async function handleSubmitReview(params) {
     };
   }
 
+  const cleanEmail = String(email).toLowerCase().trim();
+
+  // Gate: only accept reviews from emails that actually had a confirmed
+  // booking for this event. Was previously a public CSRF surface — any
+  // GET with a guessable event UUID + email could submit unlimited
+  // reviews. Now also dedup'd one-per-(event,email).
+  const { data: hasBooking } = await supabase
+    .from('bookings')
+    .select('id', { head: true, count: 'exact' })
+    .eq('event_id', event_id)
+    .ilike('email', cleanEmail)
+    .eq('status', 'confirmed')
+    .limit(1);
+  if (!hasBooking) {
+    return {
+      statusCode: 403,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'text/html' },
+      body: '<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;"><h2>This review link is no longer valid.</h2></body></html>',
+    };
+  }
+  const { count: existingCount } = await supabase
+    .from('reviews')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', event_id)
+    .ilike('email', cleanEmail);
+  if ((existingCount || 0) > 0) {
+    return {
+      statusCode: 200,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'text/html' },
+      body: '<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;"><h2>Thanks — you’ve already left feedback for this session.</h2></body></html>',
+    };
+  }
+
   const { error } = await supabase.from('reviews').insert({
     event_id,
-    email: email.toLowerCase().trim(),
+    email: cleanEmail,
     rating: ratingNum,
     comment: comment || null,
   });
@@ -1322,15 +1416,19 @@ async function handleCreatePlan(body) {
 
 async function handleUpdatePlan(body) {
   requireAdmin(body.admin_key);
-  const { plan_id, ...fields } = body;
+  const { plan_id } = body;
   if (!plan_id) return respond(400, { success: false, error: 'plan_id is required' });
-  delete fields.admin_key;
-  delete fields.action;
-  delete fields.id;
-  delete fields.created_at;
+  const ALLOWED = ['name', 'price_cents', 'period_label', 'badge_text',
+                   'badge_style', 'description', 'features',
+                   'display_order', 'status'];
+  const update = {};
+  for (const k of ALLOWED) if (k in body) update[k] = body[k];
+  if (!Object.keys(update).length) {
+    return respond(400, { success: false, error: 'no fields to update' });
+  }
   const { data, error } = await supabase
     .from('membership_plans')
-    .update(fields)
+    .update(update)
     .eq('id', plan_id)
     .select()
     .single();
@@ -1415,15 +1513,17 @@ async function handleCreateTestimonial(body) {
 
 async function handleUpdateTestimonial(body) {
   requireAdmin(body.admin_key);
-  const { testimonial_id, ...fields } = body;
+  const { testimonial_id } = body;
   if (!testimonial_id) return respond(400, { success: false, error: 'testimonial_id is required' });
-  delete fields.admin_key;
-  delete fields.action;
-  delete fields.id;
-  delete fields.created_at;
+  const ALLOWED = ['quote', 'attribution', 'page', 'display_order', 'status'];
+  const update = {};
+  for (const k of ALLOWED) if (k in body) update[k] = body[k];
+  if (!Object.keys(update).length) {
+    return respond(400, { success: false, error: 'no fields to update' });
+  }
   const { data, error } = await supabase
     .from('testimonials')
-    .update(fields)
+    .update(update)
     .eq('id', testimonial_id)
     .select()
     .single();
@@ -1523,17 +1623,23 @@ async function handleCalendarFeed() {
     .order('session_date', { ascending: true });
   if (error) throw error;
 
-  // Fetch bookings for each event
-  const vevents = [];
-  for (const event of (events || [])) {
+  // Single batched count of bookings per event — drops the N+1 loop
+  const eventIds = (events || []).map((e) => e.id);
+  const countByEvent = {};
+  if (eventIds.length) {
     const { data: bookings } = await supabase
       .from('bookings')
-      .select('name')
-      .eq('event_id', event.id)
+      .select('event_id')
+      .in('event_id', eventIds)
       .in('status', ['confirmed', 'held']);
+    for (const b of (bookings || [])) {
+      countByEvent[b.event_id] = (countByEvent[b.event_id] || 0) + 1;
+    }
+  }
 
-    const bookedNames = (bookings || []).map(b => b.name).join(', ');
-    const bookedCount = (bookings || []).length;
+  const vevents = [];
+  for (const event of (events || [])) {
+    const bookedCount = countByEvent[event.id] || 0;
 
     const dtStart = new Date(event.session_date);
     const dtEnd = new Date(dtStart.getTime() + 45 * 60 * 1000); // 45 min default duration
@@ -1548,12 +1654,14 @@ async function handleCalendarFeed() {
       location = 'The Dairy, Ravensbourne';
     }
 
+    // PRIVACY: this feed is public (anyone with the URL can subscribe).
+    // Don't include booker names — only counts.
     vevents.push(
 `BEGIN:VEVENT
 DTSTART:${formatDt(dtStart)}
 DTEND:${formatDt(dtEnd)}
 SUMMARY:${event.name} (${bookedCount}/${event.spots_total} booked)
-DESCRIPTION:Booked: ${bookedNames || 'None yet'}
+DESCRIPTION:${bookedCount}/${event.spots_total} spots booked
 LOCATION:${location}
 UID:${event.id}@vfit-studio
 END:VEVENT`
@@ -1712,13 +1820,15 @@ async function handleCreateAppointment(body) {
 
 async function handleUpdateAppointment(body) {
   requireAdmin(body.admin_key);
-  const { appointment_id, ...fields } = body;
+  const { appointment_id } = body;
   if (!appointment_id) return respond(400, { success: false, error: 'appointment_id is required' });
-  delete fields.admin_key; delete fields.action; delete fields.id; delete fields.created_at;
-  fields.updated_at = new Date().toISOString();
+  const ALLOWED = ['member_id', 'starts_at', 'ends_at', 'kind', 'notes',
+                   'status', 'linked_event_id'];
+  const update = { updated_at: new Date().toISOString() };
+  for (const k of ALLOWED) if (k in body) update[k] = body[k];
   const { data, error } = await supabase
     .from('appointments')
-    .update(fields)
+    .update(update)
     .eq('id', appointment_id)
     .select('*, members(id, name, email, phone)')
     .single();
@@ -1850,18 +1960,20 @@ async function handleLoungeMe(event) {
     overrideMap[`${o.slot_id}|${o.session_date}`] = o;
   }
 
+  // schedule_slots.day_of_week uses Mon=0 convention (per the admin
+  // form). JS Date.getDay() is Sun=0. Convert before comparing.
   const upcoming = [];
   for (let d = new Date(today); d <= horizon; d.setDate(d.getDate() + 1)) {
-    const dow = d.getDay();
+    const adminDow = (d.getDay() + 6) % 7;  // Sun=0 → 6, Mon=1 → 0, etc.
     for (const s of slots) {
-      if (s.day_of_week === dow) {
+      if (s.day_of_week === adminDow) {
         const dateKey = d.toISOString().slice(0, 10);
         const override = overrideMap[`${s.id}|${dateKey}`];
         upcoming.push({
           slot_id: s.id,
           date: dateKey,
           time: s.time,
-          day_of_week: dow,
+          day_of_week: adminDow,
           state: override?.state || 'scheduled',
           charge_required: override?.charge_required || false,
           reason: override?.reason || null,
@@ -1982,7 +2094,7 @@ async function handleLoungeCancelSession(event, body) {
   try {
     await sendOwnerAlert(
       `Lounge: ${member.name} cancelled ${session_date} ${slotTime}`,
-      `<p><strong>${member.name}</strong> (${member.plan || '—'}) cancelled their ${session_date} ${slotTime} session.</p>` +
+      `<p><strong>${escapeHtmlPlain(member.name)}</strong> (${escapeHtmlPlain(member.plan || '—')}) cancelled their ${escapeHtmlPlain(session_date)} ${escapeHtmlPlain(slotTime || '')} session.</p>` +
       `<p>Notice: ${Math.round(policy.noticeHours)}h (required ${policy.requiredHours}h). ` +
       `${policy.chargeRequired ? '<strong style="color:#b85c5c;">Charge required (late cancellation).</strong>' : 'Within policy — no charge.'}</p>` +
       (reason ? `<p>Member note: ${escapeHtmlPlain(reason)}</p>` : '')
@@ -2062,7 +2174,7 @@ async function handleLoungeCreateTravelHold(event, body) {
   try {
     await sendOwnerAlert(
       `Lounge: ${member.name} added a travel hold`,
-      `<p><strong>${member.name}</strong> (${member.plan || '—'}) is on hold from <strong>${start_date}</strong> to <strong>${end_date}</strong>.</p>` +
+      `<p><strong>${escapeHtmlPlain(member.name)}</strong> (${escapeHtmlPlain(member.plan || '—')}) is on hold from <strong>${escapeHtmlPlain(start_date)}</strong> to <strong>${escapeHtmlPlain(end_date)}</strong>.</p>` +
       (reason ? `<p>Note: ${escapeHtmlPlain(reason)}</p>` : '') +
       `<p>Pause days used in last 12 months: ${usedDays + requestDays} of ${PAUSE_CAP_DAYS_PER_YEAR}.</p>`
     );
@@ -2131,9 +2243,9 @@ async function markSessionsPaused(memberId, startDate, endDate) {
   const end = new Date(endDate + 'T00:00:00');
   const rows = [];
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dow = d.getDay();
+    const adminDow = (d.getDay() + 6) % 7;  // see handleLoungeMe note
     for (const s of slots) {
-      if (s.day_of_week === dow) {
+      if (s.day_of_week === adminDow) {
         rows.push({
           member_id: memberId,
           slot_id: s.id,
@@ -2179,10 +2291,36 @@ async function handleAdminGenerateLoungeLink(body) {
     console.error('generateLink failed:', error);
     return respond(500, { success: false, error: 'link generation failed' });
   }
+  // Audit — every admin-initiated impersonation link is logged so abuse
+  // is detectable from the lounge_audit_log table.
+  await supabase.from('lounge_audit_log').insert({
+    member_id: member.id,
+    actor_role: 'trainer',
+    action: 'admin_generate_lounge_link',
+    resource: member.id,
+  });
   return respond(200, {
     success: true,
     member: { id: member.id, name: member.name, email: member.email },
     action_link: link.properties.action_link,
+  });
+}
+
+// ─── Lounge: rotate iCal token (revoke any leaked subscription URLs) ───
+async function handleLoungeRotateIcal(event) {
+  let ctx;
+  try { ctx = await requireMember(event); }
+  catch (err) { return respond(err.statusCode || 401, { success: false, error: err.message }); }
+  const { member, user } = ctx;
+  const newToken = require('crypto').randomUUID();
+  await supabase.from('members').update({ ical_token: newToken }).eq('id', member.id);
+  await supabase.from('lounge_audit_log').insert({
+    member_id: member.id, actor_user_id: user.id, actor_role: 'member',
+    action: 'rotate_ical_token',
+  });
+  return respond(200, {
+    success: true,
+    ical_url: `${SITE_URL}/.netlify/functions/api?action=lounge_ical&token=${newToken}`,
   });
 }
 
@@ -2229,7 +2367,7 @@ async function handleLoungeConcierge(event, body) {
   try {
     await sendOwnerAlert(
       `Concierge request from ${member.name}: ${label}`,
-      `<p><strong>${member.name}</strong> (${member.plan || '—'}) submitted a concierge request.</p>` +
+      `<p><strong>${escapeHtmlPlain(member.name)}</strong> (${escapeHtmlPlain(member.plan || '—')}) submitted a concierge request.</p>` +
       `<p style="font-weight:500;">Type: ${escapeHtmlPlain(label)}</p>` +
       (details ? `<blockquote style="border-left:3px solid #c9b99a;padding:8px 16px;color:#3d3530;">${escapeHtmlPlain(details)}</blockquote>` : '') +
       `<p style="margin-top:16px;"><a href="${SITE_URL}/admin.html" style="color:#3d3530;">Open in admin →</a></p>`
@@ -2279,9 +2417,9 @@ async function handleLoungeIcal(params) {
 
   const events = [];
   for (let d = new Date(today); d <= horizon; d.setDate(d.getDate() + 1)) {
-    const dow = d.getDay();
+    const adminDow = (d.getDay() + 6) % 7;  // see handleLoungeMe note
     for (const s of slots) {
-      if (s.day_of_week === dow) {
+      if (s.day_of_week === adminDow) {
         const dateKey = d.toISOString().slice(0, 10);
         if (skip.has(`${s.id}|${dateKey}`)) continue;
         events.push(buildIcalEvent(member, s, dateKey));
@@ -2598,7 +2736,7 @@ async function handleLoungeSendMessage(event, body) {
   try {
     await sendOwnerAlert(
       `Lounge message from ${member.name}`,
-      `<p><strong>${member.name}</strong> (${member.plan || '—'}) sent you a message in the Lounge:</p>` +
+      `<p><strong>${escapeHtmlPlain(member.name)}</strong> (${escapeHtmlPlain(member.plan || '—')}) sent you a message in the Lounge:</p>` +
       `<blockquote style="border-left:3px solid #c9b99a;padding:8px 16px;color:#3d3530;">${escapeHtmlPlain(text)}</blockquote>` +
       `<p style="margin-top:16px;"><a href="${SITE_URL}/admin.html" style="color:#3d3530;">Reply in admin →</a></p>`
     );
@@ -2609,6 +2747,13 @@ async function handleLoungeSendMessage(event, body) {
 
 // ─── Lounge: messaging (admin side) ───
 async function handleLoungeAdminInbox() {
+  // Audit (admin read of member-message data)
+  supabase.from('lounge_audit_log').insert({
+    actor_role: 'trainer',
+    action: 'admin_view_inbox',
+    resource: 'all',
+  }).then(() => {}, () => {});
+
   // Latest message per member, with unread count, ordered by activity
   const { data: messages } = await supabase
     .from('lounge_messages')
@@ -2642,25 +2787,44 @@ async function handleLoungeAdminThread(event, params) {
   const memberId = params.member_id;
   if (!memberId) return respond(400, { success: false, error: 'member_id required' });
 
-  const { data: messages } = await supabase
-    .from('lounge_messages')
-    .select('id, direction, body, read_at, sent_at')
-    .eq('member_id', memberId)
-    .order('sent_at', { ascending: true })
-    .limit(500);
+  const [msgsRes, memberRes] = await Promise.all([
+    supabase.from('lounge_messages')
+      .select('id, direction, body, read_at, sent_at')
+      .eq('member_id', memberId)
+      .order('sent_at', { ascending: true })
+      .limit(500),
+    supabase.from('members').select('id, name, email, plan').eq('id', memberId).single(),
+  ]);
 
-  const { data: member } = await supabase
-    .from('members').select('id, name, email, plan').eq('id', memberId).single();
+  // Audit (admin read of member data)
+  supabase.from('lounge_audit_log').insert({
+    member_id: memberId,
+    actor_role: 'trainer',
+    action: 'admin_view_thread',
+    resource: memberId,
+  }).then(() => {}, () => {});
 
-  // Mark inbound (member→trainer) as read
+  return respond(200, {
+    success: true,
+    member: memberRes.data,
+    messages: msgsRes.data || [],
+  });
+}
+
+// Separate POST so admins explicitly mark read (was happening as a
+// silent side-effect on a GET, letting any drive-by request destroy
+// the unread state Georgie depends on).
+async function handleLoungeAdminMarkThreadRead(body) {
+  requireAdmin(body.admin_key);
+  const memberId = body.member_id;
+  if (!memberId) return respond(400, { success: false, error: 'member_id required' });
   await supabase
     .from('lounge_messages')
     .update({ read_at: new Date().toISOString() })
     .eq('member_id', memberId)
     .eq('direction', 'in')
     .is('read_at', null);
-
-  return respond(200, { success: true, member, messages: messages || [] });
+  return respond(200, { success: true });
 }
 
 async function handleLoungeAdminSendMessage(body) {
@@ -2680,6 +2844,13 @@ async function handleLoungeAdminSendMessage(body) {
 
 // ─── Lounge: admin-side activity feed (cancellations + holds) ───
 async function handleLoungeAdminActivity() {
+  // Audit (admin read of member-session data)
+  supabase.from('lounge_audit_log').insert({
+    actor_role: 'trainer',
+    action: 'admin_view_activity',
+    resource: 'all',
+  }).then(() => {}, () => {});
+
   // Recent cancellations (last 60 days)
   const sixtyDaysAgo = new Date();
   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
@@ -2762,20 +2933,28 @@ async function handleLoungeSavePreferences(event, body) {
   return respond(200, { success: true, preferences: data });
 }
 
-function escapeHtmlPlain(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  })[c]);
-}
-
 // ═══════════════════════════════════════════════
 // Main handler
 // ═══════════════════════════════════════════════
 
+// Admin-only GET actions — must present X-Admin-Key header (or
+// admin_key query param). Anything not in this set is public OR
+// gated by member JWT inside its own handler.
+const ADMIN_GET_ACTIONS = new Set([
+  'events', 'bookings', 'notifications', 'memberships', 'contacts',
+  'dashboard', 'members', 'schedule', 'member', 'referrals',
+  'all_plans', 'all_testimonials', 'media',
+  'crm_dashboard', 'appointments',
+  'lounge_admin_activity', 'lounge_admin_challenges',
+  'lounge_admin_inbox', 'lounge_admin_thread',
+]);
+
 exports.handler = async (event) => {
+  const corsHeaders = corsHeadersFor(event);
+
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: CORS_HEADERS, body: '' };
+    return { statusCode: 200, headers: corsHeaders, body: '' };
   }
 
   try {
@@ -2784,6 +2963,10 @@ exports.handler = async (event) => {
 
     // ─── GET requests ───
     if (event.httpMethod === 'GET') {
+      if (ADMIN_GET_ACTIONS.has(action)) {
+        try { requireAdminFromEvent(event); }
+        catch { return respond(401, { success: false, error: 'unauthorized' }); }
+      }
       switch (action) {
         case 'config':
           return await handleConfig();
@@ -2872,10 +3055,8 @@ exports.handler = async (event) => {
 
       switch (postAction) {
         case 'verify_admin':
-          if (body.admin_key === process.env.ADMIN_KEY) {
-            return respond(200, { success: true });
-          }
-          return respond(401, { success: false, error: 'Invalid password' });
+          try { requireAdmin(body.admin_key); return respond(200, { success: true }); }
+          catch { return respond(401, { success: false, error: 'Invalid password' }); }
         case 'book':
           return await handleBook(body);
         case 'notify':
@@ -2998,6 +3179,8 @@ exports.handler = async (event) => {
           return await handleLoungeSendMessage(event, body);
         case 'lounge_admin_send_message':
           return await handleLoungeAdminSendMessage(body);
+        case 'lounge_admin_mark_thread_read':
+          return await handleLoungeAdminMarkThreadRead(body);
         case 'lounge_challenge_join':
           return await handleLoungeChallengeJoin(event, body);
         case 'lounge_challenge_leave':
@@ -3012,6 +3195,8 @@ exports.handler = async (event) => {
           return await handleLoungeConcierge(event, body);
         case 'admin_generate_lounge_link':
           return await handleAdminGenerateLoungeLink(body);
+        case 'lounge_rotate_ical':
+          return await handleLoungeRotateIcal(event);
         default:
           return respond(400, { success: false, error: 'unknown action' });
       }
@@ -3023,6 +3208,8 @@ exports.handler = async (event) => {
     if (err.message === 'unauthorized') {
       return respond(401, { success: false, error: 'unauthorized' });
     }
-    return respond(500, { success: false, error: err.message || 'internal server error' });
+    // Generic 500 — never leak err.message (could expose Postgres column
+    // names, stack hints, internal paths). Real diagnostics go to logs.
+    return respond(500, { success: false, error: 'internal server error' });
   }
 };

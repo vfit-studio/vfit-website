@@ -22,15 +22,19 @@ let _inboxTab = 'enquiries';
 // ─── API Helpers ───
 async function apiGet(action, params = {}) {
   const q = new URLSearchParams({ action, ...params });
-  const r = await fetch(API + '?' + q);
+  const headers = {};
+  const k = getKey();
+  if (k) headers['X-Admin-Key'] = k;
+  const r = await fetch(API + '?' + q, { headers });
   return r.json();
 }
 
 async function apiPost(data) {
+  const k = getKey();
   const r = await fetch(API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...data, admin_key: _key }),
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': k || '' },
+    body: JSON.stringify({ ...data, admin_key: k }),
   });
   return r.json();
 }
@@ -38,6 +42,31 @@ async function apiPost(data) {
 function getKey() {
   return _key || sessionStorage.getItem('vfit_admin_key');
 }
+
+// Replacement for native confirm() — Safari can disable repeated
+// dialogs and the native UX violates CLAUDE.md rule #10. Styled modal
+// matching the rest of the CRM.
+function crmConfirm(msg, onYes) {
+  // Reuse existing element if open from a previous call
+  let overlay = document.getElementById('crm-confirm-overlay');
+  if (overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'crm-confirm-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(61,53,48,0.45);z-index:2000;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#fefcf8;border-radius:6px;max-width:380px;width:92vw;padding:28px 26px;font-family:'Jost',sans-serif;box-shadow:0 12px 32px rgba(61,53,48,.18);">
+      <p style="font-size:15px;line-height:1.55;color:#3d3530;margin:0 0 22px;">${esc ? esc(msg) : msg}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button data-confirm-no  style="padding:10px 20px;background:transparent;color:#3d3530;border:1px solid #c9b99a;border-radius:3px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;">Cancel</button>
+        <button data-confirm-yes style="padding:10px 20px;background:#3d3530;color:#fefcf8;border:none;border-radius:3px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;">Confirm</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-confirm-no]').onclick  = () => overlay.remove();
+  overlay.querySelector('[data-confirm-yes]').onclick = () => { overlay.remove(); try { onYes(); } catch (e) { console.error(e); } };
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
 // ─── Utilities ───
 function fmtTime(iso) {
@@ -165,7 +194,9 @@ async function crmLogin() {
 }
 
 function crmLogout() {
-  if (!confirm('Log out?')) return;
+  return crmConfirm('Log out?', _doLogout);
+}
+function _doLogout() {
   sessionStorage.removeItem('vfit_admin_key');
   location.reload();
 }
@@ -218,9 +249,10 @@ function switchTab(tab) {
   const labels = { today: 'Today', calendar: 'Calendar', clients: 'Clients', inbox: 'Inbox' };
   document.getElementById('topbar-tab-label').textContent = labels[tab] || '';
 
+  if (tab === 'today')    loadToday();      // refresh on re-entry
   if (tab === 'calendar') loadCalendar();
-  if (tab === 'clients') renderClientList();
-  if (tab === 'inbox') loadInbox();
+  if (tab === 'clients')  renderClientList();
+  if (tab === 'inbox')    loadInbox();
 }
 
 // ═══════════════════════════════════════════════
@@ -247,20 +279,26 @@ async function loadToday() {
     </div>
   `;
 
-  // Update inbox badge
+  // Update inbox badge — both branches so it clears once enquiries are
+  // dealt with (was sticky-on, never reset).
+  const badge = document.getElementById('inbox-tab-badge');
+  const dot = document.getElementById('enq-dot');
   if (data.new_enquiries > 0) {
-    const badge = document.getElementById('inbox-tab-badge');
-    badge.textContent = data.new_enquiries;
-    badge.style.display = 'flex';
-    document.getElementById('enq-dot').style.display = 'inline-block';
+    if (badge) { badge.textContent = data.new_enquiries; badge.style.display = 'flex'; }
+    if (dot) dot.style.display = 'inline-block';
+  } else {
+    if (badge) badge.style.display = 'none';
+    if (dot) dot.style.display = 'none';
   }
 
-  // Today's sessions
+  // Today's sessions — guard against missing field (was crashing if the
+  // API responded {success:true} without today_appointments).
   const sessionsEl = document.getElementById('today-sessions');
-  if (data.today_appointments.length === 0) {
+  const todayApts = data.today_appointments || [];
+  if (todayApts.length === 0) {
     sessionsEl.innerHTML = '<div class="empty-state">No sessions today</div>';
   } else {
-    sessionsEl.innerHTML = data.today_appointments.map(apt => renderTodayCard(apt)).join('');
+    sessionsEl.innerHTML = todayApts.map(apt => renderTodayCard(apt)).join('');
   }
 
   // Action required
@@ -403,18 +441,19 @@ async function updateAptStatus(aptId, status) {
   }
 }
 
-async function cancelApt(aptId) {
-  if (!confirm('Cancel this session?')) return;
-  const res = await apiPost({ action: 'delete_appointment', appointment_id: aptId });
-  if (res.success) {
-    toast('Session cancelled');
-    closeAllSheets();
-    if (_activeTab === 'today') loadToday();
-    if (_activeTab === 'calendar') loadCalDay(_selectedDay);
-    if (_activeMemberId) loadMemberApts(_activeMemberId);
-  } else {
-    toast('Could not cancel', 'error');
-  }
+function cancelApt(aptId) {
+  crmConfirm('Cancel this session?', async function() {
+    const res = await apiPost({ action: 'delete_appointment', appointment_id: aptId });
+    if (res.success) {
+      toast('Session cancelled');
+      closeAllSheets();
+      if (_activeTab === 'today') loadToday();
+      if (_activeTab === 'calendar') loadCalDay(_selectedDay);
+      if (_activeMemberId) loadMemberApts(_activeMemberId);
+    } else {
+      toast('Could not cancel', 'error');
+    }
+  });
 }
 
 function closeThenOpenProfile(memberId) {
@@ -709,8 +748,11 @@ function renderClientList() {
   }
 
   el.innerHTML = statsHtml + filtered.map(m => {
+    // schedule_slots.day_of_week uses Mon=0 (matches admin form). Was
+    // doing `- 1` here which produced -1 for Mondays and shifted every
+    // other day by one slot.
     const nextSlot = m.slots && m.slots.length > 0
-      ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][m.slots[0].day_of_week - 1] + ' · ' + m.slots[0].time
+      ? (['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][m.slots[0].day_of_week] || '?') + ' · ' + m.slots[0].time
       : '';
     const statusDot = { active: 'var(--moss)', paused: 'var(--clay)', cancelled: 'var(--stone)' }[m.status] || 'var(--stone)';
     return `
@@ -850,7 +892,7 @@ async function loadMemberProfile(id) {
     <div class="profile-section">
       <div class="profile-section-title">Recurring Slots</div>
       <div>${m.slots.map(s => {
-        const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][s.day_of_week - 1] || s.day_of_week;
+        const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][s.day_of_week] || '?';
         return `<span class="slot-chip">${dayName} · ${s.time}</span>`;
       }).join('')}</div>
     </div>` : ''}
@@ -923,39 +965,38 @@ function editCurrentMember() {
   if (m) openAddMemberSheet(m);
 }
 
-async function changeMemberStatus(id, newStatus) {
-  const labels = { paused: 'Pause', active: 'Reactivate', cancelled: 'Cancel' };
+function changeMemberStatus(id, newStatus) {
   const confirmMsg = {
     paused: 'Pause this client?',
     active: 'Reactivate this client?',
     cancelled: 'Cancel this client\'s membership?',
   }[newStatus];
-  if (!confirm(confirmMsg)) return;
-
-  const res = await apiPost({ action: 'update_member', member_id: id, status: newStatus });
-  if (res.success) {
-    // Update local cache
-    const idx = _members.findIndex(m => m.id === id);
-    if (idx >= 0) _members[idx].status = newStatus;
-    toast('Status updated to ' + newStatus);
-    await loadMemberProfile(id);
-    if (_activeTab === 'clients') renderClientList();
-  } else {
-    toast('Could not update status', 'error');
-  }
+  crmConfirm(confirmMsg, async function() {
+    const res = await apiPost({ action: 'update_member', member_id: id, status: newStatus });
+    if (res.success) {
+      const idx = _members.findIndex(m => m.id === id);
+      if (idx >= 0) _members[idx].status = newStatus;
+      toast('Status updated to ' + newStatus);
+      await loadMemberProfile(id);
+      if (_activeTab === 'clients') renderClientList();
+    } else {
+      toast('Could not update status', 'error');
+    }
+  });
 }
 
-async function deleteMember(id, name) {
-  if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
-  const res = await apiPost({ action: 'delete_member', member_id: id });
-  if (res.success) {
-    _members = _members.filter(m => m.id !== id);
-    closeMemberProfile();
-    renderClientList();
-    toast(name + ' deleted');
-  } else {
-    toast('Could not delete', 'error');
-  }
+function deleteMember(id, name) {
+  crmConfirm(`Delete ${name}? This cannot be undone.`, async function() {
+    const res = await apiPost({ action: 'delete_member', member_id: id });
+    if (res.success) {
+      _members = _members.filter(m => m.id !== id);
+      closeMemberProfile();
+      renderClientList();
+      toast(name + ' deleted');
+    } else {
+      toast('Could not delete', 'error');
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -1030,12 +1071,15 @@ async function loadInbox() {
   renderEnquiries();
   renderMessages();
 
-  // Badge
+  // Badge — both sides of the if so the count clears when zero.
   const newCount = _enquiries.filter(e => e.status === 'new').length;
   const dot = document.getElementById('enq-dot');
-  dot.style.display = newCount > 0 ? 'inline-block' : 'none';
+  if (dot) dot.style.display = newCount > 0 ? 'inline-block' : 'none';
   const badge = document.getElementById('inbox-tab-badge');
-  if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'flex'; }
+  if (badge) {
+    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'flex'; }
+    else              { badge.style.display = 'none'; }
+  }
 }
 
 function switchInboxTab(tab) {
@@ -1202,17 +1246,18 @@ function openMessageSheet(id) {
   openSheet('message-sheet');
 }
 
-async function deleteMessage(id) {
-  if (!confirm('Delete this message?')) return;
-  const res = await apiPost({ action: 'delete_contact', contact_id: id });
-  if (res.success) {
-    _messages = _messages.filter(m => m.id !== id);
-    renderMessages();
-    closeAllSheets();
-    toast('Message deleted');
-  } else {
-    toast('Could not delete', 'error');
-  }
+function deleteMessage(id) {
+  crmConfirm('Delete this message?', async function() {
+    const res = await apiPost({ action: 'delete_contact', contact_id: id });
+    if (res.success) {
+      _messages = _messages.filter(m => m.id !== id);
+      renderMessages();
+      closeAllSheets();
+      toast('Message deleted');
+    } else {
+      toast('Could not delete', 'error');
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════

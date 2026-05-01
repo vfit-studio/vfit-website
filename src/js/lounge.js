@@ -185,7 +185,11 @@ function bindShell() {
 
 function navigate(route) {
   state.route = route;
-  $$('.lng-nav-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.route === route));
+  $$('.lng-nav-btn').forEach((b) => {
+    const active = b.dataset.route === route;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
   $$('.lng-page').forEach((p) => { p.hidden = p.dataset.page !== route; });
   if (location.hash !== `#/${route}`) {
     history.replaceState(null, '', `#/${route}`);
@@ -457,24 +461,31 @@ function openSessionAction(item) {
   const tier = planKey(plan);
   const required = NOTICE_HOURS[tier];
   const start = parseSessionStart(item.date, item.time);
-  const noticeHours = (start.getTime() - Date.now()) / (1000 * 60 * 60);
-  const inTime = noticeHours >= required;
+  // If we can't parse the time client-side, defer the policy decision
+  // to the server (which has the source of truth) and show a softer
+  // message instead of incorrectly claiming "in time".
+  const noticeHours = start ? (start.getTime() - Date.now()) / (1000 * 60 * 60) : null;
+  const inTime = noticeHours == null ? null : (noticeHours >= required);
   const niceDate = formatDate(item.date) + ' · ' + (item.time || '');
+
+  const policyMsg = inTime === true
+    ? `Cancelling now is <strong>within policy</strong> (${required}hr notice). No charge.`
+    : inTime === false
+      ? `Cancelling now is <strong style="color:var(--error);">late</strong>. Required notice is ${required}hr — full session fee applies.`
+      : `Georgie's policy is ${required}hr notice. The system will confirm whether this is in time when you submit.`;
+  const btnStyle = inTime === false ? 'background:var(--error);' : '';
 
   const sheet = document.createElement('div');
   sheet.className = 'lng-sheet';
+  sheet._returnFocus = document.activeElement;
   sheet.innerHTML = `
     <div class="lng-sheet-overlay" data-sheet-close></div>
     <div class="lng-sheet-card">
       <p class="lng-eyebrow" style="margin:0 0 8px;">Session</p>
       <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:26px;margin:0 0 4px;color:var(--deep);">${escapeHtml(niceDate)}</h2>
-      <p style="font-size:13px;color:var(--body);margin:0 0 22px;">
-        ${inTime
-          ? `Cancelling now is <strong>within policy</strong> (${required}hr notice). No charge.`
-          : `Cancelling now is <strong style="color:var(--error);">late</strong>. Required notice is ${required}hr — full session fee applies.`}
-      </p>
+      <p style="font-size:13px;color:var(--body);margin:0 0 22px;">${policyMsg}</p>
       <textarea class="lng-sheet-note" id="sheet-note" rows="2" placeholder="Add a note for Georgie (optional)"></textarea>
-      <button class="lng-btn-primary" style="width:100%;margin-top:12px;${inTime ? '' : 'background:var(--error);'}" id="sheet-cancel">Confirm cancellation</button>
+      <button class="lng-btn-primary" style="width:100%;margin-top:12px;${btnStyle}" id="sheet-cancel">Confirm cancellation</button>
       <button class="lng-link-btn" style="display:block;margin:14px auto 0;" data-sheet-close>Keep this session</button>
     </div>
   `;
@@ -513,12 +524,34 @@ function openSessionAction(item) {
 function closeSheet(sheet) {
   sheet.classList.remove('is-open');
   setTimeout(() => sheet.remove(), 220);
+  // Restore focus to whatever was focused before the sheet opened
+  if (sheet._returnFocus) {
+    try { sheet._returnFocus.focus(); } catch (_) {}
+  }
 }
 
+// Global Escape handler — closes the topmost open sheet OR the drawer.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const drawer = $('#lng-drawer');
+  if (drawer && !drawer.hidden && drawer.classList.contains('is-open')) {
+    closeDrawer();
+    return;
+  }
+  const sheets = document.querySelectorAll('.lng-sheet');
+  if (sheets.length) {
+    const top = sheets[sheets.length - 1];
+    closeSheet(top);
+  }
+});
+
+// Returns null on unparseable time (instead of midnight) so the UI
+// can render an "ask Georgie" hedge rather than confidently showing
+// the wrong notice math. The server has the real source of truth.
 function parseSessionStart(dateStr, timeStr) {
-  if (!timeStr) return new Date(dateStr + 'T00:00:00');
+  if (!timeStr) return null;
   const m = String(timeStr).match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  if (!m) return new Date(dateStr + 'T00:00:00');
+  if (!m) return null;
   let h = parseInt(m[1], 10);
   const mn = parseInt(m[2], 10);
   if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12;
@@ -528,7 +561,10 @@ function parseSessionStart(dateStr, timeStr) {
 
 // ─── Travel hold modal ─────────────────────────
 function openTravelHoldModal() {
-  const today = new Date().toISOString().slice(0, 10);
+  // Use *local* today, not UTC — was preventing same-day holds for
+  // Australian users in the late evening (when UTC has rolled to tomorrow).
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const sheet = document.createElement('div');
   sheet.className = 'lng-sheet';
   sheet.innerHTML = `
@@ -615,20 +651,20 @@ async function openBillingPortal() {
   }
 }
 
-async function cancelTravelHold(holdId) {
-  try {
-    await api('lounge_cancel_travel_hold', {
-      method: 'POST',
-      auth: true,
-      body: { hold_id: holdId },
-    });
-    await loadMe();
-    renderAll();
-    if (state.route === 'payments') renderBilling();
-    showToast('Hold cancelled.');
-  } catch (err) {
-    showToast('Couldn’t cancel hold.', true);
-  }
+function cancelTravelHold(holdId) {
+  once('cancelHold:' + holdId, async () => {
+    try {
+      await api('lounge_cancel_travel_hold', {
+        method: 'POST', auth: true, body: { hold_id: holdId },
+      });
+      await loadMe();
+      renderAll();
+      if (state.route === 'payments') renderBilling();
+      showToast('Hold cancelled.');
+    } catch (err) {
+      showToast('Couldn’t cancel hold.', true);
+    }
+  });
 }
 
 function onStealthToggle() {
@@ -855,29 +891,42 @@ function challengeCardHtml(c) {
   `;
 }
 
-async function joinChallenge(id, useStealthHandle) {
-  try {
-    await api('lounge_challenge_join', {
-      method: 'POST', auth: true,
-      body: { challenge_id: id, use_stealth_handle: useStealthHandle },
-    });
-    await loadChallenges();
-    showToast('You’re in.');
-  } catch (err) {
-    showToast('Couldn’t join.', true);
-  }
+// Generic in-flight guard — prevents double-tap from firing the same
+// POST twice while the first is still in flight.
+const _inFlight = new Set();
+async function once(key, fn) {
+  if (_inFlight.has(key)) return;
+  _inFlight.add(key);
+  try { return await fn(); }
+  finally { _inFlight.delete(key); }
 }
 
-async function leaveChallenge(id) {
-  try {
-    await api('lounge_challenge_leave', {
-      method: 'POST', auth: true,
-      body: { challenge_id: id },
-    });
-    await loadChallenges();
-  } catch (err) {
-    showToast('Couldn’t leave.', true);
-  }
+function joinChallenge(id, useStealthHandle) {
+  once('join:' + id, async () => {
+    try {
+      await api('lounge_challenge_join', {
+        method: 'POST', auth: true,
+        body: { challenge_id: id, use_stealth_handle: useStealthHandle },
+      });
+      await loadChallenges();
+      showToast('You’re in.');
+    } catch (err) {
+      showToast('Couldn’t join.', true);
+    }
+  });
+}
+
+function leaveChallenge(id) {
+  once('leave:' + id, async () => {
+    try {
+      await api('lounge_challenge_leave', {
+        method: 'POST', auth: true, body: { challenge_id: id },
+      });
+      await loadChallenges();
+    } catch (err) {
+      showToast('Couldn’t leave.', true);
+    }
+  });
 }
 
 function openLogEntryModal(challengeId) {
@@ -1050,15 +1099,23 @@ async function sendMessage(e) {
   const input = $('#msg-input');
   const text = input.value.trim();
   if (!text) return;
-  input.value = '';
+  // Disable the input visually rather than clearing it. If the send
+  // fails we don't have to worry about racing the poll restoring.
+  input.disabled = true;
+  const sendBtn = $('#msg-form button[type="submit"]');
+  if (sendBtn) sendBtn.disabled = true;
   try {
     await api('lounge_send_message', {
       method: 'POST', auth: true, body: { body: text },
     });
+    input.value = '';
     await refreshMessages();
   } catch (err) {
     showToast('Couldn’t send message — try again.', true);
-    input.value = text;
+  } finally {
+    input.disabled = false;
+    if (sendBtn) sendBtn.disabled = false;
+    input.focus();
   }
 }
 
@@ -1094,7 +1151,19 @@ async function boot() {
       showView('lounge-login');
       return;
     }
-    showToast('Couldn’t load your lounge. Please try again.', true);
+    // Any other error (corrupt token, 5xx, network blip) — give the
+    // member a real next step instead of a stranded "Loading..." page.
+    const feature = $('#today-feature');
+    if (feature) {
+      feature.innerHTML = `
+        <p class="lng-eyebrow" style="margin:0 0 8px;">Hmm</p>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;margin:0 0 8px;color:var(--deep);">We couldn't reach the lounge.</h2>
+        <p style="font-size:14px;line-height:1.65;color:var(--body);margin:0 0 14px;">If this keeps happening, sign in again or reach out to Georgie.</p>
+        <button class="lng-btn-secondary" style="margin-top:0;" onclick="location.reload()">Retry</button>
+        <button class="lng-link-btn" style="display:block;margin:14px auto 0;" id="boot-err-logout">Sign in again</button>`;
+      const lo = $('#boot-err-logout'); if (lo) lo.addEventListener('click', () => { clearTokens(); location.reload(); });
+    }
+    showToast('Couldn’t load your lounge.', true);
     return;
   }
 
