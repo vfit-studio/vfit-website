@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VFIT — Membership Agreement</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sand: #f5f0e8;
+    --cream: #faf7f2;
+    --stone: #e8e0d4;
+    --clay: #c9b99a;
+    --bark: #8c7660;
+    --deep: #3d3530;
+    --warm-white: #fefcf8;
+    --moss: #7a8c6e;
+    --error: #c0392b;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    color: var(--deep);
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--deep);
+    padding: 28px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: 0.32em;
+    color: var(--warm-white);
+  }
+  .header-tag {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--clay);
+  }
+
+  /* ─── HERO BAND ─── */
+  .hero-band {
+    background: var(--sand);
+    padding: 60px 60px 50px;
+    border-bottom: 1px solid var(--stone);
+  }
+  .hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    color: var(--bark);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-eyebrow::after { content: ''; width: 50px; height: 1px; background: var(--clay); display: inline-block; }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 5vw, 62px);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .hero-title em { font-style: italic; color: var(--bark); }
+  .hero-desc {
+    font-size: 13px;
+    line-height: 1.9;
+    color: #6b5e52;
+    max-width: 560px;
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-wrap {
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--stone);
+    padding: 20px 60px;
+    display: flex;
+    gap: 0;
+  }
+  .prog-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--clay);
+    padding-right: 36px;
+    position: relative;
+  }
+  .prog-step::after {
+    content: '→';
+    position: absolute;
+    right: 12px;
+    color: var(--stone);
+    font-size: 12px;
+  }
+  .prog-step:last-child::after { display: none; }
+  .prog-num {
+    width: 24px; height: 24px;
+    border: 1px solid var(--stone);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: var(--clay);
+    flex-shrink: 0;
+  }
+  .prog-step.active { color: var(--deep); }
+  .prog-step.active .prog-num { background: var(--deep); border-color: var(--deep); color: var(--warm-white); }
+  .prog-step.done { color: var(--bark); }
+  .prog-step.done .prog-num { background: var(--bark); border-color: var(--bark); color: var(--warm-white); }
+
+  /* ─── MAIN LAYOUT ─── */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+  }
+
+  /* ─── SECTION BLOCKS ─── */
+  .form-block {
+    margin-bottom: 56px;
+    display: none;
+  }
+  .form-block.active { display: block; }
+
+  .block-label {
+    font-size: 10px;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    color: var(--bark);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .block-label::after { content: ''; flex: 1; max-width: 50px; height: 1px; background: var(--clay); }
+
+  .block-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    margin-bottom: 32px;
+    line-height: 1.2;
+  }
+  .block-title em { font-style: italic; color: var(--bark); }
+
+  /* ─── MEMBERSHIP SELECTOR ─── */
+  .plan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .plan-card {
+    border: 1px solid var(--stone);
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--warm-white);
+    position: relative;
+  }
+  .plan-card:hover { border-color: var(--clay); }
+  .plan-card.selected { border-color: var(--deep); background: var(--sand); }
+  .plan-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 12px; right: 14px;
+    font-size: 14px;
+    color: var(--deep);
+  }
+  .plan-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+  .plan-price {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--deep);
+    margin-bottom: 8px;
+  }
+  .plan-price span { font-size: 12px; font-weight: 300; color: var(--bark); }
+  .plan-desc { font-size: 12px; line-height: 1.7; color: #6b5e52; }
+  .plan-error { font-size: 12px; color: var(--error); margin-top: 8px; display: none; }
+
+  /* ─── FORM FIELDS ─── */
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .field-row.single { grid-template-columns: 1fr; }
+  .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field-group { display: flex; flex-direction: column; gap: 8px; }
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--bark);
+  }
+  .field-input {
+    padding: 13px 16px;
+    border: 1px solid var(--stone);
+    background: var(--warm-white);
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--deep);
+    outline: none;
+    transition: border-color 0.3s;
+    width: 100%;
+  }
+  .field-input:focus { border-color: var(--clay); }
+  .field-input.error { border-color: var(--error); }
+  .field-input::placeholder { color: var(--clay); opacity: 0.7; }
+  select.field-input { cursor: pointer; }
+
+  /* ─── DIVIDER ─── */
+  .form-divider {
+    height: 1px;
+    background: var(--stone);
+    margin: 40px 0;
+  }
+
+  /* ─── INFO BOX ─── */
+  .info-box {
+    background: var(--sand);
+    border-left: 3px solid var(--clay);
+    padding: 20px 24px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    line-height: 1.85;
+    color: #6b5e52;
+  }
+  .info-box strong { color: var(--deep); font-weight: 500; }
+
+  /* ─── BANK DETAILS ─── */
+  .bank-security {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--bark);
+    margin-bottom: 28px;
+  }
+  .bank-security::before {
+    content: '🔒';
+    font-size: 14px;
+  }
+
+  /* ─── T&C SECTION ─── */
+  .tc-scroll {
+    border: 1px solid var(--stone);
+    background: var(--warm-white);
+    height: 280px;
+    overflow-y: auto;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    font-size: 12.5px;
+    line-height: 1.95;
+    color: #6b5e52;
+    scroll-behavior: smooth;
+  }
+  .tc-scroll::-webkit-scrollbar { width: 4px; }
+  .tc-scroll::-webkit-scrollbar-track { background: var(--stone); }
+  .tc-scroll::-webkit-scrollbar-thumb { background: var(--clay); }
+
+  .tc-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--deep);
+    margin: 20px 0 8px;
+  }
+  .tc-heading:first-child { margin-top: 0; }
+  .tc-indent { padding-left: 20px; }
+  .tc-indent2 { padding-left: 40px; }
+
+  /* ─── CANCELLATION T&C ─── */
+  .cancel-box {
+    border: 1px solid var(--stone);
+    background: var(--warm-white);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    font-size: 12.5px;
+    line-height: 1.95;
+    color: #6b5e52;
+  }
+
+  /* ─── CHECKBOXES ─── */
+  .agree-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+  .agree-row input[type="checkbox"] {
+    width: 18px; height: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--deep);
+    cursor: pointer;
+  }
+  .agree-label {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #6b5e52;
+  }
+  .agree-label strong { color: var(--deep); }
+
+  /* ─── NAVIGATION BUTTONS ─── */
+  .btn-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--stone);
+  }
+  .btn-next {
+    padding: 15px 44px;
+    background: var(--deep);
+    color: var(--warm-white);
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-next:hover { background: var(--bark); transform: translateY(-1px); }
+  .btn-next:disabled { background: var(--clay); cursor: not-allowed; transform: none; }
+  .btn-back-link {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--bark);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-back-link:hover { color: var(--deep); }
+
+  /* ─── SUCCESS SCREEN ─── */
+  #successScreen {
+    display: none;
+    text-align: center;
+    padding: 80px 40px;
+  }
+  .success-mark {
+    width: 64px; height: 64px;
+    border: 1px solid var(--moss);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 32px;
+    font-size: 24px;
+    color: var(--moss);
+  }
+  .success-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .success-title em { font-style: italic; color: var(--bark); }
+  .success-sub {
+    font-size: 14px;
+    line-height: 1.9;
+    color: #6b5e52;
+    max-width: 480px;
+    margin: 0 auto 40px;
+  }
+  .success-detail {
+    background: var(--sand);
+    border: 1px solid var(--stone);
+    padding: 24px 32px;
+    text-align: left;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .success-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--stone);
+  }
+  .success-detail-row:last-child { border-bottom: none; }
+  .success-detail-label { color: var(--bark); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
+  .success-detail-val { color: var(--deep); font-weight: 400; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--deep);
+    padding: 28px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-text {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(254,252,248,0.35);
+    text-transform: uppercase;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    header, .hero-band, .progress-wrap, footer { padding-left: 24px; padding-right: 24px; }
+    .plan-grid { grid-template-columns: 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+    .field-row.three { grid-template-columns: 1fr; }
+    .progress-wrap { flex-wrap: wrap; gap: 10px; }
+    .prog-step::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <span class="logo">VFIT</span>
+  <span class="header-tag">Membership Agreement</span>
+</header>
+
+<!-- Hero -->
+<div class="hero-band">
+  <p class="hero-eyebrow">Welcome to VFIT</p>
+  <h1 class="hero-title">Your Membership<br><em>Agreement.</em></h1>
+  <p class="hero-desc">Please complete all sections below. Once submitted, Georgie will be in touch to confirm your start date and first session. We're so glad you're here.</p>
+</div>
+
+<!-- Progress -->
+<div class="progress-wrap" id="progressBar">
+  <div class="prog-step active" id="prog1"><div class="prog-num" id="pnum1">1</div><span>Your Plan</span></div>
+  <div class="prog-step" id="prog2"><div class="prog-num" id="pnum2">2</div><span>Your Details</span></div>
+  <div class="prog-step" id="prog3"><div class="prog-num" id="pnum3">3</div><span>Card Details</span></div>
+  <div class="prog-step" id="prog4"><div class="prog-num" id="pnum4">4</div><span>Agreement</span></div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- ── STEP 1: PLAN ── -->
+  <div class="form-block active" id="step1">
+    <p class="block-label">Step 1</p>
+    <h2 class="block-title">Select your<br><em>membership plan.</em></h2>
+
+    <div class="plan-grid">
+      <div class="plan-card" onclick="selectPlan(this, 'Signature', '$60/session', '3-month minimum')">
+        <div class="plan-name">Signature</div>
+        <div class="plan-price">$60 <span>/ session</span></div>
+        <div class="plan-desc">3-month minimum commitment. Best value per session. Weekly recurring group sessions (max 4 ppl).</div>
+      </div>
+      <div class="plan-card" onclick="selectPlan(this, 'Flexible', '$70/session', 'No minimum contract')">
+        <div class="plan-name">Flexible</div>
+        <div class="plan-price">$70 <span>/ session</span></div>
+        <div class="plan-desc">No minimum contract. Full flexibility. Weekly recurring group sessions (max 4 ppl).</div>
+      </div>
+      <div class="plan-card" onclick="selectPlan(this, 'VIP', '$190/session', '3-month commitment')">
+        <div class="plan-name">VIP</div>
+        <div class="plan-price">$190 <span>/ session</span></div>
+        <div class="plan-desc">Private 1-on-1 with Georgie. Fridge access. Direct line to Georgie anytime. 3-month commitment.</div>
+      </div>
+    </div>
+    <p class="plan-error" id="planError">Please select a membership plan to continue.</p>
+
+    <div class="btn-row">
+      <button class="btn-next" onclick="goStep(2)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 2: DETAILS ── -->
+  <div class="form-block" id="step2">
+    <p class="block-label">Step 2</p>
+    <h2 class="block-title">Your personal<br><em>details.</em></h2>
+
+    <!-- Personal -->
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">First Name *</label>
+        <input class="field-input" id="firstName" type="text" placeholder="First name">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Last Name *</label>
+        <input class="field-input" id="lastName" type="text" placeholder="Last name">
+      </div>
+    </div>
+    <div class="field-row single">
+      <div class="field-group">
+        <label class="field-label">Date of Birth *</label>
+        <input class="field-input" id="dob" type="date">
+      </div>
+    </div>
+
+    <div class="form-divider"></div>
+
+    <!-- Contact -->
+    <p class="block-label" style="margin-bottom:20px;">Contact Information</p>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Email Address *</label>
+        <input class="field-input" id="email" type="email" placeholder="hello@email.com">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Phone Number *</label>
+        <input class="field-input" id="phone" type="tel" placeholder="04xx xxx xxx">
+      </div>
+    </div>
+    <div class="field-row single">
+      <div class="field-group">
+        <label class="field-label">Street Address *</label>
+        <input class="field-input" id="address" type="text" placeholder="Street address">
+      </div>
+    </div>
+    <div class="field-row three">
+      <div class="field-group">
+        <label class="field-label">Suburb *</label>
+        <input class="field-input" id="suburb" type="text" placeholder="Suburb">
+      </div>
+      <div class="field-group">
+        <label class="field-label">State *</label>
+        <select class="field-input" id="state">
+          <option value="">Select state</option>
+          <option>QLD</option><option>NSW</option><option>VIC</option>
+          <option>SA</option><option>WA</option><option>TAS</option>
+          <option>ACT</option><option>NT</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Postcode *</label>
+        <input class="field-input" id="postcode" type="text" placeholder="4350">
+      </div>
+    </div>
+
+    <div class="form-divider"></div>
+
+    <!-- Emergency -->
+    <p class="block-label" style="margin-bottom:20px;">Emergency Contact</p>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Contact Name *</label>
+        <input class="field-input" id="emergencyName" type="text" placeholder="Full name">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Relationship *</label>
+        <input class="field-input" id="emergencyRel" type="text" placeholder="e.g. Partner, Parent">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Emergency Phone *</label>
+        <input class="field-input" id="emergencyPhone" type="tel" placeholder="04xx xxx xxx">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Any medical conditions we should know about?</label>
+        <input class="field-input" id="medical" type="text" placeholder="Injuries, conditions, allergies (or 'None')">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back-link" onclick="goStep(1)">← Back</button>
+      <button class="btn-next" onclick="goStep(3)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: PAYMENT ── -->
+  <div class="form-block" id="step3">
+    <p class="block-label">Step 3</p>
+    <h2 class="block-title">Your card<br><em>details.</em></h2>
+
+    <div class="info-box">
+      <strong>How billing works.</strong> Sessions are billed weekly to your nominated card. Your first charge will occur on the Monday of your first training week. You will always receive confirmation before any changes are made to your billing.
+    </div>
+
+    <p class="bank-security">Your card details are held securely and used only for VFIT session billing.</p>
+
+    <div class="field-row single">
+      <div class="field-group">
+        <label class="field-label">Name on Card *</label>
+        <input class="field-input" id="accountName" type="text" placeholder="Name as it appears on your card">
+      </div>
+    </div>
+    <div class="field-row single">
+      <div class="field-group">
+        <label class="field-label">Card Number *</label>
+        <input class="field-input" id="accountNumber" type="text" placeholder="xxxx xxxx xxxx xxxx" maxlength="19" oninput="formatCard(this)">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Expiry Date *</label>
+        <input class="field-input" id="bsb" type="text" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+      </div>
+      <div class="field-group">
+        <label class="field-label">CVV *</label>
+        <input class="field-input" id="cvv" type="text" placeholder="xxx" maxlength="4">
+      </div>
+    </div>
+    <div class="field-row single">
+      <div class="field-group">
+        <label class="field-label">Card Type</label>
+        <select class="field-input" id="bankName">
+          <option value="">Select card type</option>
+          <option>Visa</option>
+          <option>Mastercard</option>
+          <option>American Express</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back-link" onclick="goStep(2)">← Back</button>
+      <button class="btn-next" onclick="goStep(4)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 4: AGREEMENT ── -->
+  <div class="form-block" id="step4">
+    <p class="block-label">Step 4</p>
+    <h2 class="block-title">Read &amp; sign<br><em>your agreement.</em></h2>
+
+    <!-- Liability T&C -->
+    <p style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin-bottom:12px;">Liability Waiver</p>
+    <div class="tc-scroll" id="tcScroll">
+      <p style="margin-bottom:16px;">By signing this document (marked 'I Agree') I hereby acknowledge and agree to the terms and conditions below in consideration of your participation in a session of personal training, stretch therapy, Pilates, running or other physical activity (referred to as "the Session") with Georgie Valdal, her employees, agents, guides, contractors, and affiliates (referred to as "VFit") or VFit Space Hire including photoshoots and workshops.</p>
+
+      <p class="tc-heading">1. Assumption of Risks</p>
+      <p>a. You understand and acknowledge that the Session/hire may involve certain inherent risks and dangers, including but not limited to:</p>
+      <p class="tc-indent">i. High levels of physical exertion, including cardiovascular exertion, and other activities that require a high level of fitness; and/or</p>
+      <p class="tc-indent">ii. Potential accidents, injuries, illnesses, or property damage caused by unpredictable factors or third parties.</p>
+      <p>b. You assume full responsibility for any injury, loss, or damage that you may sustain as a result of participating in the Session or hiring.</p>
+
+      <p class="tc-heading">2. Medical Conditions</p>
+      <p>a. You understand that it is your responsibility, and not VFit's, to:</p>
+      <p class="tc-indent">i. Ensure that you have an adequate understanding of your own health and physical condition before participating in the Session, and that if you are unsure in that regard, to seek medical advice before participating in the Session;</p>
+      <p class="tc-indent">ii. Ensure that you have appropriate medical insurance coverage to cover any medical treatment or emergencies that may arise during the Session; and</p>
+      <p class="tc-indent">iii. Disclose any physical limitations, disabilities, ailments or impairments which may affect your ability to participate in the Session.</p>
+      <p>b. You hereby represent and warrant that:</p>
+      <p class="tc-indent">i. You are fully aware of your own health and physical condition;</p>
+      <p class="tc-indent">ii. If you have any physical limitations, disabilities, ailments or impairments, you have disclosed those matters to VFit prior to entering into this agreement;</p>
+      <p class="tc-indent">iii. Save for any physical limitations, disabilities, ailments or impairments you have already disclosed to VFit, you are in good health and physical condition;</p>
+      <p class="tc-indent">iv. You are voluntarily participating in the Session; and</p>
+      <p class="tc-indent">v. You are aware that your participation in the Session may be injurious to your health.</p>
+
+      <p class="tc-heading">3. Release, Waiver and Indemnity</p>
+      <p>a. To the fullest extent permitted by law, you hereby release, discharge, and waive any and all claims, actions, liabilities, demands, or suits of any nature whatsoever (including but not limited to those arising from negligence or any other fault) against VFit as may arise from or in connection with the Session.</p>
+      <p>b. To the fullest extent permitted by law, you release, indemnify and hold harmless VFit:</p>
+      <p class="tc-indent">i. From any and all claims, actions, liabilities, costs or expenses (including legal fees) arising from or in connection with your participation in the Session or in relation to this agreement; and</p>
+      <p class="tc-indent">ii. From any and all liability (save for that which is caused by the reckless conduct of VFit) for:</p>
+      <p class="tc-indent2">1. Death;</p>
+      <p class="tc-indent2">2. Physical or mental injury (including the aggravation, acceleration or recurrence of an existing injury); and</p>
+      <p class="tc-indent2">3. The contraction, aggravation or acceleration of any disease.</p>
+
+      <p class="tc-heading">4. Governing Law and Jurisdiction</p>
+      <p>a. This agreement will be governed by and construed in accordance with the laws of Australia.</p>
+      <p>b. Any disputes arising from or in connection with this agreement will be subject to the exclusive jurisdiction of the courts of Queensland.</p>
+
+      <p class="tc-heading">5. Acknowledgment</p>
+      <p>a. You:</p>
+      <p class="tc-indent">i. Acknowledge that you have carefully read and understood this agreement;</p>
+      <p class="tc-indent">ii. Voluntarily agree to be bound by the terms of this agreement; and</p>
+      <p class="tc-indent">iii. Understand that this agreement applies to any Session that you undertake with VFit either before or after agreeing to the above terms.</p>
+    </div>
+
+    <label class="agree-row">
+      <input type="checkbox" id="agreeTC">
+      <span class="agree-label"><strong>I Agree</strong> — I have read and accept the Liability Waiver above.</span>
+    </label>
+
+    <div class="form-divider"></div>
+
+    <!-- Membership & Cancellation T&C -->
+    <p style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin-bottom:12px;">Membership & Cancellation Terms</p>
+    <div class="tc-scroll">
+      <p style="margin-bottom:16px;">The following terms govern your VFIT membership, including session attendance, cancellation obligations, and membership termination. By agreeing below, you confirm you have read and understood the terms applicable to your chosen membership type.</p>
+
+      <p class="tc-heading">1. Flexible Membership — $70 per session</p>
+      <p style="margin-bottom:10px;">The Flexible Membership operates on a no lock-in basis. The following terms apply:</p>
+      <p class="tc-indent" style="margin-bottom:8px;">a. <strong>Session cancellations:</strong> A minimum of <strong>4 weeks written notice</strong> is required to cancel or reschedule a scheduled session. Where notice of less than 4 weeks is provided, the full session fee of $70 will be charged regardless of attendance.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">b. <strong>No-shows:</strong> Failure to attend a booked session without any prior notice will result in the full session fee being charged.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">c. <strong>Membership termination:</strong> You may terminate your Flexible Membership at any time without penalty. There is no minimum commitment period. Termination takes effect immediately upon written notice to Georgie, and no further sessions will be charged from that date.</p>
+
+      <p class="tc-heading">2. Signature Membership — $60 per session</p>
+      <p style="margin-bottom:10px;">The Signature Membership is subject to a minimum 3-month commitment. The following terms apply:</p>
+      <p class="tc-indent" style="margin-bottom:8px;">a. <strong>Session cancellations:</strong> A minimum of <strong>1 week's written notice</strong> is required to cancel or reschedule a scheduled session. Where less than 1 week's notice is provided, the full session fee of $60 will be charged.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">b. <strong>No-shows:</strong> Failure to attend a booked session without any prior notice will result in the full session fee being charged.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">c. <strong>Minimum term:</strong> You are committed to a minimum period of 3 months from your membership start date. Sessions will continue to be billed throughout this period regardless of attendance.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">d. <strong>Membership termination:</strong> Following the completion of your 3-month minimum term, you may terminate this membership by providing a minimum of <strong>1 month's written notice</strong> to Georgie. Early termination within the minimum term is not permitted, except in the case of a medical condition supported by a valid doctor's certificate.</p>
+
+      <p class="tc-heading">3. VIP Membership — $190 per session</p>
+      <p style="margin-bottom:10px;">The VIP Membership is a premium private training arrangement subject to a 3-month commitment. The following terms apply:</p>
+      <p class="tc-indent" style="margin-bottom:8px;">a. <strong>Session cancellations:</strong> A minimum of <strong>1 week's written notice</strong> is required to cancel or reschedule a scheduled session. Where less than 1 week's notice is provided, the full session fee of $190 will be charged.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">b. <strong>No-shows:</strong> Failure to attend a booked session without any prior notice will result in the full session fee being charged.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">c. <strong>Minimum term:</strong> You are committed to a minimum period of 3 months from your membership start date. Sessions will continue to be billed throughout this period regardless of attendance.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">d. <strong>Membership termination:</strong> Following the completion of your 3-month minimum term, you may terminate this membership by providing a minimum of <strong>1 month's written notice</strong> to Georgie. Early termination within the minimum term is not permitted, except in the case of a medical condition supported by a valid doctor's certificate.</p>
+
+      <p class="tc-heading">4. General Terms — All Memberships</p>
+      <p class="tc-indent" style="margin-bottom:8px;">a. All cancellation and termination notices must be submitted in writing directly to Georgie Valdal.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">b. VFIT reserves the right to review and update membership terms with reasonable notice provided to all members.</p>
+      <p class="tc-indent" style="margin-bottom:8px;">c. Sessions are non-transferable and cannot be shared with another person.</p>
+      <p class="tc-indent" style="margin-bottom:0;">d. This agreement is governed by the laws of Australia and subject to the jurisdiction of the courts of Queensland.</p>
+    </div>
+
+    <label class="agree-row">
+      <input type="checkbox" id="agreeCancel">
+      <span class="agree-label"><strong>I Agree</strong> — I have read and accept the Membership &amp; Cancellation Terms above.</span>
+    </label>
+
+    <div class="form-divider"></div>
+
+    <!-- Signature -->
+    <p style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--bark);margin-bottom:20px;">Your Signature</p>
+    <div class="info-box" style="margin-bottom:24px;">
+      By typing your full name below, you are providing your digital signature and confirming that all information provided in this agreement is accurate and complete.
+    </div>
+    <div class="field-row single">
+      <div class="field-group">
+        <label class="field-label">Full Name (Digital Signature) *</label>
+        <input class="field-input" id="signature" type="text" placeholder="Type your full legal name">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Date *</label>
+        <input class="field-input" id="signDate" type="date">
+      </div>
+      <div class="field-group"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back-link" onclick="goStep(3)">← Back</button>
+      <button class="btn-next" onclick="submitAgreement()">Submit Agreement ✦</button>
+    </div>
+  </div>
+
+  <!-- ── SUCCESS ── -->
+  <div id="successScreen">
+    <div class="success-mark">✦</div>
+    <h2 class="success-title">Agreement<br><em>received.</em></h2>
+    <p class="success-sub">Thank you for completing your VFIT membership agreement. Georgie will be in touch within 24 hours to confirm your start date and first session. We can't wait to welcome you.</p>
+    <div class="success-detail" id="successDetail"></div>
+  </div>
+
+</div><!-- /main -->
+
+<footer>
+  <span class="footer-text">© 2025 VFIT — Boutique Fitness Studio</span>
+  <span class="footer-text">Shop 8/203 Margaret St · Toowoomba City QLD 4350</span>
+</footer>
+
+<script>
+  let selectedPlan = '';
+  let selectedPlanPrice = '';
+  let selectedPlanTerm = '';
+
+  function selectPlan(card, name, price, term) {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedPlan = name;
+    selectedPlanPrice = price;
+    selectedPlanTerm = term;
+    document.getElementById('planError').style.display = 'none';
+  }
+
+  function formatCard(input) {
+    let val = input.value.replace(/\D/g, '');
+    val = val.match(/.{1,4}/g)?.join(' ') || val;
+    input.value = val;
+  }
+
+  function formatExpiry(input) {
+    let val = input.value.replace(/\D/g, '');
+    if (val.length > 2) val = val.slice(0,2) + ' / ' + val.slice(2,4);
+    input.value = val;
+  }
+
+  function updateProgress(step) {
+    for (let i = 1; i <= 4; i++) {
+      const prog = document.getElementById('prog' + i);
+      const num = document.getElementById('pnum' + i);
+      prog.classList.remove('active', 'done');
+      if (i < step) {
+        prog.classList.add('done');
+        num.textContent = '✓';
+      } else if (i === step) {
+        prog.classList.add('active');
+        num.textContent = i;
+      } else {
+        num.textContent = i;
+      }
+    }
+  }
+
+  function goStep(n) {
+    // Validate step 1
+    if (n === 2 && !selectedPlan) {
+      document.getElementById('planError').style.display = 'block';
+      return;
+    }
+    // Validate step 2
+    if (n === 3) {
+      const required = ['firstName','lastName','dob','email','phone','address','suburb','state','postcode','emergencyName','emergencyRel','emergencyPhone'];
+      let valid = true;
+      required.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.classList.add('error');
+          valid = false;
+        } else {
+          el.classList.remove('error');
+        }
+      });
+      if (!valid) { alert('Please fill in all required fields.'); return; }
+    }
+    // Validate step 3
+    if (n === 4) {
+      const required = ['accountName','bsb','accountNumber'];
+      let valid = true;
+      required.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.classList.add('error');
+          valid = false;
+        } else {
+          el.classList.remove('error');
+        }
+      });
+      if (!valid) { alert('Please fill in your bank account details.'); return; }
+    }
+
+    document.querySelectorAll('.form-block').forEach(b => b.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+    updateProgress(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function submitAgreement() {
+    if (!document.getElementById('agreeTC').checked) {
+      alert('Please agree to the Liability Waiver to continue.'); return;
+    }
+    if (!document.getElementById('agreeCancel').checked) {
+      alert('Please agree to the Cancellation Policy to continue.'); return;
+    }
+    const sig = document.getElementById('signature').value.trim();
+    const sigDate = document.getElementById('signDate').value;
+    if (!sig || !sigDate) {
+      alert('Please provide your digital signature and date.'); return;
+    }
+
+    // Build success detail
+    const name = document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    document.getElementById('successDetail').innerHTML = `
+      <div class="success-detail-row"><span class="success-detail-label">Name</span><span class="success-detail-val">${name}</span></div>
+      <div class="success-detail-row"><span class="success-detail-label">Plan</span><span class="success-detail-val">${selectedPlan} · ${selectedPlanPrice}</span></div>
+      <div class="success-detail-row"><span class="success-detail-label">Term</span><span class="success-detail-val">${selectedPlanTerm}</span></div>
+      <div class="success-detail-row"><span class="success-detail-label">Email</span><span class="success-detail-val">${email}</span></div>
+      <div class="success-detail-row"><span class="success-detail-label">Phone</span><span class="success-detail-val">${phone}</span></div>
+      <div class="success-detail-row"><span class="success-detail-label">Signed</span><span class="success-detail-val">${sig} · ${sigDate}</span></div>
+    `;
+
+    document.querySelectorAll('.form-block').forEach(b => b.classList.remove('active'));
+    document.getElementById('progressBar').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Set today's date as default for sign date
+  document.getElementById('signDate').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>

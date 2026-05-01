@@ -328,7 +328,7 @@ function renderMembershipRequestCards(members) {
       '<div class="data-card-meta">' + esc(m.email || '') + (m.phone ? ' · ' + esc(m.phone) : '') + '</div>' +
       (m.plan ? '<div class="data-card-meta">Plan: ' + esc(m.plan) + '</div>' : '') +
       ((m.days || m.times) ? '<div class="data-card-meta">' + esc(m.days || '') + (m.times ? ' — ' + esc(m.times) : '') + '</div>' : '') +
-      (m.notes ? '<div class="data-card-body">' + esc(truncate(m.notes, 120)) + '</div>' : '') +
+      (function(){ var p = parseNotes(m.notes); var fu = p.date ? '<div class="data-card-meta" style="color:var(--moss);font-weight:600;">Follow-up: ' + esc(p.date) + '</div>' : ''; var nb = p.text ? '<div class="data-card-body">' + esc(truncate(p.text, 120)) + '</div>' : ''; return fu + nb; })() +
       '<div class="data-card-meta" style="font-size:11px;color:var(--clay);">' + formatDate(m.created_at) + '</div>' +
       '<div class="data-card-actions">' +
         (showAccept ? '<button class="btn-outline" onclick="openAcceptModal(\'' + esc(m.id) + '\')">Accept</button>' : '') +
@@ -361,7 +361,7 @@ function renderMemberListCards(members) {
       '<div class="data-card-meta">' + esc(m.email || '') + (m.phone && m.phone !== '--' ? ' · ' + esc(m.phone) : '') + '</div>' +
       (m.plan ? '<div class="data-card-meta">Plan: ' + esc(m.plan) + ' · ' + (m.sessions_per_week || 1) + 'x/wk</div>' : '') +
       '<div class="data-card-meta">Slots: ' + slots + '</div>' +
-      (m.notes ? '<div class="data-card-body">' + esc(truncate(m.notes, 140)) + '</div>' : '') +
+      (function(){ var p = parseNotes(m.notes); var fu = p.date ? '<div class="data-card-meta" style="color:var(--moss);font-weight:600;">Follow-up: ' + esc(p.date) + '</div>' : ''; var nb = p.text ? '<div class="data-card-body">' + esc(truncate(p.text, 140)) + '</div>' : ''; return fu + nb; })() +
       '<div class="data-card-actions">' +
         '<button class="btn-outline" onclick="openNotesModal(\'' + esc(m.id) + '\', \'member\')">' + (m.notes ? 'Edit Notes' : 'Add Notes') + '</button>' +
         '<button class="btn-outline" onclick="openEditMemberModal(\'' + esc(m.id) + '\')">Edit</button>' +
@@ -875,7 +875,7 @@ async function loadMemberships() {
           '<td>' + esc(m.sessions || '') + '</td>' +
           '<td>' + esc(m.days || '') + '</td>' +
           '<td>' + esc(m.times || '') + '</td>' +
-          '<td title="' + esc(m.notes || '') + '">' + esc(truncate(m.notes || '', 40)) + '</td>' +
+          (function(){ var p = parseNotes(m.notes); var disp = (p.date ? '[FU ' + p.date + '] ' : '') + (p.text || ''); return '<td title="' + esc(disp) + '">' + esc(truncate(disp, 40)) + '</td>'; })() +
           '<td>' +
             '<select class="status-select" onchange="updateMembershipStatus(\'' + esc(id) + '\', this.value)">' +
               '<option value="new"' + (status === 'new' ? ' selected' : '') + '>New</option>' +
@@ -943,6 +943,19 @@ async function markNew(id) {
 
 var _notesEntityType = 'enquiry'; // 'enquiry' or 'member'
 
+// Encode/decode a follow-up date inside the notes field as a [FU:YYYY-MM-DD] prefix.
+// Lets us add follow-ups without needing a follow_up_at column on the DB.
+function parseNotes(notesRaw) {
+  if (!notesRaw) return { date: null, text: '' };
+  var m = String(notesRaw).match(/^\[FU:(\d{4}-\d{2}-\d{2})\]\s*\n?\s*/);
+  if (m) return { date: m[1], text: notesRaw.substring(m[0].length) };
+  return { date: null, text: notesRaw };
+}
+function buildNotes(date, text) {
+  var t = text || '';
+  return date ? '[FU:' + date + ']\n' + t : t;
+}
+
 function openNotesModal(id, type) {
   _notesEntityType = type === 'member' ? 'member' : 'enquiry';
   var record;
@@ -951,13 +964,11 @@ function openNotesModal(id, type) {
   } else {
     record = (_loadedMembershipRequests || []).find(function(r) { return r.id === id; }) || {};
   }
+  var parsed = parseNotes(record.notes);
   document.getElementById('mreq-notes-id').value = id;
   document.getElementById('mreq-notes-name').textContent = record.name || (_notesEntityType === 'member' ? 'member' : 'enquiry');
-  document.getElementById('mreq-notes-text').value = record.notes || '';
-  // Date input expects YYYY-MM-DD
-  var fu = record.follow_up_at || '';
-  if (fu && fu.length > 10) fu = fu.substring(0, 10);
-  document.getElementById('mreq-notes-followup').value = fu;
+  document.getElementById('mreq-notes-text').value = parsed.text;
+  document.getElementById('mreq-notes-followup').value = parsed.date || '';
   document.getElementById('mreq-notes-modal').classList.add('open');
   setTimeout(function() { document.getElementById('mreq-notes-text').focus(); }, 100);
 }
@@ -970,14 +981,15 @@ async function saveNotes() {
   var id = document.getElementById('mreq-notes-id').value;
   var notes = document.getElementById('mreq-notes-text').value;
   var followUp = document.getElementById('mreq-notes-followup').value || null;
+  var combined = buildNotes(followUp, notes);
   try {
     if (_notesEntityType === 'member') {
-      await apiPost({ action: 'update_member', member_id: id, notes: notes, follow_up_at: followUp });
+      await apiPost({ action: 'update_member', member_id: id, notes: combined });
       showToast('Saved', 'success');
       closeNotesModal();
       loadMemberList();
     } else {
-      await apiPost({ action: 'update_membership', id: id, notes: notes, follow_up_at: followUp });
+      await apiPost({ action: 'update_membership', id: id, notes: combined });
       showToast('Saved', 'success');
       closeNotesModal();
       loadMembershipRequests();
@@ -2719,12 +2731,14 @@ async function loadFollowUps() {
   try {
     var rEnq = await apiGet({ action: 'memberships' });
     var rMem = await apiGet({ action: 'members' });
-    var enqs = (rEnq.data || []).filter(function(m) { return m.follow_up_at; }).map(function(m) {
-      return { id: m.id, name: m.name, type: 'enquiry', status: m.status || 'new', plan: m.plan, notes: m.notes, follow_up_at: m.follow_up_at };
-    });
-    var mems = (rMem.members || []).filter(function(m) { return m.follow_up_at; }).map(function(m) {
-      return { id: m.id, name: m.name, type: 'member', status: m.status || 'active', plan: m.plan, notes: m.notes, follow_up_at: m.follow_up_at };
-    });
+    var enqs = (rEnq.data || []).map(function(m) {
+      var p = parseNotes(m.notes);
+      return p.date ? { id: m.id, name: m.name, type: 'enquiry', status: m.status || 'new', plan: m.plan, notes: p.text, follow_up_at: p.date } : null;
+    }).filter(Boolean);
+    var mems = (rMem.members || []).map(function(m) {
+      var p = parseNotes(m.notes);
+      return p.date ? { id: m.id, name: m.name, type: 'member', status: m.status || 'active', plan: m.plan, notes: p.text, follow_up_at: p.date } : null;
+    }).filter(Boolean);
     _fuItems = enqs.concat(mems);
 
     // Update sidebar badge with overdue + today count
