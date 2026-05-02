@@ -487,6 +487,18 @@ async function handleContact(body) {
     message: message || null,
   });
   if (error) throw error;
+
+  // Notify Georgie + send the sender an acknowledgement
+  try {
+    await sendOwnerAlert(
+      `New contact form: ${name}`,
+      `<p><strong>${escapeHtmlPlain(name)}</strong> (${escapeHtmlPlain(email)}` +
+        (phone ? `, ${escapeHtmlPlain(phone)}` : '') + `) sent you a message:</p>` +
+      (message ? `<blockquote style="border-left:3px solid #c9b99a;padding:8px 16px;color:#3d3530;">${escapeHtmlPlain(message)}</blockquote>` : '<p style="color:#8c7660;font-style:italic;">(no message body)</p>') +
+      `<p style="margin-top:16px;"><a href="${SITE_URL}/admin.html" style="color:#3d3530;">Open in admin →</a></p>`
+    );
+  } catch (e) { console.error('owner alert failed', e); }
+
   return respond(200, { success: true, message: 'Message sent!' });
 }
 
@@ -507,6 +519,22 @@ async function handleMembership(body) {
     notes: notes || null,
   });
   if (error) throw error;
+
+  // Notify Georgie + confirmation to the enquirer
+  try {
+    await sendOwnerAlert(
+      `New membership enquiry: ${name} — ${plan}`,
+      `<p><strong>${escapeHtmlPlain(name)}</strong> (${escapeHtmlPlain(email)}` +
+        (phone ? `, ${escapeHtmlPlain(phone)}` : '') + `) enquired about <strong>${escapeHtmlPlain(plan)}</strong>.</p>` +
+      (sessions ? `<p>Sessions: ${escapeHtmlPlain(sessions)}</p>` : '') +
+      (days ? `<p>Preferred days: ${escapeHtmlPlain(days)}</p>` : '') +
+      (times ? `<p>Preferred times: ${escapeHtmlPlain(times)}</p>` : '') +
+      (notes ? `<p>Notes:</p><blockquote style="border-left:3px solid #c9b99a;padding:8px 16px;color:#3d3530;">${escapeHtmlPlain(notes)}</blockquote>` : '') +
+      `<p style="margin-top:16px;"><a href="${SITE_URL}/admin.html" style="color:#3d3530;">Open in admin →</a></p>`
+    );
+    await sendMembershipConfirmation(email.toLowerCase().trim(), name, plan);
+  } catch (e) { console.error('membership notify failed', e); }
+
   return respond(200, { success: true, message: 'Enquiry received! We will be in touch shortly.' });
 }
 
