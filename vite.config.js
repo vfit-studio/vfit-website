@@ -13,6 +13,7 @@ export default defineConfig({
         crm:       resolve(__dirname, 'src/crm.html'),
         agreement: resolve(__dirname, 'src/agreement.html'),
         lounge:    resolve(__dirname, 'src/lounge.html'),
+        cancellation: resolve(__dirname, 'src/cancellation-policy.html'),
       },
     },
   },
