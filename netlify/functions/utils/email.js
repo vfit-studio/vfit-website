@@ -114,7 +114,7 @@ async function sendMembershipConfirmation(to, name, plan) {
     html: wrap(`
       <h2 style="font-family:Georgia,serif;font-size:26px;font-weight:normal;color:#3d3530;margin:0 0 16px;">Thanks, ${esc(firstName)}.</h2>
       <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">We've received your enquiry for the <strong>${esc(plan)}</strong>.</p>
-      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">Georgie will be in touch within 24 hours to discuss your placement and get you started.</p>
+      <p style="font-size:14px;line-height:1.8;color:#6b5e52;margin:0 0 24px;">Georgie will be in touch to discuss your placement and get you started.</p>
       <div style="background:#f5f0e8;padding:20px 28px;border-left:3px solid #c9b99a;margin:0 0 24px;">
         <p style="font-size:13px;color:#8c7660;margin:0;line-height:1.7;">VFIT Private Studio<br>Shop 8/203 Margaret St, Toowoomba City QLD 4350</p>
       </div>
