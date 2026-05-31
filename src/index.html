@@ -208,6 +208,14 @@
 
 <!-- ============================================
      PAGE: RUN CLUB
+     ----------------------------------------------
+     WINTER CLOSURE (set 2026-05-31): Run Club is closed for winter.
+     The recurring "next Tuesday" countdown was removed here and in
+     src/js/index.js (the RUNCLUB_CONFIG fallback + countdown widget).
+     TO REOPEN IN SPRING: revert commit 5976280
+       git revert 5976280   (then commit + push)
+     That restores the live countdown, booking buttons, and "Every
+     Tuesday" copy on this page, the home offering, and contact page.
      ============================================ -->
 <div class="page" id="page-runclub">
   <section class="cinematic-hero" style="position:relative;overflow:hidden;">
